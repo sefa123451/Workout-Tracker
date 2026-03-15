@@ -939,8 +939,8 @@ function App() {
             </div>
             <div className="topbar-actions">
               <div className="topbar-chip">
-                <span>Live data</span>
-                <strong>{latestWorkout ? formatDisplayDate(latestWorkout.date) : 'No sessions yet'}</strong>
+                <span>Today</span>
+                <strong>{formatCalendarDate(new Date())}</strong>
               </div>
               <div className="theme-switcher topbar-theme-switcher" role="group" aria-label="Theme">
                 {THEME_OPTIONS.map((option) => (
