@@ -430,6 +430,13 @@ button {
   gap: 16px;
 }
 
+.form-toolbar {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(180px, 240px) minmax(220px, 1fr);
+  align-items: end;
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -522,6 +529,11 @@ button {
   padding: 24px;
 }
 
+.split-grid {
+  display: grid;
+  gap: 16px;
+}
+
 .entry-card {
   background: var(--card-background-strong);
 }
@@ -598,6 +610,26 @@ button {
   background: var(--surface-contrast);
 }
 
+.split-config-row {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
+  align-items: end;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-muted);
+}
+
+.split-sets-field {
+  min-width: 0;
+}
+
+.split-config-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .set-actions {
   display: flex;
   flex-wrap: wrap;
@@ -610,6 +642,18 @@ button {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 20px;
+}
+
+.empty-inline {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-muted);
+}
+
+.empty-inline p {
+  margin: 0;
+  color: var(--text-secondary);
 }
 
 .history-entry {
@@ -858,6 +902,11 @@ button {
   }
 
   .set-row {
+    grid-template-columns: 1fr;
+  }
+
+  .split-config-row,
+  .form-toolbar {
     grid-template-columns: 1fr;
   }
 

@@ -17,6 +17,17 @@ function renderExerciseView(overrides = {}) {
     formatCalendarDate: vi.fn(() => 'Jan 1, 2024'),
     startEditingExercise: vi.fn(),
     deleteExercise: vi.fn(),
+    splits: [],
+    splitForm: { name: '', exercises: [] },
+    setSplitForm: vi.fn(),
+    editingSplitId: null,
+    splitMessage: { type: '', text: '' },
+    handleSplitSubmit: vi.fn((event) => event.preventDefault()),
+    resetSplitForm: vi.fn(),
+    startEditingSplit: vi.fn(),
+    deleteSplit: vi.fn(),
+    createSplitExercise: vi.fn(() => ({ id: 'split-exercise-1', exerciseId: '', defaultSets: '3' })),
+    getExerciseName: vi.fn(() => 'Back squat'),
     ...overrides,
   };
 

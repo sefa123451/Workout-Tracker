@@ -21,11 +21,11 @@ export function createSet() {
   };
 }
 
-export function createWorkoutEntry() {
+export function createWorkoutEntry(exerciseId = '', setCount = 1) {
   return {
     id: createId(),
-    exerciseId: '',
-    sets: [createSet()],
+    exerciseId,
+    sets: Array.from({ length: Math.max(1, setCount) }, () => createSet()),
   };
 }
 
@@ -54,6 +54,7 @@ export function getTodayInputValue() {
 export function createWorkoutForm() {
   return {
     date: getTodayInputValue(),
+    splitId: '',
     entries: [createWorkoutEntry()],
   };
 }
@@ -61,6 +62,7 @@ export function createWorkoutForm() {
 export function createWorkoutFormFromWorkout(workout) {
   return {
     date: workout.date,
+    splitId: typeof workout.splitId === 'string' ? workout.splitId : '',
     entries: workout.entries.map((entry) => ({
       id: createId(),
       exerciseId: entry.exerciseId,
@@ -74,6 +76,49 @@ export function createWorkoutFormFromWorkout(workout) {
           : [createSet()],
     })),
   };
+}
+
+export function createSplitExercise(exerciseId = '', defaultSets = 3) {
+  return {
+    id: createId(),
+    exerciseId,
+    defaultSets: String(defaultSets),
+  };
+}
+
+export function createSplitForm() {
+  return {
+    name: '',
+    exercises: [createSplitExercise()],
+  };
+}
+
+export function createSplitFormFromSplit(split) {
+  return {
+    name: split.name,
+    exercises:
+      split.exercises.length > 0
+        ? split.exercises.map((exercise) => ({
+            id: createId(),
+            exerciseId: exercise.exerciseId,
+            defaultSets: String(exercise.defaultSets),
+          }))
+        : [createSplitExercise()],
+  };
+}
+
+export function buildWorkoutEntriesFromSplit(split) {
+  if (!split) {
+    return [createWorkoutEntry()];
+  }
+
+  if (!split.exercises.length) {
+    return [];
+  }
+
+  return split.exercises.map((exercise) =>
+    createWorkoutEntry(exercise.exerciseId, exercise.defaultSets),
+  );
 }
 
 export function normalizeExercise(rawExercise) {
@@ -94,6 +139,66 @@ export function normalizeExercise(rawExercise) {
       typeof rawExercise.createdAt === 'string' && rawExercise.createdAt
         ? rawExercise.createdAt
         : new Date().toISOString(),
+  };
+}
+
+export function normalizeSplit(rawSplit) {
+  if (!rawSplit || typeof rawSplit !== 'object') {
+    return null;
+  }
+
+  const name = typeof rawSplit.name === 'string' ? rawSplit.name.trim() : '';
+
+  if (!name) {
+    return null;
+  }
+
+  const exercises = Array.isArray(rawSplit.exercises)
+    ? rawSplit.exercises
+        .map((rawExercise) => {
+          if (
+            !rawExercise ||
+            typeof rawExercise !== 'object' ||
+            typeof rawExercise.exerciseId !== 'string' ||
+            !rawExercise.exerciseId
+          ) {
+            return null;
+          }
+
+          const defaultSets = Number(rawExercise.defaultSets);
+
+          if (!Number.isInteger(defaultSets) || defaultSets < 1) {
+            return null;
+          }
+
+          return {
+            id:
+              typeof rawExercise.id === 'string' && rawExercise.id ? rawExercise.id : createId(),
+            exerciseId: rawExercise.exerciseId,
+            defaultSets,
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  if (Array.isArray(rawSplit.exercises) && rawSplit.exercises.length > 0 && exercises.length === 0) {
+    return null;
+  }
+
+  const chosenExerciseIds = exercises.map((exercise) => exercise.exerciseId);
+
+  if (new Set(chosenExerciseIds).size !== chosenExerciseIds.length) {
+    return null;
+  }
+
+  return {
+    id: typeof rawSplit.id === 'string' && rawSplit.id ? rawSplit.id : createId(),
+    name,
+    createdAt:
+      typeof rawSplit.createdAt === 'string' && rawSplit.createdAt
+        ? rawSplit.createdAt
+        : new Date().toISOString(),
+    exercises,
   };
 }
 
@@ -173,6 +278,7 @@ export function normalizeWorkout(rawWorkout) {
   return {
     id: typeof rawWorkout.id === 'string' && rawWorkout.id ? rawWorkout.id : createId(),
     date,
+    splitId: typeof rawWorkout.splitId === 'string' ? rawWorkout.splitId : '',
     createdAt:
       typeof rawWorkout.createdAt === 'string' && rawWorkout.createdAt
         ? rawWorkout.createdAt
@@ -195,14 +301,14 @@ export function sortWorkouts(workouts) {
 
 export function readStoredData() {
   if (typeof window === 'undefined') {
-    return { exercises: [], workouts: [] };
+    return { exercises: [], splits: [], workouts: [] };
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
 
     if (!raw) {
-      return { exercises: [], workouts: [] };
+      return { exercises: [], splits: [], workouts: [] };
     }
 
     const parsed = JSON.parse(raw);
@@ -215,12 +321,13 @@ export function readStoredData() {
       exercises: Array.isArray(payload.exercises)
         ? payload.exercises.map(normalizeExercise).filter(Boolean)
         : [],
+      splits: Array.isArray(payload.splits) ? payload.splits.map(normalizeSplit).filter(Boolean) : [],
       workouts: Array.isArray(payload.workouts)
         ? sortWorkouts(payload.workouts.map(normalizeWorkout).filter(Boolean))
         : [],
     };
   } catch {
-    return { exercises: [], workouts: [] };
+    return { exercises: [], splits: [], workouts: [] };
   }
 }
 
@@ -243,10 +350,17 @@ export function validateImportedData(payload) {
   }
 
   const normalizedExercises = collections.exercises.map(normalizeExercise);
+  const normalizedSplits = Array.isArray(collections.splits)
+    ? collections.splits.map(normalizeSplit)
+    : [];
   const normalizedWorkouts = collections.workouts.map(normalizeWorkout);
 
   if (normalizedExercises.some((exercise) => exercise === null)) {
     return { error: 'Imported exercises contain empty or invalid items.' };
+  }
+
+  if (normalizedSplits.some((split) => split === null)) {
+    return { error: 'Imported splits contain empty names, missing exercises, or invalid default sets.' };
   }
 
   if (normalizedWorkouts.some((workout) => workout === null)) {
@@ -265,9 +379,27 @@ export function validateImportedData(payload) {
     exerciseNames.add(normalizedName);
   }
 
+  const splitNames = new Set();
+  const exerciseIds = new Set(normalizedExercises.map((exercise) => exercise.id));
+
+  for (const split of normalizedSplits) {
+    const normalizedName = split.name.trim().toLowerCase();
+
+    if (splitNames.has(normalizedName)) {
+      return { error: 'Imported splits contain duplicate names.' };
+    }
+
+    if (split.exercises.some((exercise) => !exerciseIds.has(exercise.exerciseId))) {
+      return { error: 'Imported splits reference exercises that do not exist.' };
+    }
+
+    splitNames.add(normalizedName);
+  }
+
   return {
     value: {
       exercises: normalizedExercises,
+      splits: normalizedSplits,
       workouts: sortWorkouts(normalizedWorkouts),
     },
   };

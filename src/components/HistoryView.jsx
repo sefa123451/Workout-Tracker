@@ -4,6 +4,7 @@ import EmptyState from './EmptyState.jsx';
 export default function HistoryView({
   sortedWorkouts,
   getExerciseName,
+  getSplitName,
   formatDisplayDate,
   formatNumber,
   getEntryMetrics,
@@ -26,6 +27,7 @@ export default function HistoryView({
                 <div className="workout-card-header">
                   <div className="workout-card-title">
                     <strong>{formatDisplayDate(workout.date)}</strong>
+                    {workout.splitId ? <span>{getSplitName(workout.splitId)}</span> : null}
                     <span>{workout.entries.length} exercises</span>
                   </div>
                   <div className="history-actions">

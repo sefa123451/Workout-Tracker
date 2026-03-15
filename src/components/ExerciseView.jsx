@@ -1,5 +1,6 @@
 import React from 'react';
 import EmptyState from './EmptyState.jsx';
+import SplitManagerSection from './SplitManagerSection.jsx';
 
 export default function ExerciseView({
   editingExerciseId,
@@ -12,6 +13,17 @@ export default function ExerciseView({
   formatCalendarDate,
   startEditingExercise,
   deleteExercise,
+  splits,
+  splitForm,
+  setSplitForm,
+  editingSplitId,
+  splitMessage,
+  handleSplitSubmit,
+  resetSplitForm,
+  startEditingSplit,
+  deleteSplit,
+  createSplitExercise,
+  getExerciseName,
 }) {
   return (
     <main className="content-grid">
@@ -97,6 +109,21 @@ export default function ExerciseView({
           />
         )}
       </section>
+
+      <SplitManagerSection
+        exercises={exercises}
+        splits={splits}
+        splitForm={splitForm}
+        setSplitForm={setSplitForm}
+        editingSplitId={editingSplitId}
+        splitMessage={splitMessage}
+        handleSplitSubmit={handleSplitSubmit}
+        resetSplitForm={resetSplitForm}
+        startEditingSplit={startEditingSplit}
+        deleteSplit={deleteSplit}
+        createSplitExercise={createSplitExercise}
+        getExerciseName={getExerciseName}
+      />
     </main>
   );
 }

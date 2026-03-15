@@ -8,9 +8,11 @@ import WorkoutFormView from './WorkoutFormView.jsx';
 function renderWorkoutFormView(overrides = {}) {
   const props = {
     exercises: [],
+    splits: [],
     workouts: [],
     workoutForm: {
       date: '2024-01-12',
+      splitId: '',
       entries: [
         {
           id: 'entry-1',
@@ -24,6 +26,7 @@ function renderWorkoutFormView(overrides = {}) {
     setWorkoutForm: vi.fn(),
     updateWorkoutEntry: vi.fn(),
     applyLatestWorkoutToEntry: vi.fn(),
+    handleWorkoutSplitChange: vi.fn(),
     handleWorkoutSubmit: vi.fn((event) => event.preventDefault()),
     resetWorkoutForm: vi.fn(),
     createSet: vi.fn(() => ({ id: 'new-set', weight: '', reps: '' })),
@@ -31,6 +34,7 @@ function renderWorkoutFormView(overrides = {}) {
     createWorkoutEntry: vi.fn(() => ({ id: 'new-entry', exerciseId: '', sets: [] })),
     formatDisplayDate: vi.fn(() => 'Jan 12, 2024'),
     formatNumber: vi.fn((value) => String(value)),
+    getSplitName: vi.fn(() => 'Push'),
     ...overrides,
   };
 
@@ -64,6 +68,7 @@ describe('WorkoutFormView', () => {
       ],
       workoutForm: {
         date: '2024-01-12',
+        splitId: '',
         entries: [
           {
             id: 'entry-1',

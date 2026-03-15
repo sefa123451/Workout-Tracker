@@ -41,7 +41,7 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'Add exercise' }));
 
     expect(screen.getByText('Added Back squat.')).toBeTruthy();
-    expect(screen.getByText('Back squat')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
   });
 
   it('saves a workout and shows it in history', async () => {
@@ -64,8 +64,54 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'Save workout' }));
 
     expect(screen.getByText('Past sessions')).toBeTruthy();
-    expect(screen.getByText('Back squat')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
+  });
+
+  it('creates a workout from a split and shows the split in history', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+        {
+          id: 'press',
+          name: 'Shoulder press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [
+            { id: 'split-1', exerciseId: 'bench', defaultSets: 1 },
+            { id: 'split-2', exerciseId: 'press', defaultSets: 1 },
+          ],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    await user.selectOptions(screen.getByLabelText('Split'), 'push');
+
+    const weightInputs = screen.getAllByLabelText('Weight');
+    const repInputs = screen.getAllByLabelText('Reps');
+
+    await user.type(weightInputs[0], '80');
+    await user.type(repInputs[0], '8');
+    await user.type(weightInputs[1], '40');
+    await user.type(repInputs[1], '10');
+    await user.click(screen.getByRole('button', { name: 'Save workout' }));
+
+    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getByText('Bench press')).toBeTruthy();
+    expect(screen.getByText('Shoulder press')).toBeTruthy();
   });
 
   it('keeps current data when a valid import is canceled', async () => {
@@ -93,8 +139,8 @@ describe('App integration flows', () => {
     expect(confirmSpy).toHaveBeenCalledTimes(1);
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'exercises' }));
-    expect(screen.getByText('Existing exercise')).toBeTruthy();
-    expect(screen.queryByText('Imported exercise')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Existing exercise' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Imported exercise' })).toBeNull();
   });
 
   it('replaces current data when a valid import is confirmed', async () => {
@@ -118,11 +164,11 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Imported 1 exercises and 0 workouts.')).toBeTruthy();
+    expect(await screen.findByText('Imported 1 exercises, 0 splits, and 0 workouts.')).toBeTruthy();
 
     await userEvent.setup().click(screen.getByRole('button', { name: 'exercises' }));
-    expect(screen.getByText('Imported exercise')).toBeTruthy();
-    expect(screen.queryByText('Existing exercise')).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Imported exercise' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Existing exercise' })).toBeNull();
 
     await waitFor(() => {
       expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY))).toMatchObject({

@@ -93,6 +93,7 @@ describe('import validation', () => {
         {
           id: 'w1',
           date: '2024-01-12',
+          splitId: '',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },
@@ -108,15 +109,61 @@ describe('import validation', () => {
           createdAt: expect.any(String),
         },
       ],
+      splits: [],
       workouts: [
         {
           id: 'w1',
           date: '2024-01-12',
+          splitId: '',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },
       ],
     });
+  });
+
+  it('accepts valid splits and rejects duplicate split names', () => {
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Squat' }],
+        splits: [
+          { id: 'split-1', name: 'Push', exercises: [] },
+          { id: 'split-2', name: ' push ', exercises: [] },
+        ],
+        workouts: [],
+      }),
+    ).toEqual({
+      error: 'Imported splits contain duplicate names.',
+    });
+
+    const result = validateImportedData({
+      exercises: [{ id: '1', name: 'Squat' }],
+      splits: [
+        {
+          id: 'split-1',
+          name: 'Leg day',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          exercises: [{ exerciseId: '1', defaultSets: 4 }],
+        },
+      ],
+      workouts: [],
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.value.splits).toEqual([
+      {
+        id: 'split-1',
+        name: 'Leg day',
+        createdAt: '2024-01-12T10:00:00.000Z',
+        exercises: [
+          {
+            id: expect.any(String),
+            exerciseId: '1',
+            defaultSets: 4,
+          },
+        ],
+      },
+    ]);
   });
 });
 

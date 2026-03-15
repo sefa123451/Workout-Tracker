@@ -8,9 +8,13 @@ import {
   STORAGE_KEY,
   STORAGE_VERSION,
   buildProgressHistory,
+  buildWorkoutEntriesFromSplit,
   createId,
   createSet,
   createSetFromValues,
+  createSplitExercise,
+  createSplitForm,
+  createSplitFormFromSplit,
   createWorkoutEntry,
   createWorkoutForm,
   createWorkoutFormFromWorkout,
@@ -64,6 +68,7 @@ function App() {
   const [themeMode, setThemeMode] = useState(getInitialThemeMode);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [exercises, setExercises] = useState(storedData.exercises);
+  const [splits, setSplits] = useState(storedData.splits);
   const [workouts, setWorkouts] = useState(storedData.workouts);
   const fileInputRef = useRef(null);
   const [storageWarning, setStorageWarning] = useState('');
@@ -71,6 +76,9 @@ function App() {
   const [exerciseName, setExerciseName] = useState('');
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [exerciseMessage, setExerciseMessage] = useState({ type: '', text: '' });
+  const [splitForm, setSplitForm] = useState(createSplitForm);
+  const [editingSplitId, setEditingSplitId] = useState(null);
+  const [splitMessage, setSplitMessage] = useState({ type: '', text: '' });
   const [workoutMessage, setWorkoutMessage] = useState({ type: '', text: '' });
   const [workoutForm, setWorkoutForm] = useState(createWorkoutForm);
   const [editingWorkoutId, setEditingWorkoutId] = useState(null);
@@ -88,6 +96,7 @@ function App() {
         JSON.stringify({
           version: STORAGE_VERSION,
           exercises,
+          splits,
           workouts,
         }),
       );
@@ -95,7 +104,7 @@ function App() {
     } catch {
       setStorageWarning('Changes could not be saved locally. Refreshing may restore older data.');
     }
-  }, [exercises, workouts]);
+  }, [exercises, splits, workouts]);
 
   useEffect(() => {
     if (!selectedExerciseId && exercises.length > 0) {
@@ -159,10 +168,19 @@ function App() {
     return exercises.find((exercise) => exercise.id === exerciseId)?.name ?? 'Unknown exercise (deleted)';
   }
 
+  function getSplitName(splitId) {
+    if (!splitId) {
+      return 'Custom workout';
+    }
+
+    return splits.find((split) => split.id === splitId)?.name ?? 'Unknown split (deleted)';
+  }
+
   function exportAppData() {
     const exportPayload = {
       version: STORAGE_VERSION,
       exercises,
+      splits,
       workouts,
     };
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
@@ -181,6 +199,7 @@ function App() {
 
   function resetAppEditingState() {
     resetExerciseForm();
+    resetSplitForm();
     resetWorkoutForm();
   }
 
@@ -210,7 +229,7 @@ function App() {
       }
 
       const confirmed = window.confirm(
-        `Import ${validatedImport.value.exercises.length} exercises and ${validatedImport.value.workouts.length} workouts? This will replace your current local data.`,
+        `Import ${validatedImport.value.exercises.length} exercises, ${validatedImport.value.splits.length} splits, and ${validatedImport.value.workouts.length} workouts? This will replace your current local data.`,
       );
 
       if (!confirmed) {
@@ -219,13 +238,14 @@ function App() {
       }
 
       setExercises(validatedImport.value.exercises);
+      setSplits(validatedImport.value.splits);
       setWorkouts(validatedImport.value.workouts);
       resetAppEditingState();
       setSelectedExerciseId(validatedImport.value.exercises[0]?.id ?? '');
       setActiveView('dashboard');
       setDataMessage({
         type: 'success',
-        text: `Imported ${validatedImport.value.exercises.length} exercises and ${validatedImport.value.workouts.length} workouts.`,
+        text: `Imported ${validatedImport.value.exercises.length} exercises, ${validatedImport.value.splits.length} splits, and ${validatedImport.value.workouts.length} workouts.`,
       });
     } catch {
       setDataMessage({ type: 'error', text: 'Unable to read the selected file.' });
@@ -242,12 +262,24 @@ function App() {
     }
   }
 
+  function resetSplitForm(clearMessage = true) {
+    setSplitForm(createSplitForm());
+    setEditingSplitId(null);
+    if (clearMessage) {
+      setSplitMessage({ type: '', text: '' });
+    }
+  }
+
   function getLinkedWorkoutCount(exerciseId) {
     return workouts.reduce(
       (count, workout) =>
         count + workout.entries.filter((entry) => entry.exerciseId === exerciseId).length,
       0,
     );
+  }
+
+  function getLinkedSplitWorkoutCount(splitId) {
+    return workouts.filter((workout) => workout.splitId === splitId).length;
   }
 
   function handleExerciseSubmit(event) {
@@ -328,6 +360,16 @@ function App() {
     }
 
     setExercises((current) => current.filter((item) => item.id !== exerciseId));
+    setSplits((current) =>
+      current.map((split) => ({
+        ...split,
+        exercises: split.exercises.filter((splitExercise) => splitExercise.exerciseId !== exerciseId),
+      })),
+    );
+    setSplitForm((current) => ({
+      ...current,
+      exercises: current.exercises.filter((item) => item.exerciseId !== exerciseId),
+    }));
     setWorkoutForm((current) => ({
       ...current,
       entries: current.entries.map((entry) =>
@@ -353,6 +395,144 @@ function App() {
     }
   }
 
+  function normalizeSplitEntries(form) {
+    const normalizedName = form.name.trim();
+
+    if (!normalizedName) {
+      return { error: 'Split name cannot be empty.' };
+    }
+
+    if (
+      splits.some(
+        (split) =>
+          split.id !== editingSplitId && split.name.trim().toLowerCase() === normalizedName.toLowerCase(),
+      )
+    ) {
+      return { error: 'Split names should be unique.' };
+    }
+
+    const chosenExerciseIds = form.exercises.map((entry) => entry.exerciseId).filter(Boolean);
+
+    if (new Set(chosenExerciseIds).size !== chosenExerciseIds.length) {
+      return { error: 'Use each exercise only once per split.' };
+    }
+
+    const normalizedExercises = [];
+
+    for (const [index, splitExercise] of form.exercises.entries()) {
+      const exerciseId = splitExercise.exerciseId.trim();
+      const defaultSets = Number(splitExercise.defaultSets);
+
+      if (!exerciseId && String(splitExercise.defaultSets).trim() === '') {
+        continue;
+      }
+
+      if (!exerciseId) {
+        return { error: `Split exercise ${index + 1}: choose an exercise.` };
+      }
+
+      if (!Number.isInteger(defaultSets) || defaultSets < 1) {
+        return { error: `Split exercise ${index + 1}: default sets must be a whole number above 0.` };
+      }
+
+      normalizedExercises.push({
+        exerciseId,
+        defaultSets,
+      });
+    }
+
+    return {
+      value: {
+        name: normalizedName,
+        exercises: normalizedExercises,
+      },
+    };
+  }
+
+  function handleSplitSubmit(event) {
+    event.preventDefault();
+    const normalizedSplit = normalizeSplitEntries(splitForm);
+
+    if (normalizedSplit.error) {
+      setSplitMessage({ type: 'error', text: normalizedSplit.error });
+      return;
+    }
+
+    if (editingSplitId) {
+      setSplits((current) =>
+        current.map((split) =>
+          split.id === editingSplitId ? { ...split, ...normalizedSplit.value } : split,
+        ),
+      );
+      resetSplitForm(false);
+      setSplitMessage({ type: 'success', text: `Updated ${normalizedSplit.value.name}.` });
+    } else {
+      const newSplit = {
+        id: createId(),
+        name: normalizedSplit.value.name,
+        createdAt: new Date().toISOString(),
+        exercises: normalizedSplit.value.exercises,
+      };
+
+      setSplits((current) => [...current, newSplit]);
+      resetSplitForm(false);
+      setSplitMessage({ type: 'success', text: `Added ${normalizedSplit.value.name}.` });
+    }
+
+    setActiveView('exercises');
+  }
+
+  function startEditingSplit(splitId) {
+    const split = splits.find((item) => item.id === splitId);
+
+    if (!split) {
+      setSplitMessage({ type: 'error', text: 'Split not found.' });
+      return;
+    }
+
+    setEditingSplitId(split.id);
+    setSplitForm(createSplitFormFromSplit(split));
+    setSplitMessage({ type: '', text: '' });
+    setActiveView('exercises');
+  }
+
+  function deleteSplit(splitId) {
+    const split = splits.find((item) => item.id === splitId);
+
+    if (!split) {
+      return;
+    }
+
+    const linkedWorkoutCount = getLinkedSplitWorkoutCount(splitId);
+    const historyMessage =
+      linkedWorkoutCount > 0
+        ? ' Existing workout history will be kept and shown with an unknown split label.'
+        : '';
+    const confirmed = window.confirm(`Delete ${split.name}?${historyMessage}`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSplits((current) => current.filter((item) => item.id !== splitId));
+    setWorkoutForm((current) => ({
+      ...current,
+      splitId: current.splitId === splitId ? '' : current.splitId,
+    }));
+
+    if (editingSplitId === splitId) {
+      resetSplitForm();
+    } else {
+      setSplitMessage({
+        type: 'success',
+        text:
+          linkedWorkoutCount > 0
+            ? `Deleted ${split.name}. Linked workout history was preserved.`
+            : `Deleted ${split.name}.`,
+      });
+    }
+  }
+
   function updateWorkoutEntry(entryId, updater) {
     setWorkoutForm((current) => ({
       ...current,
@@ -367,6 +547,33 @@ function App() {
     }));
   }
 
+  function handleWorkoutSplitChange(splitId) {
+    setWorkoutForm((current) => {
+      if (!splitId) {
+        return {
+          ...current,
+          splitId: '',
+          entries: current.entries.length > 0 ? current.entries : [createWorkoutEntry()],
+        };
+      }
+
+      const split = splits.find((item) => item.id === splitId);
+
+      if (!split) {
+        return {
+          ...current,
+          splitId,
+        };
+      }
+
+      return {
+        ...current,
+        splitId,
+        entries: buildWorkoutEntriesFromSplit(split),
+      };
+    });
+  }
+
   function resetWorkoutForm(clearMessage = true) {
     setWorkoutForm(createWorkoutForm());
     setEditingWorkoutId(null);
@@ -378,6 +585,10 @@ function App() {
   function normalizeWorkoutEntries(form) {
     if (!isValidDateInput(form.date)) {
       return { error: 'Please enter a valid workout date.' };
+    }
+
+    if (form.entries.length === 0) {
+      return { error: 'This workout has no exercises yet. Add one or choose a split with exercises.' };
     }
 
     const chosenExerciseIds = form.entries
@@ -430,6 +641,7 @@ function App() {
     return {
       value: {
         date: form.date,
+        splitId: form.splitId,
         entries: normalizedEntries,
       },
     };
@@ -494,6 +706,7 @@ function App() {
               ? {
                   ...workout,
                   date: normalizedWorkout.value.date,
+                  splitId: normalizedWorkout.value.splitId,
                   entries: normalizedWorkout.value.entries,
                 }
               : workout,
@@ -506,6 +719,7 @@ function App() {
       const newWorkout = {
         id: createId(),
         date: normalizedWorkout.value.date,
+        splitId: normalizedWorkout.value.splitId,
         createdAt: new Date().toISOString(),
         entries: normalizedWorkout.value.entries,
       };
@@ -593,12 +807,24 @@ function App() {
           formatCalendarDate={formatCalendarDate}
           startEditingExercise={startEditingExercise}
           deleteExercise={deleteExercise}
+          splits={splits}
+          splitForm={splitForm}
+          setSplitForm={setSplitForm}
+          editingSplitId={editingSplitId}
+          splitMessage={splitMessage}
+          handleSplitSubmit={handleSplitSubmit}
+          resetSplitForm={resetSplitForm}
+          startEditingSplit={startEditingSplit}
+          deleteSplit={deleteSplit}
+          createSplitExercise={createSplitExercise}
+          getExerciseName={getExerciseName}
         />
       )}
 
       {activeView === 'log' && (
         <WorkoutFormView
           exercises={exercises}
+          splits={splits}
           workouts={workouts}
           workoutForm={workoutForm}
           editingWorkoutId={editingWorkoutId}
@@ -606,6 +832,7 @@ function App() {
           setWorkoutForm={setWorkoutForm}
           updateWorkoutEntry={updateWorkoutEntry}
           applyLatestWorkoutToEntry={applyLatestWorkoutToEntry}
+          handleWorkoutSplitChange={handleWorkoutSplitChange}
           handleWorkoutSubmit={handleWorkoutSubmit}
           resetWorkoutForm={resetWorkoutForm}
           createSet={createSet}
@@ -613,6 +840,7 @@ function App() {
           createWorkoutEntry={createWorkoutEntry}
           formatDisplayDate={formatDisplayDate}
           formatNumber={formatNumber}
+          getSplitName={getSplitName}
         />
       )}
 
@@ -620,6 +848,7 @@ function App() {
         <HistoryView
           sortedWorkouts={sortedWorkouts}
           getExerciseName={getExerciseName}
+          getSplitName={getSplitName}
           formatDisplayDate={formatDisplayDate}
           formatNumber={formatNumber}
           getEntryMetrics={getEntryMetrics}

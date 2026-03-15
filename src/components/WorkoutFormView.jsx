@@ -4,6 +4,7 @@ import { getLatestExerciseSession } from '../lib/workoutData.js';
 
 export default function WorkoutFormView({
   exercises,
+  splits,
   workouts,
   workoutForm,
   editingWorkoutId,
@@ -11,6 +12,7 @@ export default function WorkoutFormView({
   setWorkoutForm,
   updateWorkoutEntry,
   applyLatestWorkoutToEntry,
+  handleWorkoutSplitChange,
   handleWorkoutSubmit,
   resetWorkoutForm,
   createSet,
@@ -18,7 +20,10 @@ export default function WorkoutFormView({
   createWorkoutEntry,
   formatDisplayDate,
   formatNumber,
+  getSplitName,
 }) {
+  const selectedSplit = splits.find((split) => split.id === workoutForm.splitId) ?? null;
+
   return (
     <main className="content-grid">
       <section className="panel panel-wide">
@@ -35,25 +40,70 @@ export default function WorkoutFormView({
           />
         ) : (
           <form className="stack" onSubmit={handleWorkoutSubmit}>
-            <label className="field field-compact">
-              <span>Workout date</span>
-              <input
-                type="date"
-                value={workoutForm.date}
-                onChange={(event) =>
-                  setWorkoutForm((current) => ({ ...current, date: event.target.value }))
-                }
-              />
-            </label>
+            <div className="form-toolbar">
+              <label className="field field-compact">
+                <span>Workout date</span>
+                <input
+                  type="date"
+                  value={workoutForm.date}
+                  onChange={(event) =>
+                    setWorkoutForm((current) => ({ ...current, date: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="field">
+                <span>Split</span>
+                <select
+                  value={workoutForm.splitId}
+                  onChange={(event) => handleWorkoutSplitChange(event.target.value)}
+                >
+                  <option value="">Custom workout</option>
+                  {workoutForm.splitId &&
+                    !splits.some((split) => split.id === workoutForm.splitId) && (
+                      <option value={workoutForm.splitId}>{getSplitName(workoutForm.splitId)}</option>
+                    )}
+                  {splits.map((split) => (
+                    <option key={split.id} value={split.id}>
+                      {split.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {workoutForm.splitId && (
+              <div className="suggestion-card">
+                <div className="suggestion-header">
+                  <div>
+                    <span className="metric-label">Selected split</span>
+                    <p>
+                      {getSplitName(workoutForm.splitId)}
+                      {selectedSplit
+                        ? ` • ${selectedSplit.exercises.length} configured ${
+                            selectedSplit.exercises.length === 1 ? 'exercise' : 'exercises'
+                          }`
+                        : ' • Split removed from the planner'}
+                    </p>
+                  </div>
+                </div>
+                {selectedSplit && selectedSplit.exercises.length === 0 && (
+                  <div className="empty-inline">
+                    <p>This split has no exercises yet. Add some in the split planner or build today manually below.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="stack">
               {workoutForm.entries.map((entry, entryIndex) => {
                 const latestSession = getLatestExerciseSession(workouts, entry.exerciseId);
+                const selectedExerciseName =
+                  exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? '';
 
                 return (
                   <article key={entry.id} className="entry-card">
                     <div className="entry-card-header">
-                      <h3>Exercise {entryIndex + 1}</h3>
+                      <h3>{selectedExerciseName || `Exercise ${entryIndex + 1}`}</h3>
                       {workoutForm.entries.length > 1 && (
                         <button
                           type="button"
@@ -65,7 +115,7 @@ export default function WorkoutFormView({
                             }))
                           }
                         >
-                          Remove exercise
+                          {workoutForm.splitId ? 'Skip today' : 'Remove exercise'}
                         </button>
                       )}
                     </div>
@@ -217,6 +267,12 @@ export default function WorkoutFormView({
                 );
               })}
             </div>
+
+            {workoutForm.splitId && workoutForm.entries.length === 0 && (
+              <div className="empty-inline">
+                <p>No exercises were added from this split yet. Use the button below to add one manually if needed.</p>
+              </div>
+            )}
 
             <div className="actions">
               <button
