@@ -26,15 +26,28 @@ export default function ExerciseView({
   getExerciseName,
 }) {
   return (
-    <main className="content-grid">
-      <section className="panel">
+    <main className="content-grid library-layout">
+      <section className="library-overview-grid" aria-label="Library overview">
+        <article className="library-overview-card library-overview-card-primary">
+          <span className="section-label">Exercise library</span>
+          <strong>{exercises.length}</strong>
+          <p>{exercises.length ? 'Movements ready to use' : 'Start with your first exercise'}</p>
+        </article>
+        <article className="library-overview-card">
+          <span className="section-label">Saved splits</span>
+          <strong>{splits.length}</strong>
+          <p>{splits.length ? 'Templates for faster logging' : 'No split templates yet'}</p>
+        </article>
+      </section>
+
+      <section className="panel panel-form">
         <div className="section-heading">
           <div>
             <p className="section-label">Exercise library</p>
-            <h2>{editingExerciseId ? 'Edit exercise' : 'Create exercises'}</h2>
+            <h2>{editingExerciseId ? 'Edit exercise' : 'Exercises'}</h2>
           </div>
         </div>
-        <form className="stack" onSubmit={handleExerciseSubmit}>
+        <form className="stack form-stack" onSubmit={handleExerciseSubmit}>
           <label className="field">
             <span>Exercise name</span>
             <input
@@ -66,17 +79,17 @@ export default function ExerciseView({
         </form>
       </section>
 
-      <section className="panel">
+      <section className="panel panel-highlight">
         <div className="section-heading">
           <div>
             <p className="section-label">Saved exercises</p>
-            <h2>Ready for future workouts</h2>
+            <h2>Library</h2>
           </div>
         </div>
         {exercises.length ? (
-          <div className="exercise-grid">
+          <div className="exercise-grid library-grid">
             {exercises.map((exercise) => (
-              <article key={exercise.id} className="exercise-card">
+              <article key={exercise.id} className="exercise-card library-card">
                 <div className="exercise-card-header">
                   <div>
                     <h3>{exercise.name}</h3>
@@ -86,6 +99,7 @@ export default function ExerciseView({
                     <button
                       type="button"
                       className="ghost-button action-button"
+                      aria-label={`Edit ${exercise.name}`}
                       onClick={() => startEditingExercise(exercise.id)}
                     >
                       Edit
@@ -93,11 +107,15 @@ export default function ExerciseView({
                     <button
                       type="button"
                       className="ghost-button action-button danger-button"
+                      aria-label={`Delete ${exercise.name}`}
                       onClick={() => deleteExercise(exercise.id)}
                     >
                       Delete
                     </button>
                   </div>
+                </div>
+                <div className="library-card-meta">
+                  <span className="library-meta-pill">Ready to log</span>
                 </div>
               </article>
             ))}
@@ -105,7 +123,7 @@ export default function ExerciseView({
         ) : (
           <EmptyState
             title="No exercises yet"
-            body="Create your first exercise to unlock workout logging and progress tracking."
+            body="Add your first movement to start logging."
           />
         )}
       </section>

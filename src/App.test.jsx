@@ -114,6 +114,48 @@ describe('App integration flows', () => {
     expect(screen.getByText('Shoulder press')).toBeTruthy();
   });
 
+  it('lets you skip and restore a split exercise while logging', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+        {
+          id: 'press',
+          name: 'Shoulder press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [
+            { id: 'split-1', exerciseId: 'bench', defaultSets: 1 },
+            { id: 'split-2', exerciseId: 'press', defaultSets: 1 },
+          ],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    await user.selectOptions(screen.getByLabelText('Split'), 'push');
+
+    await user.click(screen.getByRole('button', { name: 'Skip Bench press for today' }));
+
+    expect(screen.getByText('Skipped today')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Restore Bench press' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Restore Bench press' }));
+
+    expect(screen.getAllByText(/Bench press|Shoulder press/).length).toBeGreaterThan(1);
+  });
+
   it('keeps current data when a valid import is canceled', async () => {
     renderAppWithStoredData({
       exercises: [
@@ -226,10 +268,15 @@ describe('App integration flows', () => {
 
     const workoutsThisWeekCard = screen.getByText('Workouts this week').closest('.stat-card');
     const mostTrainedCard = screen.getByText('Most trained exercise').closest('.stat-card');
+    const recentPrCard = screen.getByText('PR hits').closest('.stat-card');
 
     expect(workoutsThisWeekCard.textContent).toContain('2');
     expect(mostTrainedCard.textContent).toContain('Back squat');
-    expect(mostTrainedCard.textContent).toContain('3 workout entries');
+    expect(mostTrainedCard.textContent).toContain('3 entries');
+    expect(recentPrCard.textContent).toContain('3');
+    expect(recentPrCard.textContent).toContain('Last 30 days');
+    expect(screen.getByText('Latest PRs')).toBeTruthy();
+    expect(screen.getByText('Volume by day')).toBeTruthy();
   });
 
   it('edits and then deletes a workout from history', async () => {
@@ -260,7 +307,7 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'history' }));
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: /Edit workout from/i }));
 
     const weightInput = screen.getByLabelText('Weight');
     await user.clear(weightInput);
@@ -268,12 +315,53 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
     expect(screen.getByText('Set 1: 110 × 5')).toBeTruthy();
-    expect(screen.getByText(/Best weight 110/)).toBeTruthy();
+    expect(screen.getByText('Wt 110')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
 
     expect(confirmSpy).toHaveBeenCalled();
     expect(screen.getByText('Workout history is empty')).toBeTruthy();
+  });
+
+  it('duplicates a workout into the log form as a new workout', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [{ weight: 80, reps: 8 }],
+            },
+          ],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /Duplicate workout from/i }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByText('Loaded a copy of Jan 12, 2024. Save it as a new workout when ready.')).toBeTruthy();
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Reps').value).toBe('8');
+    expect(screen.getByRole('button', { name: 'Save workout' })).toBeTruthy();
   });
 
   it('preserves workout history as unknown exercise when deleting an exercise', async () => {
@@ -304,7 +392,7 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
 
     expect(confirmSpy).toHaveBeenCalled();
     expect(screen.getByText('Deleted Back squat. Linked workout history was preserved.')).toBeTruthy();
@@ -353,9 +441,49 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'progress' }));
 
     expect(screen.getByText('Volume trend')).toBeTruthy();
+    expect(screen.getByText('PR hits')).toBeTruthy();
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
     expect(screen.getByText('Weight up')).toBeTruthy();
-    expect(screen.getByText(/Compared with/)).toBeTruthy();
+    expect(screen.getAllByText(/vs/).length).toBeGreaterThan(0);
+  });
+
+  it('switches the progress chart metric between volume, weight, and reps', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-03-10',
+          createdAt: '2026-03-10T10:00:00.000Z',
+          entries: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] }],
+        },
+        {
+          id: 'workout-2',
+          date: '2026-03-14',
+          createdAt: '2026-03-14T10:00:00.000Z',
+          entries: [{ exerciseId: 'squat', sets: [{ weight: 110, reps: 6 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'progress' }));
+    expect(screen.getByText('Volume trend')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Weight' }));
+    expect(screen.getByText('Weight trend')).toBeTruthy();
+    expect(screen.getAllByText('Best weight').length).toBeGreaterThan(0);
+
+    await user.click(screen.getByRole('button', { name: 'Reps' }));
+    expect(screen.getByText('Reps trend')).toBeTruthy();
+    expect(screen.getAllByText('Best reps').length).toBeGreaterThan(0);
   });
 
   it('updates the progress range when switching to 7d', () => {
@@ -389,7 +517,7 @@ describe('App integration flows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'progress' }));
     fireEvent.click(screen.getByRole('button', { name: '7d' }));
 
-    expect(screen.getByText('Entries in the last 7 days')).toBeTruthy();
+    expect(screen.getAllByText('7 days').length).toBeGreaterThan(0);
     expect(screen.queryByText(/No entries in the last 7 days/)).toBeNull();
   });
 });

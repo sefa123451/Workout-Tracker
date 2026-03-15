@@ -3,6 +3,8 @@ import {
   buildProgressHistory,
   filterProgressHistoryByDays,
   getEntryMetrics,
+  getDashboardSummary,
+  getProgressWindowSummary,
   isValidDateInput,
   parseSet,
   validateImportedData,
@@ -227,6 +229,58 @@ describe('progress history', () => {
 
     expect(filterProgressHistoryByDays(history, 7).map((session) => session.workoutId)).toEqual(['w2']);
     expect(filterProgressHistoryByDays(history, 30).map((session) => session.workoutId)).toEqual(['w2', 'w1']);
+  });
+
+  it('summarizes progress windows with PR count and average volume', () => {
+    const history = buildProgressHistory(workouts, 'squat');
+    const summary = getProgressWindowSummary(history);
+
+    expect(summary).toMatchObject({
+      sessionCount: 2,
+      personalRecordCount: 2,
+      averageVolume: 525,
+      bestWeight: 110,
+      latestWeight: 110,
+    });
+  });
+});
+
+describe('dashboard insights', () => {
+  it('calculates recent pr hits and average weekly volume', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'));
+
+    const summary = getDashboardSummary([
+      {
+        id: 'w1',
+        date: '2026-03-10',
+        createdAt: '2026-03-10T08:00:00.000Z',
+        entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+      },
+      {
+        id: 'w2',
+        date: '2026-03-12',
+        createdAt: '2026-03-12T08:00:00.000Z',
+        entries: [{ exerciseId: 'bench', sets: [{ weight: 85, reps: 8 }] }],
+      },
+    ]);
+
+    expect(summary.totalVolumeThisWeek).toBe(1320);
+    expect(summary.averageVolumeThisWeek).toBe(660);
+    expect(summary.recentPrHits).toBe(2);
+    expect(summary.latestPersonalRecords).toEqual([
+      {
+        exerciseId: 'bench',
+        date: '2026-03-12',
+        labels: ['Weight PR', 'Volume PR'],
+      },
+      {
+        exerciseId: 'bench',
+        date: '2026-03-10',
+        labels: ['Weight PR', 'Reps PR', 'Volume PR'],
+      },
+    ]);
+    expect(summary.weeklyVolumeTrend).toHaveLength(7);
   });
 });
 

@@ -15,22 +15,63 @@ export default function SplitManagerSection({
   createSplitExercise,
   getExerciseName,
 }) {
+  function moveSplitExercise(fromIndex, toIndex) {
+    setSplitForm((current) => {
+      if (
+        toIndex < 0 ||
+        toIndex >= current.exercises.length ||
+        fromIndex === toIndex
+      ) {
+        return current;
+      }
+
+      const nextExercises = [...current.exercises];
+      const [movedExercise] = nextExercises.splice(fromIndex, 1);
+      nextExercises.splice(toIndex, 0, movedExercise);
+
+      return {
+        ...current,
+        exercises: nextExercises,
+      };
+    });
+  }
+
   return (
     <>
-      <section className="panel panel-wide">
+      <section className="panel panel-wide panel-form">
         <div className="section-heading">
           <div>
             <p className="section-label">Workout splits</p>
-            <h2>{editingSplitId ? 'Edit split' : 'Build a split'}</h2>
+            <h2>{editingSplitId ? 'Edit split' : 'Split planner'}</h2>
           </div>
         </div>
         {!exercises.length ? (
           <EmptyState
             title="Create exercises first"
-            body="Splits use your saved exercises, so add a few movements before building Push, Pull, Legs, or any custom plan."
+            body="Add exercises first, then build a split."
           />
         ) : (
-          <form className="stack" onSubmit={handleSplitSubmit}>
+          <form className="stack split-builder-form" onSubmit={handleSplitSubmit}>
+            <div className="split-builder-summary">
+              <div className="split-builder-summary-card split-builder-summary-card-primary">
+                <span className="section-label">Planner</span>
+                <strong>{splitForm.exercises.length}</strong>
+                <p>{splitForm.exercises.length ? 'Exercises in this split' : 'Build a split from scratch'}</p>
+              </div>
+              <div className="split-builder-summary-card">
+                <span className="section-label">Default flow</span>
+                <strong>
+                  {splitForm.exercises.length
+                    ? splitForm.exercises.reduce(
+                        (sum, exercise) => sum + (Number.parseInt(exercise.defaultSets, 10) || 0),
+                        0,
+                      )
+                    : 0}
+                </strong>
+                <p>Total default sets across this split</p>
+              </div>
+            </div>
+
             <label className="field">
               <span>Split name</span>
               <input
@@ -43,10 +84,11 @@ export default function SplitManagerSection({
               />
             </label>
 
-            <div className="stack">
+            <div className="stack split-config-list">
               {splitForm.exercises.length ? (
                 splitForm.exercises.map((splitExercise, index) => (
                   <div key={splitExercise.id} className="split-config-row">
+                    <div className="split-config-index">#{index + 1}</div>
                     <label className="field">
                       <span>Exercise {index + 1}</span>
                       <select
@@ -93,7 +135,26 @@ export default function SplitManagerSection({
                     <div className="split-config-actions">
                       <button
                         type="button"
-                        className="ghost-button"
+                        className="ghost-button action-button"
+                        aria-label={`Move split exercise ${index + 1} up`}
+                        onClick={() => moveSplitExercise(index, index - 1)}
+                        disabled={index === 0}
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button action-button"
+                        aria-label={`Move split exercise ${index + 1} down`}
+                        onClick={() => moveSplitExercise(index, index + 1)}
+                        disabled={index === splitForm.exercises.length - 1}
+                      >
+                        Down
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button action-button"
+                        aria-label={`Remove split exercise ${index + 1}`}
                         onClick={() =>
                           setSplitForm((current) => ({
                             ...current,
@@ -110,11 +171,11 @@ export default function SplitManagerSection({
                   </div>
                 ))
               ) : (
-                <div className="empty-inline">
-                  <p>No exercises in this split yet. Add one below or save the split empty for later.</p>
-                </div>
-              )}
-            </div>
+                  <div className="empty-inline">
+                    <p>No exercises yet. Add one below or save this split for later.</p>
+                  </div>
+                )}
+              </div>
 
             <div className="actions">
               <button
@@ -127,7 +188,7 @@ export default function SplitManagerSection({
                   }))
                 }
               >
-                Add exercise to split
+                Add exercise
               </button>
               <button type="submit" className="primary-button">
                 {editingSplitId ? 'Save split' : 'Add split'}
@@ -152,30 +213,31 @@ export default function SplitManagerSection({
         )}
       </section>
 
-      <section className="panel panel-wide">
+      <section className="panel panel-wide panel-highlight">
         <div className="section-heading">
           <div>
             <p className="section-label">Saved splits</p>
-            <h2>Ready for quick logging</h2>
+            <h2>Saved splits</h2>
           </div>
         </div>
         {splits.length ? (
-          <div className="split-grid">
+          <div className="split-grid split-library-grid">
             {splits.map((split) => (
-              <article key={split.id} className="exercise-card split-card">
+                <article key={split.id} className="exercise-card split-card library-card">
                 <div className="exercise-card-header">
                   <div>
                     <h3>{split.name}</h3>
                     <p>
                       {split.exercises.length
-                        ? `${split.exercises.length} exercises configured`
-                        : 'No exercises configured yet'}
+                        ? `${split.exercises.length} exercises`
+                        : 'No exercises yet'}
                     </p>
                   </div>
                   <div className="history-actions">
                     <button
                       type="button"
                       className="ghost-button action-button"
+                      aria-label={`Edit split ${split.name}`}
                       onClick={() => startEditingSplit(split.id)}
                     >
                       Edit
@@ -183,10 +245,23 @@ export default function SplitManagerSection({
                     <button
                       type="button"
                       className="ghost-button action-button danger-button"
+                      aria-label={`Delete split ${split.name}`}
                       onClick={() => deleteSplit(split.id)}
                     >
                       Delete
                     </button>
+                  </div>
+                </div>
+                <div className="split-card-summary">
+                  <div className="split-card-kpi">
+                    <span>Exercises</span>
+                    <strong>{split.exercises.length}</strong>
+                  </div>
+                  <div className="split-card-kpi">
+                    <span>Default sets</span>
+                    <strong>
+                      {split.exercises.reduce((sum, splitExercise) => sum + splitExercise.defaultSets, 0)}
+                    </strong>
                   </div>
                 </div>
                 {split.exercises.length ? (
@@ -200,7 +275,7 @@ export default function SplitManagerSection({
                   </ul>
                 ) : (
                   <div className="empty-inline">
-                    <p>This split is empty for now. You can still save it and fill it later.</p>
+                    <p>This split is empty for now.</p>
                   </div>
                 )}
               </article>
@@ -209,7 +284,7 @@ export default function SplitManagerSection({
         ) : (
           <EmptyState
             title="No splits yet"
-            body="Create a split like Push, Pull, Legs, or Upper/Lower to speed up workout logging."
+            body="Create a split to speed up logging."
           />
         )}
       </section>

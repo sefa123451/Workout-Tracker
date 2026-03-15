@@ -3,6 +3,12 @@ import EmptyState from './EmptyState.jsx';
 import ProgressChart from './ProgressChart.jsx';
 import StatCard from './StatCard.jsx';
 
+const PROGRESS_METRIC_OPTIONS = [
+  { id: 'volume', label: 'Volume', bestLabel: 'Best volume', latestLabel: 'Latest volume' },
+  { id: 'weight', label: 'Weight', bestLabel: 'Best weight', latestLabel: 'Latest weight' },
+  { id: 'reps', label: 'Reps', bestLabel: 'Best reps', latestLabel: 'Latest reps' },
+];
+
 export default function ProgressView({
   exercises,
   selectedExerciseId,
@@ -10,6 +16,8 @@ export default function ProgressView({
   progressWindows,
   selectedProgressWindow,
   setSelectedProgressWindow,
+  selectedProgressMetric,
+  setSelectedProgressMetric,
   selectedExerciseHistory,
   selectedExerciseWindowHistory,
   selectedExerciseWindowSummary,
@@ -19,23 +27,58 @@ export default function ProgressView({
   hasPersonalRecord,
   hasImprovement,
 }) {
+  const metricConfig =
+    PROGRESS_METRIC_OPTIONS.find((option) => option.id === selectedProgressMetric) ??
+    PROGRESS_METRIC_OPTIONS[0];
+
+  const metricValue =
+    selectedProgressMetric === 'weight'
+      ? {
+          best: selectedExerciseWindowSummary?.bestWeight,
+          latest: selectedExerciseWindowSummary?.latestWeight,
+          delta: selectedExerciseWindowSummary?.comparison?.weightDelta,
+        }
+      : selectedProgressMetric === 'reps'
+        ? {
+            best: selectedExerciseWindowSummary?.bestReps,
+            latest: selectedExerciseWindowSummary?.latestReps,
+            delta: selectedExerciseWindowSummary?.comparison?.repsDelta,
+          }
+        : {
+            best: selectedExerciseWindowSummary?.bestVolume,
+            latest: selectedExerciseWindowSummary?.latestVolume,
+            delta: selectedExerciseWindowSummary?.comparison?.volumeDelta,
+          };
+  const latestSession = selectedExerciseWindowHistory[0] ?? null;
+  const allTimeBest = selectedExerciseHistory.length
+    ? Math.max(
+        ...selectedExerciseHistory.map((session) =>
+          selectedProgressMetric === 'weight'
+            ? session.metrics.bestWeight
+            : selectedProgressMetric === 'reps'
+              ? session.metrics.bestReps
+              : session.metrics.totalVolume,
+        ),
+      )
+    : 0;
+
   return (
-    <main className="content-grid">
-      <section className="panel panel-wide">
+    <main className="content-grid progress-layout">
+      <section className="panel panel-wide panel-highlight progress-panel">
         <div className="section-heading">
           <div>
             <p className="section-label">Progress view</p>
-            <h2>Track one exercise over time</h2>
+            <h2>Exercise progress</h2>
           </div>
         </div>
         {!exercises.length ? (
           <EmptyState
             title="No exercises available"
-            body="Create an exercise first, then its progress will appear after you log workouts."
+            body="Create an exercise, then log a session."
           />
         ) : (
           <div className="stack">
-            <div className="progress-toolbar">
+            <div className="progress-toolbar progress-control-shell">
               <label className="field field-compact">
                 <span>Select exercise</span>
                 <select
@@ -49,21 +92,39 @@ export default function ProgressView({
                   ))}
                 </select>
               </label>
-              <div className="progress-window-switcher" role="group" aria-label="Progress comparison window">
-                {progressWindows.map((windowDays) => (
-                  <button
-                    key={windowDays}
-                    type="button"
-                    className={
-                      windowDays === selectedProgressWindow
-                        ? 'view-button active range-button'
-                        : 'view-button range-button'
-                    }
-                    onClick={() => setSelectedProgressWindow(windowDays)}
-                  >
-                    {windowDays}d
-                  </button>
-                ))}
+              <div className="progress-controls">
+                <div className="progress-window-switcher" role="group" aria-label="Progress metric">
+                  {PROGRESS_METRIC_OPTIONS.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={
+                        option.id === selectedProgressMetric
+                          ? 'view-button active range-button'
+                          : 'view-button range-button'
+                      }
+                      onClick={() => setSelectedProgressMetric(option.id)}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="progress-window-switcher" role="group" aria-label="Progress comparison window">
+                  {progressWindows.map((windowDays) => (
+                    <button
+                      key={windowDays}
+                      type="button"
+                      className={
+                        windowDays === selectedProgressWindow
+                          ? 'view-button active range-button'
+                          : 'view-button range-button'
+                      }
+                      onClick={() => setSelectedProgressWindow(windowDays)}
+                    >
+                      {windowDays}d
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -71,8 +132,37 @@ export default function ProgressView({
               <div className="history-list">
                 <article className="workout-card progress-overview">
                   <div className="workout-card-header">
-                    <strong>Volume trend</strong>
+                    <strong>{metricConfig.label} trend</strong>
                     <span>Last {selectedProgressWindow} days</span>
+                  </div>
+                  <div className="progress-highlight-grid">
+                    <div className="progress-spotlight-card progress-spotlight-card-primary">
+                      <span className="metric-label">Latest {metricConfig.label}</span>
+                      <strong>{latestSession ? formatNumber(metricValue.latest) : '--'}</strong>
+                      <p>
+                        {latestSession
+                          ? `Logged ${formatDisplayDate(latestSession.date)}`
+                          : 'No entries in range'}
+                      </p>
+                    </div>
+                    <div className="progress-spotlight-card">
+                      <span className="metric-label">All-time peak</span>
+                      <strong>{selectedExerciseHistory.length ? formatNumber(allTimeBest) : '--'}</strong>
+                      <p>{selectedExerciseHistory.length ? 'Across all sessions' : 'No history yet'}</p>
+                    </div>
+                    <div className="progress-spotlight-card">
+                      <span className="metric-label">Range change</span>
+                      <strong>
+                        {selectedExerciseWindowSummary?.comparison
+                          ? formatDelta(metricValue.delta)
+                          : '--'}
+                      </strong>
+                      <p>
+                        {selectedExerciseWindowSummary?.comparison
+                          ? `vs ${formatDisplayDate(selectedExerciseWindowSummary.comparison.firstDate)}`
+                          : 'Need 2 entries'}
+                      </p>
+                    </div>
                   </div>
                   <div className="stats-grid progress-summary-grid">
                     <StatCard
@@ -84,49 +174,48 @@ export default function ProgressView({
                       }
                       helper={
                         selectedExerciseWindowSummary
-                          ? `Entries in the last ${selectedProgressWindow} days`
-                          : 'No entries in this range'
+                          ? `${selectedProgressWindow} days`
+                          : 'No entries'
                       }
                     />
                     <StatCard
-                      label="Best volume"
+                      label="PR hits"
                       value={
                         selectedExerciseWindowSummary
-                          ? formatNumber(selectedExerciseWindowSummary.bestVolume)
+                          ? String(selectedExerciseWindowSummary.personalRecordCount)
                           : '--'
                       }
                       helper={
                         selectedExerciseWindowSummary
-                          ? 'Highest total volume in the selected range'
-                          : 'No entries in this range'
+                          ? `${selectedProgressWindow} days`
+                          : 'No entries'
                       }
                     />
                     <StatCard
-                      label="Latest volume"
+                      label="Avg volume"
                       value={
                         selectedExerciseWindowSummary
-                          ? formatNumber(selectedExerciseWindowSummary.latestVolume)
+                          ? formatNumber(selectedExerciseWindowSummary.averageVolume)
                           : '--'
                       }
                       helper={
                         selectedExerciseWindowSummary
-                          ? 'Most recent workout volume in the selected range'
-                          : 'No entries in this range'
+                          ? 'Per session'
+                          : 'No entries'
                       }
                     />
                   </div>
-                  <ProgressChart sessions={selectedExerciseWindowHistory} />
+                  <ProgressChart sessions={selectedExerciseWindowHistory} metric={selectedProgressMetric} />
                   <div className="previous-row">
                     {selectedExerciseWindowSummary?.comparison ? (
                       <p>
-                        Compared with{' '}
-                        {formatDisplayDate(selectedExerciseWindowSummary.comparison.firstDate)}: weight{' '}
+                        vs {formatDisplayDate(selectedExerciseWindowSummary.comparison.firstDate)} • wt{' '}
                         {formatDelta(selectedExerciseWindowSummary.comparison.weightDelta)} • reps{' '}
-                        {formatDelta(selectedExerciseWindowSummary.comparison.repsDelta)} • volume{' '}
+                        {formatDelta(selectedExerciseWindowSummary.comparison.repsDelta)} • vol{' '}
                         {formatDelta(selectedExerciseWindowSummary.comparison.volumeDelta)}
                       </p>
                     ) : (
-                      <p>Log at least two entries in this window to compare the trend.</p>
+                      <p>Log one more entry to compare this range.</p>
                     )}
                   </div>
                 </article>
@@ -136,7 +225,15 @@ export default function ProgressView({
                     <article key={session.workoutId} className="workout-card progress-card">
                       <div className="workout-card-header">
                         <strong>{formatDisplayDate(session.date)}</strong>
-                        <span>Volume {formatNumber(session.metrics.totalVolume)}</span>
+                        <span>
+                          {metricConfig.label} {formatNumber(
+                            selectedProgressMetric === 'weight'
+                              ? session.metrics.bestWeight
+                              : selectedProgressMetric === 'reps'
+                                ? session.metrics.bestReps
+                                : session.metrics.totalVolume,
+                          )}
+                        </span>
                       </div>
                       <div className="progress-metrics">
                         <div>
@@ -159,24 +256,22 @@ export default function ProgressView({
                         {session.improvements.weight && <span className="tag">Weight up</span>}
                         {session.improvements.reps && <span className="tag">Reps up</span>}
                         {session.improvements.volume && <span className="tag">Volume up</span>}
-                        {!session.previousMetrics && (
-                          <span className="tag muted">First logged entry for this exercise</span>
-                        )}
+                        {!session.previousMetrics && <span className="tag muted">First entry</span>}
                         {!hasPersonalRecord(session.personalRecords) &&
                           !hasImprovement(session.improvements) &&
                           session.previousMetrics && (
-                            <span className="tag muted">No metric improved vs previous entry</span>
+                            <span className="tag muted">No new high</span>
                           )}
                       </div>
                       <div className="previous-row">
                         {session.previousMetrics ? (
                           <p>
-                            Previous: weight {formatNumber(session.previousMetrics.bestWeight)} • reps{' '}
+                            Prev • wt {formatNumber(session.previousMetrics.bestWeight)} • reps{' '}
                             {formatNumber(session.previousMetrics.bestReps)} • volume{' '}
                             {formatNumber(session.previousMetrics.totalVolume)}
                           </p>
                         ) : (
-                          <p>No previous entry to compare yet.</p>
+                          <p>No previous entry yet.</p>
                         )}
                       </div>
                       <ul className="set-list">
@@ -191,14 +286,14 @@ export default function ProgressView({
                 ) : (
                   <EmptyState
                     title={`No entries in the last ${selectedProgressWindow} days`}
-                    body="Choose a wider range or log a newer workout for this exercise."
+                    body="Choose a wider range or log a newer session."
                   />
                 )}
               </div>
             ) : (
               <EmptyState
                 title="No logged progress yet"
-                body="Log this exercise in a workout and its history plus improvements will show up here."
+                body="Log this exercise to unlock progress."
               />
             )}
           </div>

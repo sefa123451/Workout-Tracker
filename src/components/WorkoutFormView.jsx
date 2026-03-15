@@ -23,24 +23,25 @@ export default function WorkoutFormView({
   getSplitName,
 }) {
   const selectedSplit = splits.find((split) => split.id === workoutForm.splitId) ?? null;
+  const skippedEntries = workoutForm.skippedEntries ?? [];
 
   return (
-    <main className="content-grid">
-      <section className="panel panel-wide">
+    <main className="content-grid logging-layout">
+      <section className="panel panel-wide panel-highlight">
         <div className="section-heading">
           <div>
             <p className="section-label">Workout logging</p>
-            <h2>{editingWorkoutId ? 'Edit a saved workout' : 'Log a workout by date'}</h2>
+            <h2>{editingWorkoutId ? 'Edit workout' : 'Log workout'}</h2>
           </div>
         </div>
         {!exercises.length ? (
           <EmptyState
             title="Create exercises first"
-            body="The workout form becomes available as soon as you add at least one exercise."
+            body="Add one movement to start logging."
           />
         ) : (
-          <form className="stack" onSubmit={handleWorkoutSubmit}>
-            <div className="form-toolbar">
+          <form className="stack workout-form logging-form" onSubmit={handleWorkoutSubmit}>
+            <div className="form-toolbar form-toolbar-highlight">
               <label className="field field-compact">
                 <span>Workout date</span>
                 <input
@@ -72,14 +73,14 @@ export default function WorkoutFormView({
             </div>
 
             {workoutForm.splitId && (
-              <div className="suggestion-card">
+              <div className="suggestion-card split-summary-card">
                 <div className="suggestion-header">
                   <div>
                     <span className="metric-label">Selected split</span>
                     <p>
                       {getSplitName(workoutForm.splitId)}
                       {selectedSplit
-                        ? ` • ${selectedSplit.exercises.length} configured ${
+                        ? ` • ${selectedSplit.exercises.length} ${
                             selectedSplit.exercises.length === 1 ? 'exercise' : 'exercises'
                           }`
                         : ' • Split removed from the planner'}
@@ -88,30 +89,43 @@ export default function WorkoutFormView({
                 </div>
                 {selectedSplit && selectedSplit.exercises.length === 0 && (
                   <div className="empty-inline">
-                    <p>This split has no exercises yet. Add some in the split planner or build today manually below.</p>
+                    <p>This split is empty. Add exercises in the planner or build today manually.</p>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="stack">
+            <div className="stack entry-stack">
               {workoutForm.entries.map((entry, entryIndex) => {
                 const latestSession = getLatestExerciseSession(workouts, entry.exerciseId);
                 const selectedExerciseName =
                   exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? '';
 
                 return (
-                  <article key={entry.id} className="entry-card">
+                  <article key={entry.id} className="entry-card workout-entry-card">
                     <div className="entry-card-header">
-                      <h3>{selectedExerciseName || `Exercise ${entryIndex + 1}`}</h3>
+                      <div>
+                        <h3>{selectedExerciseName || `Exercise ${entryIndex + 1}`}</h3>
+                        <p className="entry-card-meta">
+                          {entry.sets.length} planned {entry.sets.length === 1 ? 'set' : 'sets'}
+                        </p>
+                      </div>
                       {workoutForm.entries.length > 1 && (
                         <button
                           type="button"
                           className="ghost-button"
+                          aria-label={
+                            workoutForm.splitId
+                              ? `Skip ${selectedExerciseName || `exercise ${entryIndex + 1}`} for today`
+                              : `Remove ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
+                          }
                           onClick={() =>
                             setWorkoutForm((current) => ({
                               ...current,
                               entries: current.entries.filter((item) => item.id !== entry.id),
+                              skippedEntries: workoutForm.splitId
+                                ? [...(current.skippedEntries ?? []), entry]
+                                : current.skippedEntries ?? [],
                             }))
                           }
                         >
@@ -145,22 +159,31 @@ export default function WorkoutFormView({
                     </label>
 
                     {latestSession && (
-                      <div className="suggestion-card">
+                      <div className="suggestion-card session-reference-card">
                         <div className="suggestion-header">
                           <div>
                             <span className="metric-label">Last workout</span>
                             <p>
-                              {formatDisplayDate(latestSession.date)} • Volume{' '}
+                              {formatDisplayDate(latestSession.date)} • Vol{' '}
                               {formatNumber(latestSession.metrics.totalVolume)}
                             </p>
                           </div>
                           <button
                             type="button"
                             className="ghost-button action-button"
+                            aria-label={`Use last workout values for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
                             onClick={() => applyLatestWorkoutToEntry(entry.id, latestSession)}
                           >
-                            Use last workout
+                            Use last
                           </button>
+                        </div>
+                        <div className="last-session-metrics">
+                          <span>Wt {formatNumber(latestSession.metrics.bestWeight)}</span>
+                          <span>Reps {formatNumber(latestSession.metrics.bestReps)}</span>
+                          <span>
+                            {latestSession.sets.length}{' '}
+                            {latestSession.sets.length === 1 ? 'set' : 'sets'}
+                          </span>
                         </div>
                         <ul className="set-list compact-set-list">
                           {latestSession.sets.map((set, index) => (
@@ -172,11 +195,19 @@ export default function WorkoutFormView({
                       </div>
                     )}
 
+                    <div className="set-grid-head" aria-hidden="true">
+                      <span>Set</span>
+                      <span>Weight</span>
+                      <span>Reps</span>
+                      <span>Actions</span>
+                    </div>
+
                     <div className="sets-stack">
                       {entry.sets.map((set, setIndex) => (
                         <div key={set.id} className="set-row">
+                          <div className="set-row-label">Set {setIndex + 1}</div>
                           <label className="field">
-                            <span>Weight</span>
+                            <span className="set-field-label">Weight</span>
                             <input
                               type="number"
                               min="0"
@@ -192,11 +223,11 @@ export default function WorkoutFormView({
                                   ),
                                 }))
                               }
-                              placeholder="0"
+                              placeholder="kg"
                             />
                           </label>
                           <label className="field">
-                            <span>Reps</span>
+                            <span className="set-field-label">Reps</span>
                             <input
                               type="number"
                               min="0"
@@ -212,13 +243,14 @@ export default function WorkoutFormView({
                                   ),
                                 }))
                               }
-                              placeholder="0"
+                              placeholder="reps"
                             />
                           </label>
                           <div className="set-actions">
                             <button
                               type="button"
                               className="ghost-button"
+                              aria-label={`Copy set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
                               onClick={() =>
                                 updateWorkoutEntry(entry.id, (currentEntry) => ({
                                   ...currentEntry,
@@ -234,6 +266,11 @@ export default function WorkoutFormView({
                             <button
                               type="button"
                               className="ghost-button"
+                              aria-label={
+                                entry.sets.length === 1 && setIndex === 0
+                                  ? `Clear set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
+                                  : `Remove set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
+                              }
                               onClick={() =>
                                 updateWorkoutEntry(entry.id, (currentEntry) => ({
                                   ...currentEntry,
@@ -254,6 +291,7 @@ export default function WorkoutFormView({
                     <button
                       type="button"
                       className="secondary-button"
+                      aria-label={`Add a set for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
                       onClick={() =>
                         updateWorkoutEntry(entry.id, (currentEntry) => ({
                           ...currentEntry,
@@ -274,7 +312,49 @@ export default function WorkoutFormView({
               </div>
             )}
 
-            <div className="actions">
+            {workoutForm.splitId && skippedEntries.length > 0 && (
+              <div className="skipped-section">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="section-label">Skipped today</p>
+                    <h2>Skipped</h2>
+                  </div>
+                </div>
+                <div className="skipped-grid">
+                  {skippedEntries.map((entry, index) => (
+                    <article key={entry.id} className="skipped-card">
+                      <div>
+                        <h3>
+                          {exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ??
+                            `Exercise ${index + 1}`}
+                        </h3>
+                        <p>
+                          {entry.sets.length} {entry.sets.length === 1 ? 'set' : 'sets'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="ghost-button action-button"
+                        aria-label={`Restore ${exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? `exercise ${index + 1}`}`}
+                        onClick={() =>
+                          setWorkoutForm((current) => ({
+                            ...current,
+                            entries: [...current.entries, entry],
+                            skippedEntries: (current.skippedEntries ?? []).filter(
+                              (item) => item.id !== entry.id,
+                            ),
+                          }))
+                        }
+                      >
+                        Restore
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="actions workout-actions">
               <button
                 type="button"
                 className="secondary-button"
@@ -285,7 +365,7 @@ export default function WorkoutFormView({
                   }))
                 }
               >
-                Add exercise to workout
+                Add exercise
               </button>
               {editingWorkoutId && (
                 <button type="button" className="ghost-button" onClick={resetWorkoutForm}>

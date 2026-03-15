@@ -1,33 +1,66 @@
 # Workout Tracker
 
-A polished React workout tracker with local storage, progress tracking, import/export, dark mode, and split-based workout planning.
+A polished local-first workout tracker built with React and Vite.
 
-## Features
+It combines split-based workout planning, fast daily logging, exercise progress, JSON import/export, and a premium dashboard-style UI in one small app.
 
-- Create, rename, and delete exercises
-- Create, edit, and delete workouts
-- Log sets with weight and reps
-- View workout history
-- Track exercise progress with PR markers and charts
-- Import and export all local data as JSON
-- Switch between system, light, and dark mode
+## Highlights
 
-## Split-Based Planning
+- Premium dashboard UI with dark mode, light mode, and system theme support
+- Exercise library with create, rename, and delete flows
+- Split planner for routines like `Push`, `Pull`, and `Legs`
+- Fast workout logging with prebuilt set rows from a selected split
+- Workout history with edit and delete support
+- Progress tracking with charts, PR markers, and 7 / 30 / 90 day filters
+- Local JSON export/import for backup and restore
 
-- Create workout splits such as `Push`, `Pull`, or `Legs`
+## Core Flows
+
+### 1. Build your exercise library
+
+- Add exercises
+- Rename or delete exercises later
+- Keep workout history even if an exercise is deleted
+
+### 2. Create reusable workout splits
+
+- Create splits such as `Push`, `Pull`, or `Legs`
 - Assign existing exercises to each split
-- Set a default number of sets per split exercise
-- Start a workout by choosing a date and a split
-- Automatically generate workout entries and set rows from the selected split
-- Skip an exercise for a day without removing it from the split
-- Store the selected split together with the workout
-- Show the split label in workout history
+- Define a default number of sets per exercise
+- Keep the split flexible enough for day-to-day changes
 
-If a split is deleted later, linked workout history is preserved and shown with an `Unknown split (deleted)` label.
+### 3. Log workouts quickly
 
-## Tech
+- Pick a date
+- Choose a split or log a custom workout
+- Auto-load exercises and default set rows from the split
+- Fill only weights and reps
+- Skip individual exercises for that session without changing the split itself
 
-- React
+### 4. Review and improve
+
+- Browse full workout history
+- Track progress per exercise over time
+- See PRs for weight, reps, and total volume
+- Compare recent ranges with simple charts
+
+## Data Model
+
+All app data is stored locally in the browser via `localStorage`.
+
+The app currently stores:
+
+- `exercises`
+- `splits`
+- `workouts`
+
+Workouts may include a `splitId`, and splits reference exercises by `exerciseId`.
+
+If an exercise or split is deleted later, linked workout history is preserved rather than removed.
+
+## Tech Stack
+
+- React 18
 - Vite
 - Vitest
 - Testing Library
@@ -47,6 +80,12 @@ Start the development server:
 npm run dev
 ```
 
+Open the local URL shown in the terminal, usually:
+
+```bash
+http://localhost:5173
+```
+
 Build for production:
 
 ```bash
@@ -59,25 +98,25 @@ Run tests:
 npm test -- --run
 ```
 
-## Data Storage
+## Manual Test Checklist
 
-All data is stored locally in the browser. The app currently stores:
+- Create a few exercises and confirm duplicate names are rejected
+- Create a split and assign exercises with different default set counts
+- Log a workout from that split and verify set rows are created automatically
+- Skip one split exercise, restore it, and save the workout
+- Edit and delete a workout from history
+- Check exercise progress, PR tags, and 7 / 30 / 90 day filters
+- Export all data as JSON, then import it back
+- Switch between `System`, `Light`, and `Dark` themes
 
-- `exercises`
-- `splits`
-- `workouts`
+## Current Scope
 
-Workouts can optionally include a `splitId`, and splits reference exercises by `exerciseId`.
+This project is intentionally simple and local-first.
 
-## Manual Test Ideas
+There is currently:
 
-- Create exercises and then build a split from them
-- Log a workout by selecting a split and filling only weights/reps
-- Skip one split exercise and save the workout
-- Delete a split that already has workout history and confirm history is preserved
-- Export the data and import it again
-- Check both light and dark mode
+- no backend
+- no user accounts
+- no cloud sync
 
-## Notes
-
-This project is intentionally local-first and simple to extend. There is no backend or account system yet.
+That makes it easy to run locally, iterate quickly, and extend later.

@@ -40,9 +40,7 @@ describe('ExerciseView', () => {
     renderExerciseView();
 
     expect(screen.getByText('No exercises yet')).toBeTruthy();
-    expect(
-      screen.getByText('Create your first exercise to unlock workout logging and progress tracking.'),
-    ).toBeTruthy();
+    expect(screen.getByText('Add your first movement to start logging.')).toBeTruthy();
   });
 
   it('calls edit and delete handlers for saved exercises', async () => {
@@ -57,8 +55,8 @@ describe('ExerciseView', () => {
       ],
     });
 
-    await user.click(screen.getByRole('button', { name: 'Edit' }));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Edit Back squat' }));
+    await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
 
     expect(props.startEditingExercise).toHaveBeenCalledWith('squat');
     expect(props.deleteExercise).toHaveBeenCalledWith('squat');

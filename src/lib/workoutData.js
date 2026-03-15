@@ -4,6 +4,9 @@ export const STORAGE_VERSION = 1;
 const dashboardDateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
 });
+const weekdayLabelFormatter = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+});
 
 export function createId() {
   if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
@@ -56,6 +59,7 @@ export function createWorkoutForm() {
     date: getTodayInputValue(),
     splitId: '',
     entries: [createWorkoutEntry()],
+    skippedEntries: [],
   };
 }
 
@@ -75,6 +79,7 @@ export function createWorkoutFormFromWorkout(workout) {
             }))
           : [createSet()],
     })),
+    skippedEntries: [],
   };
 }
 
@@ -511,6 +516,16 @@ export function getStartOfCurrentWeek() {
   return start;
 }
 
+function getCurrentWeekDays() {
+  const weekStart = getStartOfCurrentWeek();
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(weekStart);
+    date.setDate(weekStart.getDate() + index);
+    return date;
+  });
+}
+
 export function isDateInCurrentWeek(dateValue) {
   const workoutDate = parseInputDate(dateValue);
   const weekStart = getStartOfCurrentWeek();
@@ -524,9 +539,11 @@ export function isDateInCurrentWeek(dateValue) {
 export function getDashboardSummary(workouts) {
   const weeklyWorkouts = workouts.filter((workout) => isDateInCurrentWeek(workout.date));
   const exerciseCounts = new Map();
+  const exerciseIds = new Set();
 
   for (const workout of workouts) {
     for (const entry of workout.entries) {
+      exerciseIds.add(entry.exerciseId);
       const current = exerciseCounts.get(entry.exerciseId) ?? {
         count: 0,
         latestDate: '',
@@ -555,17 +572,85 @@ export function getDashboardSummary(workouts) {
     }
   }
 
+  const weeklyVolumeByDate = new Map();
+
+  for (const workout of weeklyWorkouts) {
+    const workoutVolume = workout.entries.reduce(
+      (entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume,
+      0,
+    );
+
+    weeklyVolumeByDate.set(workout.date, (weeklyVolumeByDate.get(workout.date) ?? 0) + workoutVolume);
+  }
+
+  const recentPrHits = Array.from(exerciseIds).reduce((count, exerciseId) => {
+    const recentHistory = filterProgressHistoryByDays(buildProgressHistory(workouts, exerciseId), 30);
+
+    return (
+      count +
+      recentHistory.filter(
+        (session) =>
+          session.personalRecords.weight ||
+          session.personalRecords.reps ||
+          session.personalRecords.volume,
+      ).length
+    );
+  }, 0);
+
+  const totalVolumeThisWeek = weeklyWorkouts.reduce(
+    (sum, workout) =>
+      sum +
+      workout.entries.reduce((entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume, 0),
+    0,
+  );
+
+  const latestPersonalRecords = Array.from(exerciseIds)
+    .flatMap((exerciseId) =>
+      filterProgressHistoryByDays(buildProgressHistory(workouts, exerciseId), 30)
+        .filter(
+          (session) =>
+            session.personalRecords.weight ||
+            session.personalRecords.reps ||
+            session.personalRecords.volume,
+        )
+        .map((session) => ({
+          exerciseId,
+          date: session.date,
+          labels: [
+            session.personalRecords.weight ? 'Weight PR' : null,
+            session.personalRecords.reps ? 'Reps PR' : null,
+            session.personalRecords.volume ? 'Volume PR' : null,
+          ].filter(Boolean),
+        })),
+    )
+    .sort((left, right) => right.date.localeCompare(left.date))
+    .slice(0, 3);
+
   return {
     lastTrainingDay: workouts[0]?.date ?? '',
     workoutsThisWeek: weeklyWorkouts.length,
-    totalVolumeThisWeek: weeklyWorkouts.reduce(
-      (sum, workout) =>
-        sum +
-        workout.entries.reduce((entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume, 0),
-      0,
-    ),
+    totalVolumeThisWeek,
+    averageVolumeThisWeek: weeklyWorkouts.length ? totalVolumeThisWeek / weeklyWorkouts.length : 0,
     mostTrainedExercise,
+    recentPrHits,
+    latestPersonalRecords,
+    weeklyVolumeTrend: getCurrentWeekDays().map((date) => {
+      const dateValue = getInputValueFromDate(date);
+      return {
+        date: dateValue,
+        label: weekdayLabelFormatter.format(date),
+        volume: weeklyVolumeByDate.get(dateValue) ?? 0,
+      };
+    }),
   };
+}
+
+function getInputValueFromDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
 }
 
 export function buildProgressHistory(workouts, exerciseId) {
@@ -626,15 +711,38 @@ export function getProgressWindowSummary(history) {
   const chronologicalHistory = [...history].reverse();
   const firstSession = chronologicalHistory[0];
   const latestSession = chronologicalHistory[chronologicalHistory.length - 1];
+  const totalVolume = chronologicalHistory.reduce(
+    (sum, session) => sum + session.metrics.totalVolume,
+    0,
+  );
   const bestVolume = chronologicalHistory.reduce(
     (max, session) => Math.max(max, session.metrics.totalVolume),
+    0,
+  );
+  const bestWeight = chronologicalHistory.reduce(
+    (max, session) => Math.max(max, session.metrics.bestWeight),
+    0,
+  );
+  const bestReps = chronologicalHistory.reduce(
+    (max, session) => Math.max(max, session.metrics.bestReps),
     0,
   );
 
   return {
     sessionCount: history.length,
+    personalRecordCount: chronologicalHistory.filter(
+      (session) =>
+        session.personalRecords.weight ||
+        session.personalRecords.reps ||
+        session.personalRecords.volume,
+    ).length,
+    averageVolume: totalVolume / chronologicalHistory.length,
     bestVolume,
     latestVolume: latestSession.metrics.totalVolume,
+    bestWeight,
+    latestWeight: latestSession.metrics.bestWeight,
+    bestReps,
+    latestReps: latestSession.metrics.bestReps,
     comparison:
       chronologicalHistory.length > 1
         ? {

@@ -13,6 +13,7 @@ function renderWorkoutFormView(overrides = {}) {
     workoutForm: {
       date: '2024-01-12',
       splitId: '',
+      skippedEntries: [],
       entries: [
         {
           id: 'entry-1',
@@ -69,6 +70,7 @@ describe('WorkoutFormView', () => {
       workoutForm: {
         date: '2024-01-12',
         splitId: '',
+        skippedEntries: [],
         entries: [
           {
             id: 'entry-1',
@@ -82,7 +84,7 @@ describe('WorkoutFormView', () => {
     expect(screen.getByText('Last workout')).toBeTruthy();
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Use last workout' }));
+    await user.click(screen.getByRole('button', { name: 'Use last workout values for Back squat' }));
 
     expect(props.applyLatestWorkoutToEntry).toHaveBeenCalledTimes(1);
     expect(props.applyLatestWorkoutToEntry).toHaveBeenCalledWith(
@@ -92,5 +94,31 @@ describe('WorkoutFormView', () => {
         date: '2024-01-10',
       }),
     );
+  });
+
+  it('shows skipped split exercises and restores them', async () => {
+    const user = userEvent.setup();
+    const props = renderWorkoutFormView({
+      exercises: [{ id: 'squat', name: 'Back squat' }],
+      splits: [{ id: 'legs', name: 'Leg day', exercises: [] }],
+      workoutForm: {
+        date: '2024-01-12',
+        splitId: 'legs',
+        skippedEntries: [
+          {
+            id: 'entry-skipped',
+            exerciseId: 'squat',
+            sets: [{ id: 'set-1', weight: '', reps: '' }],
+          },
+        ],
+        entries: [],
+      },
+    });
+
+    expect(screen.getByText('Skipped today')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Restore Back squat' }));
+
+    expect(props.setWorkoutForm).toHaveBeenCalledTimes(1);
   });
 });
