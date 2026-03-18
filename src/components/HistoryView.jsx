@@ -3,6 +3,8 @@ import EmptyState from './EmptyState.jsx';
 
 export default function HistoryView({
   sortedWorkouts,
+  historyHeatmap,
+  historyPrTimeline,
   getExerciseName,
   getSplitName,
   formatDisplayDate,
@@ -10,8 +12,14 @@ export default function HistoryView({
   getEntryMetrics,
   startEditingWorkout,
   duplicateWorkout,
+  saveWorkoutAsTemplate,
+  createSplitFromWorkout,
   deleteWorkout,
 }) {
+  const activeDays = historyHeatmap.filter((day) => day.count > 0).length;
+  const totalSessions = historyHeatmap.reduce((sum, day) => sum + day.count, 0);
+  const peakVolume = historyHeatmap.reduce((peak, day) => Math.max(peak, day.volume), 0);
+
   return (
     <main className="content-grid history-layout">
       <section className="panel panel-wide panel-highlight">
@@ -23,6 +31,77 @@ export default function HistoryView({
         </div>
         {sortedWorkouts.length ? (
           <div className="history-list timeline-list">
+            <div className="history-insight-grid">
+              <article className="history-insight-card history-insight-card-primary">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="section-label">Training calendar</p>
+                    <h2>Last 12 weeks</h2>
+                  </div>
+                  <div className="dashboard-heatmap-meta history-heatmap-meta">
+                    <span>{activeDays} active days</span>
+                    <span>{totalSessions} sessions</span>
+                    <span>{peakVolume ? `${formatNumber(peakVolume)} peak` : 'No peak yet'}</span>
+                  </div>
+                </div>
+                <div className="history-heatmap-grid" aria-label="History training calendar">
+                  {historyHeatmap.map((day) => (
+                    <div
+                      key={day.date}
+                      className={`dashboard-heatmap-cell level-${day.level}`}
+                      title={`${formatDisplayDate(day.date)} • ${day.count} ${day.count === 1 ? 'session' : 'sessions'} • ${formatNumber(day.volume)} volume`}
+                      aria-label={`${formatDisplayDate(day.date)} with ${day.count} ${day.count === 1 ? 'session' : 'sessions'}`}
+                    />
+                  ))}
+                </div>
+                <div className="dashboard-heatmap-legend">
+                  <span>Light</span>
+                  <div className="dashboard-heatmap-scale" aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map((level) => (
+                      <span key={level} className={`dashboard-heatmap-cell level-${level}`} />
+                    ))}
+                  </div>
+                  <span>Heavy</span>
+                </div>
+              </article>
+
+              <article className="history-insight-card">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="section-label">PR timeline</p>
+                    <h2>Recent wins</h2>
+                  </div>
+                </div>
+                {historyPrTimeline.length ? (
+                  <div className="history-pr-feed">
+                    {historyPrTimeline.map((record) => (
+                      <article
+                        key={`${record.exerciseId}-${record.date}-${record.labels.join('-')}`}
+                        className="dashboard-win-card history-pr-card"
+                      >
+                        <div>
+                          <strong>{getExerciseName(record.exerciseId)}</strong>
+                          <p>{formatDisplayDate(record.date)}</p>
+                        </div>
+                        <div className="tag-row">
+                          {record.labels.map((label) => (
+                            <span key={label} className="tag pr-tag">
+                              {label}
+                            </span>
+                          ))}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No PRs yet"
+                    body="Keep logging sessions to build your first PR timeline."
+                  />
+                )}
+              </article>
+            </div>
+
             {sortedWorkouts.map((workout) => {
               const sessionVolume = workout.entries.reduce(
                 (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
@@ -57,6 +136,22 @@ export default function HistoryView({
                       </button>
                       <button
                         type="button"
+                        className="ghost-button action-button"
+                        aria-label={`Save workout from ${formatDisplayDate(workout.date)} as a template`}
+                        onClick={() => saveWorkoutAsTemplate(workout.id)}
+                      >
+                        Save template
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button action-button"
+                        aria-label={`Use workout from ${formatDisplayDate(workout.date)} as a split template`}
+                        onClick={() => createSplitFromWorkout(workout.id)}
+                      >
+                        Use as split
+                      </button>
+                      <button
+                        type="button"
                         className="ghost-button action-button danger-button"
                         aria-label={`Delete workout from ${formatDisplayDate(workout.date)}`}
                         onClick={() => deleteWorkout(workout.id)}
@@ -79,6 +174,12 @@ export default function HistoryView({
                       <strong>{workout.entries.length}</strong>
                     </div>
                   </div>
+                  {workout.notes ? (
+                    <div className="history-session-note">
+                      <span className="section-label">Session note</span>
+                      <p>{workout.notes}</p>
+                    </div>
+                  ) : null}
                   <div className="workout-entry-list">
                     {workout.entries.map((entry) => {
                       const metrics = getEntryMetrics(entry);

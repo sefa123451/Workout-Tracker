@@ -68,6 +68,30 @@ describe('App integration flows', () => {
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
   });
 
+  it('saves workout notes and shows them in history', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    await user.type(screen.getByLabelText('Notes'), 'Felt strong on the top sets.');
+    await user.selectOptions(screen.getByLabelText('Exercise'), 'bench');
+    await user.type(screen.getByLabelText('Weight'), '80');
+    await user.type(screen.getByLabelText('Reps'), '8');
+    await user.click(screen.getByRole('button', { name: 'Save workout' }));
+
+    expect(screen.getByText('Session note')).toBeTruthy();
+    expect(screen.getByText('Felt strong on the top sets.')).toBeTruthy();
+  });
+
   it('creates a workout from a split and shows the split in history', async () => {
     const user = userEvent.setup();
     renderAppWithStoredData({
@@ -110,8 +134,488 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'Save workout' }));
 
     expect(screen.getByText('Push')).toBeTruthy();
-    expect(screen.getByText('Bench press')).toBeTruthy();
-    expect(screen.getByText('Shoulder press')).toBeTruthy();
+    expect(screen.getAllByText('Bench press').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Shoulder press').length).toBeGreaterThan(0);
+  });
+
+  it('starts a split workout directly from the dashboard', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [{ id: 'split-1', exerciseId: 'bench', defaultSets: 2 }],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          splitId: 'push',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Start Push' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Split').value).toBe('push');
+    expect(screen.getAllByText('Bench press').length).toBeGreaterThan(0);
+  });
+
+  it('repeats the latest workout from the dashboard', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          notes: 'Old note',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Repeat last workout' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Reps').value).toBe('8');
+    expect(screen.getByLabelText('Notes').value).toBe('');
+  });
+
+  it('loads a workout into the split planner as a new template', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+        {
+          id: 'fly',
+          name: 'Cable fly',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [{ id: 'split-1', exerciseId: 'bench', defaultSets: 3 }],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          splitId: 'push',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [
+                { weight: 80, reps: 8 },
+                { weight: 82.5, reps: 6 },
+              ],
+            },
+            {
+              exerciseId: 'fly',
+              sets: [{ weight: 20, reps: 12 }],
+            },
+          ],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /Use workout from .* as a split template/ }));
+
+    expect(screen.getByRole('heading', { name: 'Split planner' })).toBeTruthy();
+    expect(screen.getByDisplayValue('Push copy')).toBeTruthy();
+    expect(screen.getByLabelText('Exercise 1').value).toBe('bench');
+    expect(screen.getByLabelText('Exercise 2').value).toBe('fly');
+    expect(screen.getAllByLabelText('Default sets')[0].value).toBe('2');
+    expect(screen.getAllByLabelText('Default sets')[1].value).toBe('1');
+    expect(screen.getByText('Loaded workout as a new split template.')).toBeTruthy();
+  });
+
+  it('saves a workout as a reusable template and loads it into the log form', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [{ id: 'split-1', exerciseId: 'bench', defaultSets: 2 }],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          splitId: 'push',
+          notes: 'Top sets first',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /Save workout from .* as a template/ }));
+
+    expect(screen.getByText('Saved Push template.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Templates' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Push template' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Use template Push template' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Template').value).toBeTruthy();
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Split').value).toBe('push');
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Reps').value).toBe('8');
+    expect(screen.getByLabelText('Notes').value).toBe('Top sets first');
+  });
+
+  it('starts a workout template directly from the dashboard', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Keep rest short',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Use template' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Template').value).toBe('template-1');
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Reps').value).toBe('8');
+    expect(screen.getByLabelText('Notes').value).toBe('Keep rest short');
+  });
+
+  it('starts a workout from the last used template on the dashboard', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    window.localStorage.setItem('workout-tracker-last-template-id', 'template-1');
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Keep rest short',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Start last template' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Template').value).toBe('template-1');
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Notes').value).toBe('Keep rest short');
+  });
+
+  it('saves the current workout form as a new template', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'prompt').mockReturnValue('Upper day');
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    await user.selectOptions(screen.getByLabelText('Exercise'), 'bench');
+    await user.type(screen.getByLabelText('Weight'), '80');
+    await user.type(screen.getByLabelText('Reps'), '8');
+    await user.type(screen.getByLabelText('Notes'), 'Keep the setup tight');
+    await user.click(screen.getByRole('button', { name: 'Save as template' }));
+
+    expect(window.prompt).toHaveBeenCalled();
+    expect(screen.getByText('Saved Upper day.')).toBeTruthy();
+    expect(screen.getByRole('option', { name: 'Upper day' }).selected).toBe(true);
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    expect(screen.getByRole('heading', { name: 'Upper day' })).toBeTruthy();
+  });
+
+  it('renames a workout template from the library', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'prompt').mockReturnValue('Upper A');
+
+    renderAppWithStoredData({
+      exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' }],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: '',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Rename template Push template' }));
+
+    expect(window.prompt).toHaveBeenCalled();
+    expect(screen.getByText('Renamed template to Upper A.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Upper A' })).toBeTruthy();
+  });
+
+  it('updates a selected workout template from the current log form', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' }],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Old note',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Use template' }));
+    await user.clear(screen.getByLabelText('Weight'));
+    await user.type(screen.getByLabelText('Weight'), '85');
+    await user.clear(screen.getByLabelText('Notes'));
+    await user.type(screen.getByLabelText('Notes'), 'Updated note');
+    await user.click(screen.getByRole('button', { name: 'Update template' }));
+
+    expect(screen.getByText('Updated Push template.')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'dashboard' }));
+    await user.click(screen.getByRole('button', { name: 'Use template' }));
+
+    expect(screen.getByLabelText('Template').value).toBe('template-1');
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('85');
+    expect(screen.getByLabelText('Notes').value).toBe('Updated note');
+  });
+
+  it('edits a workout template in the dedicated template editor', async () => {
+    const user = userEvent.setup();
+    const today = new Date();
+    const expectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+      today.getDate(),
+    ).padStart(2, '0')}`;
+
+    renderAppWithStoredData({
+      exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' }],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Old note',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Edit template Push template' }));
+
+    expect(screen.getByRole('heading', { name: 'Edit template' })).toBeTruthy();
+    expect(screen.queryByLabelText('Workout date')).toBeNull();
+
+    await user.clear(screen.getByLabelText('Template name'));
+    await user.type(screen.getByLabelText('Template name'), 'Upper A');
+    await user.clear(screen.getByLabelText('Weight'));
+    await user.type(screen.getByLabelText('Weight'), '85');
+    await user.clear(screen.getByLabelText('Notes'));
+    await user.type(screen.getByLabelText('Notes'), 'Updated in editor');
+    await user.click(screen.getByRole('button', { name: 'Save template' }));
+
+    expect(screen.getByText('Updated Upper A.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Upper A' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Use template Upper A' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Template').value).toBe('template-1');
+    expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
+    expect(screen.getByLabelText('Weight').value).toBe('85');
+    expect(screen.getByLabelText('Notes').value).toBe('Updated in editor');
+  });
+
+  it('duplicates a workout template from the library', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' }],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Original notes',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Duplicate template Push template' }));
+
+    expect(screen.getByText('Duplicated Push template.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Push template copy' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Use template Push template copy' }));
+
+    expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Weight').value).toBe('80');
+    expect(screen.getByLabelText('Notes').value).toBe('Original notes');
+  });
+
+  it('loads a workout template into the split planner', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        { id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' },
+        { id: 'fly', name: 'Cable fly', createdAt: '2024-01-01T10:00:00.000Z' },
+      ],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Template note',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [
+                { weight: 80, reps: 8 },
+                { weight: 82.5, reps: 6 },
+              ],
+            },
+            {
+              exerciseId: 'fly',
+              sets: [{ weight: 20, reps: 12 }],
+            },
+          ],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Use template Push template as a split template' }));
+
+    expect(screen.getByRole('heading', { name: 'Split planner' })).toBeTruthy();
+    expect(screen.getByDisplayValue('Push split')).toBeTruthy();
+    expect(screen.getByLabelText('Exercise 1').value).toBe('bench');
+    expect(screen.getByLabelText('Exercise 2').value).toBe('fly');
+    expect(screen.getAllByLabelText('Default sets')[0].value).toBe('2');
+    expect(screen.getAllByLabelText('Default sets')[1].value).toBe('1');
+    expect(screen.getByText('Loaded template into the split planner.')).toBeTruthy();
   });
 
   it('lets you skip and restore a split exercise while logging', async () => {
@@ -157,6 +661,7 @@ describe('App integration flows', () => {
   });
 
   it('keeps current data when a valid import is canceled', async () => {
+    const user = userEvent.setup();
     renderAppWithStoredData({
       exercises: [
         {
@@ -168,7 +673,8 @@ describe('App integration flows', () => {
       workouts: [],
     });
 
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await user.click(screen.getByRole('button', { name: 'settings' }));
+
     const fileInput = document.querySelector('input[type="file"]');
     const file = createJsonFile({
       exercises: [{ id: 'imported', name: 'Imported exercise' }],
@@ -177,15 +683,18 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Import canceled. Your current data was kept.')).toBeTruthy();
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    expect(screen.getByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel import' }));
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Existing exercise' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Imported exercise' })).toBeNull();
   });
 
   it('replaces current data when a valid import is confirmed', async () => {
+    const user = userEvent.setup();
     renderAppWithStoredData({
       exercises: [
         {
@@ -197,7 +706,8 @@ describe('App integration flows', () => {
       workouts: [],
     });
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await user.click(screen.getByRole('button', { name: 'settings' }));
+
     const fileInput = document.querySelector('input[type="file"]');
     const file = createJsonFile({
       exercises: [{ id: 'imported', name: 'Imported exercise' }],
@@ -206,9 +716,12 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Imported 1 exercises, 0 splits, and 0 workouts.')).toBeTruthy();
+    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Replace data' }));
 
-    await userEvent.setup().click(screen.getByRole('button', { name: 'exercises' }));
+    expect(await screen.findByText('Imported 1 exercises, 0 splits, 0 templates, and 0 workouts.')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Imported exercise' })).toBeTruthy();
     expect(screen.queryByRole('heading', { name: 'Existing exercise' })).toBeNull();
 
@@ -232,6 +745,73 @@ describe('App integration flows', () => {
     expect(await screen.findByText('Selected file is not valid JSON.')).toBeTruthy();
   });
 
+  it('merges imported data into the current library and history', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench-existing',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      templates: [
+        {
+          id: 'template-existing',
+          name: 'Upper A',
+          splitId: '',
+          notes: '',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench-existing', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'settings' }));
+
+    const fileInput = document.querySelector('input[type="file"]');
+    const file = createJsonFile({
+      exercises: [
+        { id: 'bench-imported', name: 'Bench press' },
+        { id: 'row-imported', name: 'Cable row' },
+      ],
+      templates: [
+        {
+          id: 'template-imported',
+          name: 'Pull A',
+          splitId: '',
+          notes: 'Imported template',
+          entries: [{ exerciseId: 'row-imported', sets: [{ weight: 60, reps: 10 }] }],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-imported',
+          date: '2024-01-12',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'row-imported', sets: [{ weight: 60, reps: 10 }] }],
+        },
+      ],
+    });
+
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Merge data' }));
+
+    expect(await screen.findByText('Merged import. You now have 2 exercises, 0 splits, 2 templates, and 1 workouts.')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    expect(screen.getByRole('heading', { name: 'Bench press' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Cable row' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Upper A' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Pull A' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    expect(screen.getByRole('heading', { name: 'Cable row' })).toBeTruthy();
+  });
+
   it('shows dashboard weekly summary based on current-week workouts', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'));
@@ -244,22 +824,33 @@ describe('App integration flows', () => {
           createdAt: '2024-01-01T10:00:00.000Z',
         },
       ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [{ id: 'split-1', exerciseId: 'squat', defaultSets: 1 }],
+        },
+      ],
       workouts: [
         {
           id: 'workout-1',
           date: '2026-03-10',
+          splitId: 'push',
           createdAt: '2026-03-10T10:00:00.000Z',
           entries: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] }],
         },
         {
           id: 'workout-2',
           date: '2026-03-14',
+          splitId: 'push',
           createdAt: '2026-03-14T10:00:00.000Z',
           entries: [{ exerciseId: 'squat', sets: [{ weight: 110, reps: 5 }] }],
         },
         {
           id: 'workout-3',
           date: '2026-03-01',
+          splitId: 'push',
           createdAt: '2026-03-01T10:00:00.000Z',
           entries: [{ exerciseId: 'squat', sets: [{ weight: 90, reps: 5 }] }],
         },
@@ -277,6 +868,17 @@ describe('App integration flows', () => {
     expect(recentPrCard.textContent).toContain('Last 30 days');
     expect(screen.getByText('Latest PRs')).toBeTruthy();
     expect(screen.getByText('Volume by day')).toBeTruthy();
+    expect(screen.getByText('Training calendar')).toBeTruthy();
+    expect(screen.getByText('Last 28 days')).toBeTruthy();
+    expect(screen.getByText('This week vs last')).toBeTruthy();
+    expect(screen.getByText('PRs this week')).toBeTruthy();
+    expect(screen.getByText('Keep the rhythm')).toBeTruthy();
+    expect(screen.getByText('This month')).toBeTruthy();
+    expect(screen.getByLabelText('Training heatmap')).toBeTruthy();
+    expect(screen.getByText('Split insights')).toBeTruthy();
+    expect(screen.getByText('Templates that carry you')).toBeTruthy();
+    expect(screen.getByText('Top split this month')).toBeTruthy();
+    expect(screen.getAllByText('Push').length).toBeGreaterThan(0);
   });
 
   it('edits and then deletes a workout from history', async () => {
@@ -323,6 +925,43 @@ describe('App integration flows', () => {
     expect(screen.getByText('Workout history is empty')).toBeTruthy();
   });
 
+  it('restores a deleted workout when undo is used', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-12',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'squat',
+              sets: [{ weight: 100, reps: 5 }],
+            },
+          ],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
+
+    expect(screen.getByText('Workout history is empty')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Undo delete' }));
+
+    expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
+    expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
+  });
+
   it('duplicates a workout into the log form as a new workout', async () => {
     const user = userEvent.setup();
     const today = new Date();
@@ -342,6 +981,7 @@ describe('App integration flows', () => {
         {
           id: 'workout-1',
           date: '2024-01-12',
+          notes: 'Keep elbows tucked.',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [
             {
@@ -361,6 +1001,7 @@ describe('App integration flows', () => {
     expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
     expect(screen.getByLabelText('Weight').value).toBe('80');
     expect(screen.getByLabelText('Reps').value).toBe('8');
+    expect(screen.getByLabelText('Notes').value).toBe('');
     expect(screen.getByRole('button', { name: 'Save workout' })).toBeTruthy();
   });
 
@@ -399,6 +1040,67 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'history' }));
     expect(screen.getByText('Unknown exercise (deleted)')).toBeTruthy();
+  });
+
+  it('restores a deleted exercise when undo is used', async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
+
+    expect(screen.getByText('No exercises yet')).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Undo delete' }));
+
+    expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
+  });
+
+  it('shows a training calendar and pr timeline in history', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-03-10',
+          createdAt: '2026-03-10T10:00:00.000Z',
+          entries: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] }],
+        },
+        {
+          id: 'workout-2',
+          date: '2026-03-14',
+          createdAt: '2026-03-14T10:00:00.000Z',
+          entries: [{ exerciseId: 'squat', sets: [{ weight: 110, reps: 5 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+
+    expect(screen.getByText('Training calendar')).toBeTruthy();
+    expect(screen.getByText('Last 12 weeks')).toBeTruthy();
+    expect(screen.getByLabelText('History training calendar')).toBeTruthy();
+    expect(screen.getByText('PR timeline')).toBeTruthy();
+    expect(screen.getByText('Recent wins')).toBeTruthy();
+    expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
   });
 
   it('shows progress markers for an exercise with multiple workouts', async () => {
@@ -442,6 +1144,9 @@ describe('App integration flows', () => {
 
     expect(screen.getByText('Volume trend')).toBeTruthy();
     expect(screen.getByText('PR hits')).toBeTruthy();
+    expect(screen.getByText('Peak session')).toBeTruthy();
+    expect(screen.getByText('Wins in range')).toBeTruthy();
+    expect(screen.getByText('Latest signal')).toBeTruthy();
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
     expect(screen.getByText('Weight up')).toBeTruthy();
     expect(screen.getAllByText(/vs/).length).toBeGreaterThan(0);
@@ -519,5 +1224,69 @@ describe('App integration flows', () => {
 
     expect(screen.getAllByText('7 days').length).toBeGreaterThan(0);
     expect(screen.queryByText(/No entries in the last 7 days/)).toBeNull();
+  });
+
+  it('shows split progress for logged split workouts', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+        {
+          id: 'press',
+          name: 'Shoulder press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [
+            { id: 'split-1', exerciseId: 'bench', defaultSets: 1 },
+            { id: 'split-2', exerciseId: 'press', defaultSets: 1 },
+          ],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-03-10',
+          splitId: 'push',
+          createdAt: '2026-03-10T10:00:00.000Z',
+          entries: [
+            { exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] },
+            { exerciseId: 'press', sets: [{ weight: 40, reps: 10 }] },
+          ],
+        },
+        {
+          id: 'workout-2',
+          date: '2026-03-14',
+          splitId: 'push',
+          notes: 'Strong push day.',
+          createdAt: '2026-03-14T10:00:00.000Z',
+          entries: [
+            { exerciseId: 'bench', sets: [{ weight: 85, reps: 8 }] },
+            { exerciseId: 'press', sets: [{ weight: 42.5, reps: 10 }] },
+          ],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'progress' }));
+    await user.click(screen.getByRole('button', { name: 'Splits' }));
+
+    expect(screen.getByText('Push trend')).toBeTruthy();
+    expect(screen.getByText('Avg sets')).toBeTruthy();
+    expect(screen.getByText('Peak session')).toBeTruthy();
+    expect(screen.getByText('Wins in range')).toBeTruthy();
+    expect(screen.getByText('Latest signal')).toBeTruthy();
+    expect(screen.getAllByText('Volume PR').length).toBeGreaterThan(0);
+    expect(screen.getByText('Strong push day.')).toBeTruthy();
   });
 });

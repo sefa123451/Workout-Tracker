@@ -5,14 +5,24 @@ import { getLatestExerciseSession } from '../lib/workoutData.js';
 export default function WorkoutFormView({
   exercises,
   splits,
+  templates,
   workouts,
   workoutForm,
+  selectedWorkoutTemplateId,
+  editingTemplateId,
+  templateDraftName,
   editingWorkoutId,
   workoutMessage,
   setWorkoutForm,
+  setSelectedWorkoutTemplateId,
+  setTemplateDraftName,
   updateWorkoutEntry,
   applyLatestWorkoutToEntry,
   handleWorkoutSplitChange,
+  loadWorkoutTemplate,
+  saveCurrentWorkoutAsTemplate,
+  updateSelectedWorkoutTemplate,
+  handleTemplateEditorSubmit,
   handleWorkoutSubmit,
   resetWorkoutForm,
   createSet,
@@ -31,7 +41,9 @@ export default function WorkoutFormView({
         <div className="section-heading">
           <div>
             <p className="section-label">Workout logging</p>
-            <h2>{editingWorkoutId ? 'Edit workout' : 'Log workout'}</h2>
+            <h2>
+              {editingTemplateId ? 'Edit template' : editingWorkoutId ? 'Edit workout' : 'Log workout'}
+            </h2>
           </div>
         </div>
         {!exercises.length ? (
@@ -40,18 +52,58 @@ export default function WorkoutFormView({
             body="Add one movement to start logging."
           />
         ) : (
-          <form className="stack workout-form logging-form" onSubmit={handleWorkoutSubmit}>
+          <form
+            className="stack workout-form logging-form"
+            onSubmit={editingTemplateId ? handleTemplateEditorSubmit : handleWorkoutSubmit}
+          >
             <div className="form-toolbar form-toolbar-highlight">
-              <label className="field field-compact">
-                <span>Workout date</span>
-                <input
-                  type="date"
-                  value={workoutForm.date}
-                  onChange={(event) =>
-                    setWorkoutForm((current) => ({ ...current, date: event.target.value }))
-                  }
-                />
-              </label>
+              {editingTemplateId ? (
+                <label className="field">
+                  <span>Template name</span>
+                  <input
+                    type="text"
+                    value={templateDraftName}
+                    onChange={(event) => setTemplateDraftName(event.target.value)}
+                    placeholder="e.g. Upper day"
+                  />
+                </label>
+              ) : (
+                <>
+                  <label className="field">
+                    <span>Template</span>
+                    <select
+                      value={selectedWorkoutTemplateId}
+                      onChange={(event) => {
+                        const nextTemplateId = event.target.value;
+
+                        if (!nextTemplateId) {
+                          setSelectedWorkoutTemplateId('');
+                          return;
+                        }
+
+                        loadWorkoutTemplate(nextTemplateId);
+                      }}
+                    >
+                      <option value="">No template</option>
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field field-compact">
+                    <span>Workout date</span>
+                    <input
+                      type="date"
+                      value={workoutForm.date}
+                      onChange={(event) =>
+                        setWorkoutForm((current) => ({ ...current, date: event.target.value }))
+                      }
+                    />
+                  </label>
+                </>
+              )}
               <label className="field">
                 <span>Split</span>
                 <select
@@ -71,6 +123,18 @@ export default function WorkoutFormView({
                 </select>
               </label>
             </div>
+
+            <label className="field">
+              <span>Notes</span>
+              <textarea
+                value={workoutForm.notes ?? ''}
+                onChange={(event) =>
+                  setWorkoutForm((current) => ({ ...current, notes: event.target.value }))
+                }
+                placeholder="Optional notes about how the session felt, effort, or anything worth remembering"
+                rows="3"
+              />
+            </label>
 
             {workoutForm.splitId && (
               <div className="suggestion-card split-summary-card">
@@ -367,13 +431,28 @@ export default function WorkoutFormView({
               >
                 Add exercise
               </button>
+              {!editingTemplateId && (
+                <button type="button" className="ghost-button" onClick={saveCurrentWorkoutAsTemplate}>
+                  Save as template
+                </button>
+              )}
+              {selectedWorkoutTemplateId && !editingTemplateId && (
+                <button type="button" className="ghost-button" onClick={updateSelectedWorkoutTemplate}>
+                  Update template
+                </button>
+              )}
+              {editingTemplateId && (
+                <button type="button" className="ghost-button" onClick={resetWorkoutForm}>
+                  Cancel template
+                </button>
+              )}
               {editingWorkoutId && (
                 <button type="button" className="ghost-button" onClick={resetWorkoutForm}>
                   Cancel editing
                 </button>
               )}
               <button type="submit" className="primary-button">
-                {editingWorkoutId ? 'Save changes' : 'Save workout'}
+                {editingTemplateId ? 'Save template' : editingWorkoutId ? 'Save changes' : 'Save workout'}
               </button>
             </div>
 

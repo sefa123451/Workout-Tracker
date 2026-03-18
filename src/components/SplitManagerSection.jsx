@@ -12,6 +12,7 @@ export default function SplitManagerSection({
   resetSplitForm,
   startEditingSplit,
   deleteSplit,
+  moveSavedSplit,
   createSplitExercise,
   getExerciseName,
 }) {
@@ -234,6 +235,24 @@ export default function SplitManagerSection({
                     </p>
                   </div>
                   <div className="history-actions">
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Move split ${split.name} up`}
+                      onClick={() => moveSavedSplit(split.id, 'up')}
+                      disabled={splits[0]?.id === split.id}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Move split ${split.name} down`}
+                      onClick={() => moveSavedSplit(split.id, 'down')}
+                      disabled={splits[splits.length - 1]?.id === split.id}
+                    >
+                      Down
+                    </button>
                     <button
                       type="button"
                       className="ghost-button action-button"

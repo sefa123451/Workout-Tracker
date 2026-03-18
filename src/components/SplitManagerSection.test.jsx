@@ -26,6 +26,7 @@ function renderSplitManagerSection(overrides = {}) {
     resetSplitForm: vi.fn(),
     startEditingSplit: vi.fn(),
     deleteSplit: vi.fn(),
+    moveSavedSplit: vi.fn(),
     createSplitExercise: vi.fn(() => ({ id: 'split-3', exerciseId: '', defaultSets: '3' })),
     getExerciseName: vi.fn((exerciseId) =>
       exerciseId === 'bench' ? 'Bench press' : 'Shoulder press',
@@ -56,5 +57,21 @@ describe('SplitManagerSection', () => {
     });
 
     expect(result.exercises.map((entry) => entry.id)).toEqual(['split-2', 'split-1']);
+  });
+
+  it('calls move handlers for saved splits', async () => {
+    const user = userEvent.setup();
+    const props = renderSplitManagerSection({
+      splits: [
+        { id: 'push', name: 'Push', exercises: [] },
+        { id: 'pull', name: 'Pull', exercises: [] },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Move split Pull up' }));
+    await user.click(screen.getByRole('button', { name: 'Move split Push down' }));
+
+    expect(props.moveSavedSplit).toHaveBeenCalledWith('pull', 'up');
+    expect(props.moveSavedSplit).toHaveBeenCalledWith('push', 'down');
   });
 });

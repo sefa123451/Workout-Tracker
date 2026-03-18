@@ -6,9 +6,14 @@ export default function SettingsView({
   themeOptions,
   dataMessage,
   storageWarning,
+  pendingImport,
   exportAppData,
+  exportWorkoutHistoryCsv,
+  templates,
   fileInputRef,
   handleImportFile,
+  applyPendingImport,
+  clearPendingImport,
 }) {
   return (
     <main className="content-grid settings-layout">
@@ -21,7 +26,7 @@ export default function SettingsView({
         <article className="settings-overview-card">
           <span className="section-label">Data safety</span>
           <strong>Local-first</strong>
-          <p>Export backups any time and restore them when needed.</p>
+          <p>{templates.length} templates ready to reuse and back up.</p>
         </article>
       </section>
 
@@ -71,11 +76,16 @@ export default function SettingsView({
               <div>
                 <span className="section-label">Export</span>
                 <h3>Backup all data</h3>
-                <p>Create a JSON snapshot of exercises, splits, and workouts.</p>
+                <p>Save a full JSON backup or export your workout history as CSV.</p>
               </div>
-              <button type="button" className="secondary-button" onClick={exportAppData}>
-                Export JSON
-              </button>
+              <div className="settings-action-buttons">
+                <button type="button" className="secondary-button" onClick={exportAppData}>
+                  Export JSON
+                </button>
+                <button type="button" className="ghost-button" onClick={exportWorkoutHistoryCsv}>
+                  Export CSV
+                </button>
+              </div>
             </div>
             <div className="settings-action-card">
               <div>
@@ -99,6 +109,50 @@ export default function SettingsView({
               />
             </div>
           </div>
+          {pendingImport && (
+            <div className="settings-import-preview" role="status" aria-live="polite">
+              <div className="settings-import-preview-header">
+                <div>
+                  <span className="section-label">Import preview</span>
+                  <h3>{pendingImport.fileName}</h3>
+                  <p>Choose whether to replace everything or merge new items into your current local data.</p>
+                </div>
+              </div>
+              <div className="settings-import-preview-grid">
+                <div className="settings-note-card">
+                  <span className="section-label">Exercises</span>
+                  <strong>{pendingImport.value.exercises.length}</strong>
+                  <p>Library items ready to import.</p>
+                </div>
+                <div className="settings-note-card">
+                  <span className="section-label">Splits</span>
+                  <strong>{pendingImport.value.splits.length}</strong>
+                  <p>Planner templates included.</p>
+                </div>
+                <div className="settings-note-card">
+                  <span className="section-label">Templates</span>
+                  <strong>{pendingImport.value.templates?.length ?? 0}</strong>
+                  <p>Reusable workout blueprints in this import.</p>
+                </div>
+                <div className="settings-note-card">
+                  <span className="section-label">Workouts</span>
+                  <strong>{pendingImport.value.workouts.length}</strong>
+                  <p>Logged sessions that will replace current history.</p>
+                </div>
+              </div>
+              <div className="actions">
+                <button type="button" className="primary-button" onClick={() => applyPendingImport('replace')}>
+                  Replace data
+                </button>
+                <button type="button" className="secondary-button" onClick={() => applyPendingImport('merge')}>
+                  Merge data
+                </button>
+                <button type="button" className="ghost-button" onClick={clearPendingImport}>
+                  Cancel import
+                </button>
+              </div>
+            </div>
+          )}
           {dataMessage.text && (
             <p
               className={

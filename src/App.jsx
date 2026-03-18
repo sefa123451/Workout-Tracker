@@ -9,6 +9,8 @@ import {
   STORAGE_KEY,
   STORAGE_VERSION,
   buildProgressHistory,
+  buildSplitProgressHistory,
+  buildWorkoutHistoryCsv,
   buildWorkoutEntriesFromSplit,
   createId,
   createSet,
@@ -18,16 +20,21 @@ import {
   createSplitFormFromSplit,
   createWorkoutEntry,
   createWorkoutForm,
+  createWorkoutFormFromTemplate,
   createWorkoutFormFromWorkout,
   filterProgressHistoryByDays,
   formatCalendarDate,
   formatDelta,
   formatDisplayDate,
   formatNumber,
+  getRecentPersonalRecords,
   getTodayInputValue,
+  buildTrainingHeatmap,
   getDashboardSummary,
   getEntryMetrics,
+  mergeImportedData,
   getProgressWindowSummary,
+  getSplitProgressWindowSummary,
   hasImprovement,
   hasPersonalRecord,
   isValidDateInput,
@@ -47,6 +54,7 @@ const NAV_ITEMS = [
 ];
 const PROGRESS_WINDOWS = [7, 30, 90];
 const THEME_STORAGE_KEY = 'workout-tracker-theme';
+const LAST_TEMPLATE_STORAGE_KEY = 'workout-tracker-last-template-id';
 const THEME_OPTIONS = ['system', 'light', 'dark'];
 const VIEW_META = {
   dashboard: {
@@ -181,6 +189,33 @@ function getInitialThemeMode() {
   return 'dark';
 }
 
+function getInitialLastTemplateId() {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  return window.localStorage.getItem(LAST_TEMPLATE_STORAGE_KEY) ?? '';
+}
+
+function moveItem(list, fromIndex, toIndex) {
+  if (
+    !Array.isArray(list) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= list.length ||
+    toIndex >= list.length ||
+    fromIndex === toIndex
+  ) {
+    return list;
+  }
+
+  const nextList = [...list];
+  const [movedItem] = nextList.splice(fromIndex, 1);
+  nextList.splice(toIndex, 0, movedItem);
+
+  return nextList;
+}
+
 function App() {
   const [storedData] = useState(readStoredData);
   const [activeView, setActiveView] = useState('dashboard');
@@ -188,10 +223,14 @@ function App() {
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [exercises, setExercises] = useState(storedData.exercises);
   const [splits, setSplits] = useState(storedData.splits);
+  const [templates, setTemplates] = useState(storedData.templates ?? []);
   const [workouts, setWorkouts] = useState(storedData.workouts);
   const fileInputRef = useRef(null);
+  const undoRestoreRef = useRef(null);
   const [storageWarning, setStorageWarning] = useState('');
   const [dataMessage, setDataMessage] = useState({ type: '', text: '' });
+  const [undoNotice, setUndoNotice] = useState(null);
+  const [pendingImport, setPendingImport] = useState(null);
   const [exerciseName, setExerciseName] = useState('');
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [exerciseMessage, setExerciseMessage] = useState({ type: '', text: '' });
@@ -200,8 +239,14 @@ function App() {
   const [splitMessage, setSplitMessage] = useState({ type: '', text: '' });
   const [workoutMessage, setWorkoutMessage] = useState({ type: '', text: '' });
   const [workoutForm, setWorkoutForm] = useState(createWorkoutForm);
+  const [selectedWorkoutTemplateId, setSelectedWorkoutTemplateId] = useState('');
+  const [lastUsedTemplateId, setLastUsedTemplateId] = useState(getInitialLastTemplateId);
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+  const [templateDraftName, setTemplateDraftName] = useState('');
   const [editingWorkoutId, setEditingWorkoutId] = useState(null);
   const [selectedExerciseId, setSelectedExerciseId] = useState('');
+  const [selectedProgressView, setSelectedProgressView] = useState('exercise');
+  const [selectedSplitProgressId, setSelectedSplitProgressId] = useState('');
   const [selectedProgressWindow, setSelectedProgressWindow] = useState(30);
   const [selectedProgressMetric, setSelectedProgressMetric] = useState('volume');
 
@@ -217,6 +262,7 @@ function App() {
           version: STORAGE_VERSION,
           exercises,
           splits,
+          templates,
           workouts,
         }),
       );
@@ -224,7 +270,7 @@ function App() {
     } catch {
       setStorageWarning('Changes could not be saved locally. Refreshing may restore older data.');
     }
-  }, [exercises, splits, workouts]);
+  }, [exercises, splits, templates, workouts]);
 
   useEffect(() => {
     if (!selectedExerciseId && exercises.length > 0) {
@@ -235,6 +281,16 @@ function App() {
       setSelectedExerciseId(exercises[0]?.id ?? '');
     }
   }, [exercises, selectedExerciseId]);
+
+  useEffect(() => {
+    if (!selectedSplitProgressId && splits.length > 0) {
+      setSelectedSplitProgressId(splits[0].id);
+    }
+
+    if (selectedSplitProgressId && !splits.some((split) => split.id === selectedSplitProgressId)) {
+      setSelectedSplitProgressId(splits[0]?.id ?? '');
+    }
+  }, [selectedSplitProgressId, splits]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
@@ -254,6 +310,24 @@ function App() {
     mediaQuery.addListener(handleChange);
     return () => mediaQuery.removeListener(handleChange);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (lastUsedTemplateId) {
+      window.localStorage.setItem(LAST_TEMPLATE_STORAGE_KEY, lastUsedTemplateId);
+    } else {
+      window.localStorage.removeItem(LAST_TEMPLATE_STORAGE_KEY);
+    }
+  }, [lastUsedTemplateId]);
+
+  useEffect(() => {
+    if (lastUsedTemplateId && !templates.some((template) => template.id === lastUsedTemplateId)) {
+      setLastUsedTemplateId('');
+    }
+  }, [lastUsedTemplateId, templates]);
 
   const resolvedTheme = themeMode === 'system' ? systemTheme : themeMode;
 
@@ -277,12 +351,23 @@ function App() {
     selectedProgressWindow,
   );
   const selectedExerciseWindowSummary = getProgressWindowSummary(selectedExerciseWindowHistory);
+  const selectedSplitHistory = selectedSplitProgressId
+    ? buildSplitProgressHistory(workouts, selectedSplitProgressId)
+    : [];
+  const selectedSplitWindowHistory = filterProgressHistoryByDays(
+    selectedSplitHistory,
+    selectedProgressWindow,
+  );
+  const selectedSplitWindowSummary = getSplitProgressWindowSummary(selectedSplitWindowHistory);
   const totalSetsLogged = workouts.reduce(
     (sum, workout) => sum + workout.entries.reduce((entrySum, entry) => entrySum + entry.sets.length, 0),
     0,
   );
   const latestWorkout = sortedWorkouts[0] ?? null;
+  const lastUsedTemplate = templates.find((template) => template.id === lastUsedTemplateId) ?? null;
   const dashboardSummary = getDashboardSummary(sortedWorkouts);
+  const historyHeatmap = buildTrainingHeatmap(sortedWorkouts, 84);
+  const historyPrTimeline = getRecentPersonalRecords(sortedWorkouts, 90, 8);
   const activeViewMeta = VIEW_META[activeView] ?? VIEW_META.dashboard;
   const sidebarSummary = latestWorkout
     ? `Last log ${formatDisplayDate(latestWorkout.date)}`
@@ -305,6 +390,7 @@ function App() {
       version: STORAGE_VERSION,
       exercises,
       splits,
+      templates,
       workouts,
     };
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
@@ -321,10 +407,83 @@ function App() {
     setDataMessage({ type: 'success', text: 'Exported all app data as JSON.' });
   }
 
+  function exportWorkoutHistoryCsv() {
+    const csv = buildWorkoutHistoryCsv(sortedWorkouts, exercises, splits);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const objectUrl = window.URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    const timestamp = new Date().toISOString().slice(0, 10);
+
+    downloadLink.href = objectUrl;
+    downloadLink.download = `workout-history-${timestamp}.csv`;
+    downloadLink.click();
+    window.URL.revokeObjectURL(objectUrl);
+    setDataMessage({ type: 'success', text: 'Exported workout history as CSV.' });
+  }
+
   function resetAppEditingState() {
     resetExerciseForm();
     resetSplitForm();
     resetWorkoutForm();
+  }
+
+  function clearPendingImport() {
+    setPendingImport(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }
+
+  function clearUndoNotice() {
+    undoRestoreRef.current = null;
+    setUndoNotice(null);
+  }
+
+  function showUndoNotice(text, restore) {
+    undoRestoreRef.current = restore;
+    setUndoNotice({ text });
+  }
+
+  function handleUndoDelete() {
+    if (!undoRestoreRef.current) {
+      return;
+    }
+
+    undoRestoreRef.current();
+    clearUndoNotice();
+    setDataMessage({ type: 'success', text: 'Deletion undone.' });
+  }
+
+  function applyPendingImport(mode = 'replace') {
+    if (!pendingImport) {
+      return;
+    }
+
+    const nextData =
+      mode === 'merge'
+        ? mergeImportedData(
+            { exercises, splits, templates, workouts },
+            pendingImport.value,
+          )
+        : pendingImport.value;
+
+    setExercises(nextData.exercises);
+    setSplits(nextData.splits);
+    setTemplates(nextData.templates ?? []);
+    setWorkouts(nextData.workouts);
+    resetAppEditingState();
+    setSelectedExerciseId(nextData.exercises[0]?.id ?? '');
+    setActiveView('dashboard');
+    setDataMessage({
+      type: 'success',
+      text:
+        mode === 'merge'
+          ? `Merged import. You now have ${nextData.exercises.length} exercises, ${nextData.splits.length} splits, ${nextData.templates?.length ?? 0} templates, and ${nextData.workouts.length} workouts.`
+          : `Imported ${pendingImport.value.exercises.length} exercises, ${pendingImport.value.splits.length} splits, ${pendingImport.value.templates?.length ?? 0} templates, and ${pendingImport.value.workouts.length} workouts.`,
+    });
+    clearUndoNotice();
+    clearPendingImport();
   }
 
   async function handleImportFile(event) {
@@ -341,6 +500,7 @@ function App() {
       try {
         parsed = JSON.parse(fileText);
       } catch {
+        clearPendingImport();
         setDataMessage({ type: 'error', text: 'Selected file is not valid JSON.' });
         return;
       }
@@ -348,28 +508,18 @@ function App() {
       const validatedImport = validateImportedData(parsed);
 
       if (validatedImport.error) {
+        clearPendingImport();
         setDataMessage({ type: 'error', text: validatedImport.error });
         return;
       }
 
-      const confirmed = window.confirm(
-        `Import ${validatedImport.value.exercises.length} exercises, ${validatedImport.value.splits.length} splits, and ${validatedImport.value.workouts.length} workouts? This will replace your current local data.`,
-      );
-
-      if (!confirmed) {
-        setDataMessage({ type: 'warning', text: 'Import canceled. Your current data was kept.' });
-        return;
-      }
-
-      setExercises(validatedImport.value.exercises);
-      setSplits(validatedImport.value.splits);
-      setWorkouts(validatedImport.value.workouts);
-      resetAppEditingState();
-      setSelectedExerciseId(validatedImport.value.exercises[0]?.id ?? '');
-      setActiveView('dashboard');
+      setPendingImport({
+        fileName: file.name,
+        value: validatedImport.value,
+      });
       setDataMessage({
-        type: 'success',
-        text: `Imported ${validatedImport.value.exercises.length} exercises, ${validatedImport.value.splits.length} splits, and ${validatedImport.value.workouts.length} workouts.`,
+        type: 'warning',
+        text: 'Review the import preview below before replacing or merging your current data.',
       });
     } catch {
       setDataMessage({ type: 'error', text: 'Unable to read the selected file.' });
@@ -483,6 +633,14 @@ function App() {
       return;
     }
 
+    const previousExercises = exercises;
+    const previousSplits = splits;
+    const previousSplitForm = splitForm;
+    const previousWorkoutForm = workoutForm;
+    const previousTemplates = templates;
+    const previousEditingExerciseId = editingExerciseId;
+    const previousExerciseName = exerciseName;
+
     setExercises((current) => current.filter((item) => item.id !== exerciseId));
     setSplits((current) =>
       current.map((split) => ({
@@ -506,6 +664,12 @@ function App() {
       ),
       skippedEntries: current.skippedEntries.filter((entry) => entry.exerciseId !== exerciseId),
     }));
+    setTemplates((current) =>
+      current.map((template) => ({
+        ...template,
+        entries: template.entries.filter((entry) => entry.exerciseId !== exerciseId),
+      })),
+    );
 
     if (editingExerciseId === exerciseId) {
       resetExerciseForm();
@@ -518,6 +682,141 @@ function App() {
             : `Deleted ${exercise.name}.`,
       });
     }
+
+    showUndoNotice(`Deleted ${exercise.name}.`, () => {
+      setExercises(previousExercises);
+      setSplits(previousSplits);
+      setSplitForm(previousSplitForm);
+      setWorkoutForm(previousWorkoutForm);
+      setTemplates(previousTemplates);
+      setEditingExerciseId(previousEditingExerciseId);
+      setExerciseName(previousExerciseName);
+      setExerciseMessage({ type: 'success', text: `${exercise.name} restored.` });
+    });
+  }
+
+  function moveExercise(exerciseId, direction) {
+    setExercises((current) => {
+      const fromIndex = current.findIndex((exercise) => exercise.id === exerciseId);
+
+      if (fromIndex === -1) {
+        return current;
+      }
+
+      const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+      return moveItem(current, fromIndex, toIndex);
+    });
+  }
+
+  function getUniqueSplitName(baseName) {
+    const normalizedBaseName = baseName.trim() || 'Workout split';
+    const existingNames = new Set(splits.map((split) => split.name.trim().toLowerCase()));
+
+    if (!existingNames.has(normalizedBaseName.toLowerCase())) {
+      return normalizedBaseName;
+    }
+
+    let suffix = 2;
+
+    while (existingNames.has(`${normalizedBaseName} ${suffix}`.toLowerCase())) {
+      suffix += 1;
+    }
+
+    return `${normalizedBaseName} ${suffix}`;
+  }
+
+  function getUniqueTemplateName(baseName) {
+    const normalizedBaseName = baseName.trim() || 'Workout template';
+    const existingNames = new Set(templates.map((template) => template.name.trim().toLowerCase()));
+
+    if (!existingNames.has(normalizedBaseName.toLowerCase())) {
+      return normalizedBaseName;
+    }
+
+    let suffix = 2;
+
+    while (existingNames.has(`${normalizedBaseName} ${suffix}`.toLowerCase())) {
+      suffix += 1;
+    }
+
+    return `${normalizedBaseName} ${suffix}`;
+  }
+
+  function moveWorkoutTemplate(templateId, direction) {
+    setTemplates((current) => {
+      const fromIndex = current.findIndex((template) => template.id === templateId);
+
+      if (fromIndex === -1) {
+        return current;
+      }
+
+      const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+      return moveItem(current, fromIndex, toIndex);
+    });
+  }
+
+  function renameWorkoutTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      setExerciseMessage({ type: 'error', text: 'Template not found.' });
+      return;
+    }
+
+    const providedName = window.prompt('Template name', template.name);
+
+    if (providedName === null) {
+      return;
+    }
+
+    const templateName = providedName.trim();
+
+    if (!templateName) {
+      setExerciseMessage({ type: 'error', text: 'Template name cannot be empty.' });
+      return;
+    }
+
+    if (
+      templates.some(
+        (item) => item.id !== templateId && item.name.trim().toLowerCase() === templateName.toLowerCase(),
+      )
+    ) {
+      setExerciseMessage({ type: 'error', text: 'Template names should be unique.' });
+      return;
+    }
+
+    setTemplates((current) =>
+      current.map((item) => (item.id === templateId ? { ...item, name: templateName } : item)),
+    );
+    setExerciseMessage({ type: 'success', text: `Renamed template to ${templateName}.` });
+    setActiveView('exercises');
+  }
+
+  function duplicateWorkoutTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      setExerciseMessage({ type: 'error', text: 'Template not found.' });
+      return;
+    }
+
+    const duplicatedTemplate = {
+      ...template,
+      id: createId(),
+      name: getUniqueTemplateName(`${template.name} copy`),
+      createdAt: new Date().toISOString(),
+      entries: template.entries.map((entry) => ({
+        exerciseId: entry.exerciseId,
+        sets: entry.sets.map((set) => ({
+          weight: set.weight,
+          reps: set.reps,
+        })),
+      })),
+    };
+
+    setTemplates((current) => [...current, duplicatedTemplate]);
+    setExerciseMessage({ type: 'success', text: `Duplicated ${template.name}.` });
+    setActiveView('exercises');
   }
 
   function normalizeSplitEntries(form) {
@@ -639,11 +938,23 @@ function App() {
       return;
     }
 
+    const previousSplits = splits;
+    const previousWorkoutForm = workoutForm;
+    const previousTemplates = templates;
+    const previousEditingSplitId = editingSplitId;
+    const previousSplitForm = splitForm;
+
     setSplits((current) => current.filter((item) => item.id !== splitId));
     setWorkoutForm((current) => ({
       ...current,
       splitId: current.splitId === splitId ? '' : current.splitId,
     }));
+    setTemplates((current) =>
+      current.map((template) => ({
+        ...template,
+        splitId: template.splitId === splitId ? '' : template.splitId,
+      })),
+    );
 
     if (editingSplitId === splitId) {
       resetSplitForm();
@@ -656,6 +967,28 @@ function App() {
             : `Deleted ${split.name}.`,
       });
     }
+
+    showUndoNotice(`Deleted ${split.name}.`, () => {
+      setSplits(previousSplits);
+      setWorkoutForm(previousWorkoutForm);
+      setTemplates(previousTemplates);
+      setEditingSplitId(previousEditingSplitId);
+      setSplitForm(previousSplitForm);
+      setSplitMessage({ type: 'success', text: `${split.name} restored.` });
+    });
+  }
+
+  function moveSavedSplit(splitId, direction) {
+    setSplits((current) => {
+      const fromIndex = current.findIndex((split) => split.id === splitId);
+
+      if (fromIndex === -1) {
+        return current;
+      }
+
+      const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
+      return moveItem(current, fromIndex, toIndex);
+    });
   }
 
   function updateWorkoutEntry(entryId, updater) {
@@ -673,11 +1006,13 @@ function App() {
   }
 
   function handleWorkoutSplitChange(splitId) {
+    setSelectedWorkoutTemplateId('');
     setWorkoutForm((current) => {
       if (!splitId) {
         return {
           ...current,
           splitId: '',
+          notes: current.notes,
           entries: current.entries.length > 0 ? current.entries : [createWorkoutEntry()],
           skippedEntries: [],
         };
@@ -696,14 +1031,48 @@ function App() {
       return {
         ...current,
         splitId,
+        notes: current.notes,
         entries: buildWorkoutEntriesFromSplit(split),
         skippedEntries: [],
       };
     });
   }
 
+  function startWorkoutFromSplit(splitId = '') {
+    setEditingWorkoutId(null);
+    setEditingTemplateId(null);
+    setTemplateDraftName('');
+    setSelectedWorkoutTemplateId('');
+    setWorkoutMessage({ type: '', text: '' });
+
+    if (!splitId) {
+      setWorkoutForm(createWorkoutForm());
+      setActiveView('log');
+      return;
+    }
+
+    const split = splits.find((item) => item.id === splitId);
+
+    if (!split) {
+      setWorkoutForm(createWorkoutForm());
+      setWorkoutMessage({ type: 'warning', text: 'Selected split is no longer available. Starting a custom workout instead.' });
+      setActiveView('log');
+      return;
+    }
+
+    setWorkoutForm({
+      ...createWorkoutForm(),
+      splitId,
+      entries: buildWorkoutEntriesFromSplit(split),
+    });
+    setActiveView('log');
+  }
+
   function resetWorkoutForm(clearMessage = true) {
     setWorkoutForm(createWorkoutForm());
+    setSelectedWorkoutTemplateId('');
+    setEditingTemplateId(null);
+    setTemplateDraftName('');
     setEditingWorkoutId(null);
     if (clearMessage) {
       setWorkoutMessage({ type: '', text: '' });
@@ -770,6 +1139,7 @@ function App() {
       value: {
         date: form.date,
         splitId: form.splitId,
+        notes: typeof form.notes === 'string' ? form.notes.trim() : '',
         entries: normalizedEntries,
       },
     };
@@ -784,6 +1154,9 @@ function App() {
     }
 
     setEditingWorkoutId(workout.id);
+    setEditingTemplateId(null);
+    setTemplateDraftName('');
+    setSelectedWorkoutTemplateId('');
     setWorkoutForm(createWorkoutFormFromWorkout(workout));
     setWorkoutMessage({ type: '', text: '' });
     setActiveView('log');
@@ -800,15 +1173,358 @@ function App() {
     const duplicatedForm = createWorkoutFormFromWorkout(workout);
 
     setEditingWorkoutId(null);
+    setEditingTemplateId(null);
+    setTemplateDraftName('');
+    setSelectedWorkoutTemplateId('');
     setWorkoutForm({
       ...duplicatedForm,
       date: getTodayInputValue(),
+      notes: '',
     });
     setWorkoutMessage({
       type: 'success',
       text: `Loaded a copy of ${formatDisplayDate(workout.date)}. Save it as a new workout when ready.`,
     });
     setActiveView('log');
+  }
+
+  function saveWorkoutAsTemplate(workoutId) {
+    const workout = workouts.find((item) => item.id === workoutId);
+
+    if (!workout) {
+      setExerciseMessage({ type: 'error', text: 'Workout not found.' });
+      setActiveView('exercises');
+      return;
+    }
+
+    const sourceSplit = workout.splitId ? splits.find((split) => split.id === workout.splitId) : null;
+    const baseName = sourceSplit ? `${sourceSplit.name} template` : `${formatDisplayDate(workout.date)} template`;
+    const template = {
+      id: createId(),
+      name: getUniqueTemplateName(baseName),
+      splitId: workout.splitId,
+      notes: workout.notes ?? '',
+      createdAt: new Date().toISOString(),
+      entries: workout.entries.map((entry) => ({
+        exerciseId: entry.exerciseId,
+        sets: entry.sets.map((set) => ({
+          weight: set.weight,
+          reps: set.reps,
+        })),
+      })),
+    };
+
+    setTemplates((current) => [...current, template]);
+    setExerciseMessage({ type: 'success', text: `Saved ${template.name}.` });
+    setActiveView('exercises');
+  }
+
+  function saveCurrentWorkoutAsTemplate() {
+    const normalizedWorkout = normalizeWorkoutEntries(workoutForm);
+
+    if (normalizedWorkout.error) {
+      setWorkoutMessage({ type: 'error', text: normalizedWorkout.error });
+      return;
+    }
+
+    const suggestedName = getUniqueTemplateName(
+      workoutForm.splitId ? `${getSplitName(workoutForm.splitId)} template` : 'Workout template',
+    );
+    const providedName = window.prompt('Template name', suggestedName);
+
+    if (providedName === null) {
+      return;
+    }
+
+    const templateName = providedName.trim();
+
+    if (!templateName) {
+      setWorkoutMessage({ type: 'error', text: 'Template name cannot be empty.' });
+      return;
+    }
+
+    if (templates.some((template) => template.name.trim().toLowerCase() === templateName.toLowerCase())) {
+      setWorkoutMessage({ type: 'error', text: 'Template names should be unique.' });
+      return;
+    }
+
+    const template = {
+      id: createId(),
+      name: templateName,
+      splitId: normalizedWorkout.value.splitId,
+      notes: normalizedWorkout.value.notes,
+      createdAt: new Date().toISOString(),
+      entries: normalizedWorkout.value.entries,
+    };
+
+    setTemplates((current) => [...current, template]);
+    setSelectedWorkoutTemplateId(template.id);
+    setWorkoutMessage({ type: 'success', text: `Saved ${template.name}.` });
+  }
+
+  function updateSelectedWorkoutTemplate() {
+    if (!selectedWorkoutTemplateId) {
+      setWorkoutMessage({ type: 'error', text: 'Choose a template before updating it.' });
+      return;
+    }
+
+    const template = templates.find((item) => item.id === selectedWorkoutTemplateId);
+
+    if (!template) {
+      setSelectedWorkoutTemplateId('');
+      setWorkoutMessage({ type: 'error', text: 'Selected template is no longer available.' });
+      return;
+    }
+
+    const normalizedWorkout = normalizeWorkoutEntries(workoutForm);
+
+    if (normalizedWorkout.error) {
+      setWorkoutMessage({ type: 'error', text: normalizedWorkout.error });
+      return;
+    }
+
+    setTemplates((current) =>
+      current.map((item) =>
+        item.id === selectedWorkoutTemplateId
+          ? {
+              ...item,
+              splitId: normalizedWorkout.value.splitId,
+              notes: normalizedWorkout.value.notes,
+              entries: normalizedWorkout.value.entries,
+            }
+          : item,
+      ),
+    );
+    setWorkoutMessage({ type: 'success', text: `Updated ${template.name}.` });
+  }
+
+  function startEditingWorkoutTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      setExerciseMessage({ type: 'error', text: 'Template not found.' });
+      setActiveView('exercises');
+      return;
+    }
+
+    setEditingWorkoutId(null);
+    setEditingTemplateId(template.id);
+    setTemplateDraftName(template.name);
+    setSelectedWorkoutTemplateId(template.id);
+    setWorkoutForm(createWorkoutFormFromTemplate(template));
+    setWorkoutMessage({ type: '', text: '' });
+    setActiveView('log');
+  }
+
+  function handleTemplateEditorSubmit(event) {
+    event.preventDefault();
+    setWorkoutMessage({ type: '', text: '' });
+
+    if (!editingTemplateId) {
+      setWorkoutMessage({ type: 'error', text: 'Choose a template before saving changes.' });
+      return;
+    }
+
+    const template = templates.find((item) => item.id === editingTemplateId);
+
+    if (!template) {
+      resetWorkoutForm(false);
+      setWorkoutMessage({ type: 'error', text: 'This template is no longer available.' });
+      return;
+    }
+
+    const nextTemplateName = templateDraftName.trim();
+
+    if (!nextTemplateName) {
+      setWorkoutMessage({ type: 'error', text: 'Template name cannot be empty.' });
+      return;
+    }
+
+    if (
+      templates.some(
+        (item) =>
+          item.id !== editingTemplateId &&
+          item.name.trim().toLowerCase() === nextTemplateName.toLowerCase(),
+      )
+    ) {
+      setWorkoutMessage({ type: 'error', text: 'Template names should be unique.' });
+      return;
+    }
+
+    const normalizedWorkout = normalizeWorkoutEntries(workoutForm);
+
+    if (normalizedWorkout.error) {
+      setWorkoutMessage({ type: 'error', text: normalizedWorkout.error });
+      return;
+    }
+
+    setTemplates((current) =>
+      current.map((item) =>
+        item.id === editingTemplateId
+          ? {
+              ...item,
+              name: nextTemplateName,
+              splitId: normalizedWorkout.value.splitId,
+              notes: normalizedWorkout.value.notes,
+              entries: normalizedWorkout.value.entries,
+            }
+          : item,
+      ),
+    );
+    resetWorkoutForm();
+    setExerciseMessage({ type: 'success', text: `Updated ${nextTemplateName}.` });
+    setActiveView('exercises');
+  }
+
+  function createSplitFromTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      setSplitMessage({ type: 'error', text: 'Template not found.' });
+      setActiveView('exercises');
+      return;
+    }
+
+    const existingExerciseIds = new Set(exercises.map((exercise) => exercise.id));
+    const seededExercises = template.entries
+      .filter((entry) => existingExerciseIds.has(entry.exerciseId))
+      .map((entry) => createSplitExercise(entry.exerciseId, Math.max(entry.sets.length, 1)));
+    const sourceSplit = template.splitId ? splits.find((split) => split.id === template.splitId) : null;
+    const fallbackName = sourceSplit
+      ? `${sourceSplit.name} copy`
+      : template.name.toLowerCase().includes('template')
+        ? template.name.replace(/template/i, 'split')
+        : `${template.name} split`;
+
+    setEditingSplitId(null);
+    setSplitForm({
+      name: getUniqueSplitName(fallbackName),
+      exercises: seededExercises.length ? seededExercises : [createSplitExercise()],
+    });
+    setSplitMessage({
+      type: 'success',
+      text: seededExercises.length
+        ? 'Loaded template into the split planner.'
+        : 'Loaded template into the split planner. Add exercises to finish the split.',
+    });
+    setActiveView('exercises');
+  }
+
+  function createSplitFromWorkout(workoutId) {
+    const workout = workouts.find((item) => item.id === workoutId);
+
+    if (!workout) {
+      setSplitMessage({ type: 'error', text: 'Workout not found.' });
+      setActiveView('exercises');
+      return;
+    }
+
+    const existingExerciseIds = new Set(exercises.map((exercise) => exercise.id));
+    const seededExercises = workout.entries
+      .filter((entry) => existingExerciseIds.has(entry.exerciseId))
+      .map((entry) => createSplitExercise(entry.exerciseId, Math.max(entry.sets.length, 1)));
+    const sourceSplit = workout.splitId ? splits.find((split) => split.id === workout.splitId) : null;
+    const fallbackName = sourceSplit ? `${sourceSplit.name} copy` : `${formatDisplayDate(workout.date)} split`;
+
+    setEditingSplitId(null);
+    setSplitForm({
+      name: getUniqueSplitName(fallbackName),
+      exercises: seededExercises.length ? seededExercises : [createSplitExercise()],
+    });
+    setSplitMessage({
+      type: 'success',
+      text: seededExercises.length
+        ? 'Loaded workout as a new split template.'
+        : 'Loaded workout into the split planner. Add exercises to finish the template.',
+    });
+    setActiveView('exercises');
+  }
+
+  function loadWorkoutTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      setSelectedWorkoutTemplateId('');
+      setWorkoutMessage({ type: 'error', text: 'Template not found.' });
+      setActiveView('log');
+      return;
+    }
+
+    setEditingWorkoutId(null);
+    setEditingTemplateId(null);
+    setTemplateDraftName('');
+    setLastUsedTemplateId(template.id);
+    setSelectedWorkoutTemplateId(template.id);
+    setWorkoutForm(createWorkoutFormFromTemplate(template));
+    setWorkoutMessage({
+      type: 'success',
+      text: `Loaded ${template.name}. Save it as a new workout when ready.`,
+    });
+    setActiveView('log');
+  }
+
+  function deleteWorkoutTemplate(templateId) {
+    const template = templates.find((item) => item.id === templateId);
+
+    if (!template) {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete template ${template.name}?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    const previousTemplates = templates;
+    const previousSelectedTemplateId = selectedWorkoutTemplateId;
+    const previousLastUsedTemplateId = lastUsedTemplateId;
+
+    setTemplates((current) => current.filter((item) => item.id !== templateId));
+
+    if (selectedWorkoutTemplateId === templateId) {
+      setSelectedWorkoutTemplateId('');
+    }
+
+    if (lastUsedTemplateId === templateId) {
+      setLastUsedTemplateId('');
+    }
+
+    showUndoNotice(`Deleted ${template.name}.`, () => {
+      setTemplates(previousTemplates);
+      setSelectedWorkoutTemplateId(previousSelectedTemplateId);
+      setLastUsedTemplateId(previousLastUsedTemplateId);
+      setExerciseMessage({ type: 'success', text: `${template.name} restored.` });
+    });
+  }
+
+  function startWorkoutFromLastUsedTemplate() {
+    if (!lastUsedTemplateId) {
+      startWorkoutFromSplit('');
+      return;
+    }
+
+    const template = templates.find((item) => item.id === lastUsedTemplateId);
+
+    if (!template) {
+      setLastUsedTemplateId('');
+      startWorkoutFromSplit('');
+      setWorkoutMessage({
+        type: 'warning',
+        text: 'Last used template is no longer available. Starting a custom workout instead.',
+      });
+      return;
+    }
+
+    loadWorkoutTemplate(template.id);
+  }
+
+  function repeatLatestWorkout() {
+    if (!latestWorkout) {
+      return;
+    }
+
+    duplicateWorkout(latestWorkout.id);
   }
 
   function deleteWorkout(workoutId) {
@@ -824,11 +1540,22 @@ function App() {
       return;
     }
 
+    const previousWorkouts = workouts;
+    const previousEditingWorkoutId = editingWorkoutId;
+    const previousWorkoutForm = workoutForm;
+
     setWorkouts((current) => sortWorkouts(current.filter((item) => item.id !== workoutId)));
 
     if (editingWorkoutId === workoutId) {
       resetWorkoutForm();
     }
+
+    showUndoNotice(`Deleted workout from ${formatDisplayDate(workout.date)}.`, () => {
+      setWorkouts(previousWorkouts);
+      setEditingWorkoutId(previousEditingWorkoutId);
+      setWorkoutForm(previousWorkoutForm);
+      setWorkoutMessage({ type: 'success', text: 'Workout restored.' });
+    });
   }
 
   function handleWorkoutSubmit(event) {
@@ -857,6 +1584,7 @@ function App() {
                   ...workout,
                   date: normalizedWorkout.value.date,
                   splitId: normalizedWorkout.value.splitId,
+                  notes: normalizedWorkout.value.notes,
                   entries: normalizedWorkout.value.entries,
                 }
               : workout,
@@ -870,12 +1598,14 @@ function App() {
         id: createId(),
         date: normalizedWorkout.value.date,
         splitId: normalizedWorkout.value.splitId,
+        notes: normalizedWorkout.value.notes,
         createdAt: new Date().toISOString(),
         entries: normalizedWorkout.value.entries,
       };
 
       setWorkouts((current) => sortWorkouts([...current, newWorkout]));
       setWorkoutForm(createWorkoutForm());
+      setSelectedWorkoutTemplateId('');
       setWorkoutMessage({ type: 'success', text: 'Workout saved.' });
     }
 
@@ -964,9 +1694,25 @@ function App() {
             </p>
           )}
 
+          {undoNotice && (
+            <div className="feedback warning undo-banner" role="status" aria-live="polite">
+              <span>{undoNotice.text}</span>
+              <div className="undo-banner-actions">
+                <button type="button" className="ghost-button" onClick={handleUndoDelete}>
+                  Undo delete
+                </button>
+                <button type="button" className="ghost-button" onClick={clearUndoNotice}>
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeView === 'dashboard' && (
             <DashboardView
               exercises={exercises}
+              splits={splits}
+              templates={templates}
               workouts={workouts}
               totalSetsLogged={totalSetsLogged}
               dashboardSummary={dashboardSummary}
@@ -980,6 +1726,11 @@ function App() {
               exportAppData={exportAppData}
               fileInputRef={fileInputRef}
               handleImportFile={handleImportFile}
+              startWorkoutFromSplit={startWorkoutFromSplit}
+              repeatLatestWorkout={repeatLatestWorkout}
+              loadWorkoutTemplate={loadWorkoutTemplate}
+              lastUsedTemplate={lastUsedTemplate}
+              startWorkoutFromLastUsedTemplate={startWorkoutFromLastUsedTemplate}
             />
           )}
 
@@ -995,6 +1746,7 @@ function App() {
               formatCalendarDate={formatCalendarDate}
               startEditingExercise={startEditingExercise}
               deleteExercise={deleteExercise}
+              moveExercise={moveExercise}
               splits={splits}
               splitForm={splitForm}
               setSplitForm={setSplitForm}
@@ -1004,8 +1756,17 @@ function App() {
               resetSplitForm={resetSplitForm}
               startEditingSplit={startEditingSplit}
               deleteSplit={deleteSplit}
+              moveSavedSplit={moveSavedSplit}
               createSplitExercise={createSplitExercise}
               getExerciseName={getExerciseName}
+              templates={templates}
+              loadWorkoutTemplate={loadWorkoutTemplate}
+              deleteWorkoutTemplate={deleteWorkoutTemplate}
+              moveWorkoutTemplate={moveWorkoutTemplate}
+              renameWorkoutTemplate={renameWorkoutTemplate}
+              duplicateWorkoutTemplate={duplicateWorkoutTemplate}
+              createSplitFromTemplate={createSplitFromTemplate}
+              startEditingWorkoutTemplate={startEditingWorkoutTemplate}
             />
           )}
 
@@ -1013,14 +1774,24 @@ function App() {
             <WorkoutFormView
               exercises={exercises}
               splits={splits}
+              templates={templates}
               workouts={workouts}
               workoutForm={workoutForm}
+              selectedWorkoutTemplateId={selectedWorkoutTemplateId}
+              editingTemplateId={editingTemplateId}
+              templateDraftName={templateDraftName}
               editingWorkoutId={editingWorkoutId}
               workoutMessage={workoutMessage}
               setWorkoutForm={setWorkoutForm}
+              setSelectedWorkoutTemplateId={setSelectedWorkoutTemplateId}
+              setTemplateDraftName={setTemplateDraftName}
               updateWorkoutEntry={updateWorkoutEntry}
               applyLatestWorkoutToEntry={applyLatestWorkoutToEntry}
               handleWorkoutSplitChange={handleWorkoutSplitChange}
+              loadWorkoutTemplate={loadWorkoutTemplate}
+              saveCurrentWorkoutAsTemplate={saveCurrentWorkoutAsTemplate}
+              updateSelectedWorkoutTemplate={updateSelectedWorkoutTemplate}
+              handleTemplateEditorSubmit={handleTemplateEditorSubmit}
               handleWorkoutSubmit={handleWorkoutSubmit}
               resetWorkoutForm={resetWorkoutForm}
               createSet={createSet}
@@ -1035,22 +1806,31 @@ function App() {
           {activeView === 'history' && (
             <HistoryView
               sortedWorkouts={sortedWorkouts}
+              historyHeatmap={historyHeatmap}
+              historyPrTimeline={historyPrTimeline}
               getExerciseName={getExerciseName}
               getSplitName={getSplitName}
               formatDisplayDate={formatDisplayDate}
               formatNumber={formatNumber}
               getEntryMetrics={getEntryMetrics}
-          startEditingWorkout={startEditingWorkout}
-          duplicateWorkout={duplicateWorkout}
-          deleteWorkout={deleteWorkout}
-        />
-      )}
+              startEditingWorkout={startEditingWorkout}
+              duplicateWorkout={duplicateWorkout}
+              saveWorkoutAsTemplate={saveWorkoutAsTemplate}
+              createSplitFromWorkout={createSplitFromWorkout}
+              deleteWorkout={deleteWorkout}
+            />
+          )}
 
           {activeView === 'progress' && (
             <ProgressView
               exercises={exercises}
+              splits={splits}
+              selectedProgressView={selectedProgressView}
+              setSelectedProgressView={setSelectedProgressView}
               selectedExerciseId={selectedExerciseId}
               setSelectedExerciseId={setSelectedExerciseId}
+              selectedSplitProgressId={selectedSplitProgressId}
+              setSelectedSplitProgressId={setSelectedSplitProgressId}
               progressWindows={PROGRESS_WINDOWS}
               selectedProgressWindow={selectedProgressWindow}
               setSelectedProgressWindow={setSelectedProgressWindow}
@@ -1059,6 +1839,10 @@ function App() {
               selectedExerciseHistory={selectedExerciseHistory}
               selectedExerciseWindowHistory={selectedExerciseWindowHistory}
               selectedExerciseWindowSummary={selectedExerciseWindowSummary}
+              selectedSplitHistory={selectedSplitHistory}
+              selectedSplitWindowHistory={selectedSplitWindowHistory}
+              selectedSplitWindowSummary={selectedSplitWindowSummary}
+              getSplitName={getSplitName}
               formatDisplayDate={formatDisplayDate}
               formatDelta={formatDelta}
               formatNumber={formatNumber}
@@ -1074,9 +1858,14 @@ function App() {
               themeOptions={THEME_OPTIONS}
               dataMessage={dataMessage}
               storageWarning={storageWarning}
+              pendingImport={pendingImport}
               exportAppData={exportAppData}
+              exportWorkoutHistoryCsv={exportWorkoutHistoryCsv}
+              templates={templates}
               fileInputRef={fileInputRef}
               handleImportFile={handleImportFile}
+              applyPendingImport={applyPendingImport}
+              clearPendingImport={clearPendingImport}
             />
           )}
         </div>

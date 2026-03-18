@@ -4,6 +4,8 @@ import StatCard from './StatCard.jsx';
 
 export default function DashboardView({
   exercises,
+  splits,
+  templates,
   workouts,
   totalSetsLogged,
   dashboardSummary,
@@ -17,6 +19,11 @@ export default function DashboardView({
   exportAppData,
   fileInputRef,
   handleImportFile,
+  startWorkoutFromSplit,
+  repeatLatestWorkout,
+  loadWorkoutTemplate,
+  lastUsedTemplate,
+  startWorkoutFromLastUsedTemplate,
 }) {
   const focusTitle = latestWorkout ? getSplitName(latestWorkout.splitId) : 'Next session';
   const focusSubtitle = latestWorkout
@@ -38,6 +45,36 @@ export default function DashboardView({
     ...dashboardSummary.weeklyVolumeTrend.map((day) => day.volume),
     1,
   );
+  const suggestedSplitId =
+    latestWorkout?.splitId && latestWorkout.splitId !== ''
+      ? latestWorkout.splitId
+      : splits[0]?.id ?? '';
+  const suggestedSplitName = suggestedSplitId ? getSplitName(suggestedSplitId) : '';
+  const volumeDeltaPositive = dashboardSummary.volumeDeltaVsLastWeek >= 0;
+  const workoutDeltaPositive = dashboardSummary.workoutDeltaVsLastWeek >= 0;
+  const heatmapActiveDays = dashboardSummary.trainingHeatmap.filter((day) => day.count > 0).length;
+  const heatmapSessionCount = dashboardSummary.trainingHeatmap.reduce(
+    (sum, day) => sum + day.count,
+    0,
+  );
+  const heatmapPeakVolume = dashboardSummary.trainingHeatmap.reduce(
+    (peak, day) => Math.max(peak, day.volume),
+    0,
+  );
+  const splitInsightPrimary = dashboardSummary.topSplitThisMonth
+    ? {
+        title: getSplitName(dashboardSummary.topSplitThisMonth.splitId),
+        value: `${formatNumber(dashboardSummary.topSplitThisMonth.volume)}`,
+        helper: `${dashboardSummary.topSplitThisMonth.count} ${dashboardSummary.topSplitThisMonth.count === 1 ? 'session' : 'sessions'} this month`,
+      }
+    : null;
+  const splitInsightSecondary = dashboardSummary.mostUsedSplit
+    ? {
+        title: getSplitName(dashboardSummary.mostUsedSplit.splitId),
+        value: String(dashboardSummary.mostUsedSplit.count),
+        helper: 'Most logged split',
+      }
+    : null;
 
   return (
     <main className="content-grid dashboard-grid">
@@ -100,6 +137,39 @@ export default function DashboardView({
                 <span>{day.label}</span>
               </div>
             ))}
+          </div>
+        </div>
+
+        <div className="dashboard-heatmap-card">
+          <div className="section-heading compact-heading">
+            <div>
+              <p className="section-label">Training calendar</p>
+              <h2>Last 28 days</h2>
+            </div>
+            <div className="dashboard-heatmap-meta">
+              <span>{heatmapActiveDays} active days</span>
+              <span>{heatmapSessionCount} sessions</span>
+              <span>{heatmapPeakVolume ? `${formatNumber(heatmapPeakVolume)} peak` : 'No peak yet'}</span>
+            </div>
+          </div>
+          <div className="dashboard-heatmap-grid" aria-label="Training heatmap">
+            {dashboardSummary.trainingHeatmap.map((day) => (
+              <div
+                key={day.date}
+                className={`dashboard-heatmap-cell level-${day.level}`}
+                title={`${formatDisplayDate(day.date)} • ${day.count} ${day.count === 1 ? 'session' : 'sessions'} • ${formatNumber(day.volume)} volume`}
+                aria-label={`${formatDisplayDate(day.date)} with ${day.count} ${day.count === 1 ? 'session' : 'sessions'}`}
+              />
+            ))}
+          </div>
+          <div className="dashboard-heatmap-legend">
+            <span>Light</span>
+            <div className="dashboard-heatmap-scale" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((level) => (
+                <span key={level} className={`dashboard-heatmap-cell level-${level}`} />
+              ))}
+            </div>
+            <span>Heavy</span>
           </div>
         </div>
 
@@ -241,7 +311,191 @@ export default function DashboardView({
                 <strong>{totalSetsLogged}</strong>
               </div>
             </div>
+            <div className="actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => startWorkoutFromSplit(suggestedSplitId)}
+              >
+                {suggestedSplitId ? `Start ${suggestedSplitName}` : 'Start custom workout'}
+              </button>
+              {latestWorkout && (
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={repeatLatestWorkout}
+                >
+                  Repeat last workout
+                </button>
+              )}
+              {lastUsedTemplate && (
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={startWorkoutFromLastUsedTemplate}
+                >
+                  Start last template
+                </button>
+              )}
+            </div>
           </div>
+        </section>
+
+        <section className="panel panel-highlight">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Momentum</p>
+              <h2>This week vs last</h2>
+            </div>
+          </div>
+          <div className="dashboard-momentum-card">
+            <div className="dashboard-momentum-grid">
+              <div className="dashboard-momentum-stat">
+                <span>Volume</span>
+                <strong>
+                  {volumeDeltaPositive ? '+' : ''}
+                  {formatNumber(dashboardSummary.volumeDeltaVsLastWeek)}
+                </strong>
+                <p>
+                  {formatNumber(dashboardSummary.totalVolumeThisWeek)} this week
+                  {' • '}
+                  {formatNumber(dashboardSummary.totalVolumeLastWeek)} last week
+                </p>
+              </div>
+              <div className="dashboard-momentum-stat">
+                <span>Sessions</span>
+                <strong>
+                  {workoutDeltaPositive ? '+' : ''}
+                  {dashboardSummary.workoutDeltaVsLastWeek}
+                </strong>
+                <p>
+                  {dashboardSummary.workoutsThisWeek} this week
+                  {' • '}
+                  {dashboardSummary.workoutsLastWeek} last week
+                </p>
+              </div>
+            </div>
+            <div className="dashboard-momentum-meta">
+              <span>
+                PRs this week <strong>{dashboardSummary.currentWeekPrHits}</strong>
+              </span>
+              <span>
+                Best day{' '}
+                <strong>
+                  {dashboardSummary.bestTrainingDayLabel || '--'}
+                  {dashboardSummary.bestTrainingDayVolume
+                    ? ` • ${formatNumber(dashboardSummary.bestTrainingDayVolume)}`
+                    : ''}
+                </strong>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel panel-highlight">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Consistency</p>
+              <h2>Keep the rhythm</h2>
+            </div>
+          </div>
+          <div className="dashboard-consistency-card">
+            <div className="dashboard-consistency-top">
+              <div className="dashboard-consistency-stat">
+                <span>Active weeks</span>
+                <strong>{dashboardSummary.activeWeekStreak}</strong>
+                <p>{dashboardSummary.activeWeekStreak === 1 ? 'week in a row' : 'weeks in a row'}</p>
+              </div>
+              <div className="dashboard-consistency-stat">
+                <span>Best run</span>
+                <strong>{dashboardSummary.longestActiveWeekStreak}</strong>
+                <p>{dashboardSummary.longestActiveWeekStreak === 1 ? 'week best' : 'weeks best'}</p>
+              </div>
+            </div>
+            <div className="dashboard-consistency-meta">
+              <span>
+                This month <strong>{dashboardSummary.workoutsThisMonth} workouts</strong>
+              </span>
+              <span>
+                Month volume <strong>{formatNumber(dashboardSummary.totalVolumeThisMonth)}</strong>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel panel-highlight">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Split insights</p>
+              <h2>Templates that carry you</h2>
+            </div>
+          </div>
+          <div className="dashboard-split-insights-card">
+            <div className="dashboard-split-insight dashboard-split-insight-primary">
+              <div className="dashboard-split-insight-top">
+                <span className="metric-label">Top split this month</span>
+                <span className="dashboard-split-insight-value">
+                  {splitInsightPrimary ? splitInsightPrimary.value : '--'}
+                </span>
+              </div>
+              <strong>{splitInsightPrimary ? splitInsightPrimary.title : '--'}</strong>
+              <p>
+                {splitInsightPrimary
+                  ? `${splitInsightPrimary.helper}`
+                  : 'Log more split-based workouts to surface a monthly leader.'}
+              </p>
+            </div>
+            <div className="dashboard-split-insight dashboard-split-insight-secondary">
+              <div className="dashboard-split-insight-top">
+                <span className="metric-label">Most used overall</span>
+                <span className="dashboard-split-insight-value">
+                  {splitInsightSecondary ? splitInsightSecondary.value : '--'}
+                </span>
+              </div>
+              <strong>{splitInsightSecondary ? splitInsightSecondary.title : '--'}</strong>
+              <p>
+                {splitInsightSecondary
+                  ? 'Logged more often than every other split'
+                  : 'Your history has no recurring split yet.'}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel panel-highlight">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Quick templates</p>
+              <h2>Reuse a session</h2>
+            </div>
+          </div>
+          {templates.length ? (
+            <div className="dashboard-template-list">
+              {templates.slice(0, 3).map((template) => (
+                <article key={template.id} className="dashboard-template-card">
+                  <div>
+                    <strong>{template.name}</strong>
+                    <p>
+                      {template.entries.length} {template.entries.length === 1 ? 'exercise' : 'exercises'}
+                    </p>
+                    {lastUsedTemplate?.id === template.id && <p>Last used</p>}
+                  </div>
+                  <button
+                    type="button"
+                    className="ghost-button action-button"
+                    onClick={() => loadWorkoutTemplate(template.id)}
+                  >
+                    Use template
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No templates yet"
+              body="Save one workout as a template to reuse it here."
+            />
+          )}
         </section>
 
         <section className="panel panel-highlight">

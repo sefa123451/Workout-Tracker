@@ -13,7 +13,9 @@ export default function ExerciseView({
   formatCalendarDate,
   startEditingExercise,
   deleteExercise,
+  moveExercise,
   splits,
+  templates,
   splitForm,
   setSplitForm,
   editingSplitId,
@@ -24,6 +26,13 @@ export default function ExerciseView({
   deleteSplit,
   createSplitExercise,
   getExerciseName,
+  loadWorkoutTemplate,
+  deleteWorkoutTemplate,
+  moveWorkoutTemplate,
+  renameWorkoutTemplate,
+  duplicateWorkoutTemplate,
+  createSplitFromTemplate,
+  startEditingWorkoutTemplate,
 }) {
   return (
     <main className="content-grid library-layout">
@@ -99,6 +108,24 @@ export default function ExerciseView({
                     <button
                       type="button"
                       className="ghost-button action-button"
+                      aria-label={`Move ${exercise.name} up`}
+                      onClick={() => moveExercise(exercise.id, 'up')}
+                      disabled={exercises[0]?.id === exercise.id}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Move ${exercise.name} down`}
+                      onClick={() => moveExercise(exercise.id, 'down')}
+                      disabled={exercises[exercises.length - 1]?.id === exercise.id}
+                    >
+                      Down
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
                       aria-label={`Edit ${exercise.name}`}
                       onClick={() => startEditingExercise(exercise.id)}
                     >
@@ -124,6 +151,109 @@ export default function ExerciseView({
           <EmptyState
             title="No exercises yet"
             body="Add your first movement to start logging."
+          />
+        )}
+      </section>
+
+      <section className="panel panel-highlight">
+        <div className="section-heading">
+          <div>
+            <p className="section-label">Workout templates</p>
+            <h2>Templates</h2>
+          </div>
+        </div>
+        {templates.length ? (
+          <div className="exercise-grid library-grid">
+            {templates.map((template) => (
+              <article key={template.id} className="exercise-card library-card">
+                <div className="exercise-card-header">
+                  <div>
+                    <h3>{template.name}</h3>
+                    <p>
+                      {template.entries.length} {template.entries.length === 1 ? 'exercise' : 'exercises'}
+                    </p>
+                  </div>
+                  <div className="history-actions">
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Move template ${template.name} up`}
+                      onClick={() => moveWorkoutTemplate(template.id, 'up')}
+                      disabled={templates[0]?.id === template.id}
+                    >
+                      Up
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Move template ${template.name} down`}
+                      onClick={() => moveWorkoutTemplate(template.id, 'down')}
+                      disabled={templates[templates.length - 1]?.id === template.id}
+                    >
+                      Down
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Edit template ${template.name}`}
+                      onClick={() => startEditingWorkoutTemplate(template.id)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Use template ${template.name}`}
+                      onClick={() => loadWorkoutTemplate(template.id)}
+                    >
+                      Use
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Duplicate template ${template.name}`}
+                      onClick={() => duplicateWorkoutTemplate(template.id)}
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Use template ${template.name} as a split template`}
+                      onClick={() => createSplitFromTemplate(template.id)}
+                    >
+                      To split
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      aria-label={`Rename template ${template.name}`}
+                      onClick={() => renameWorkoutTemplate(template.id)}
+                    >
+                      Rename
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button danger-button"
+                      aria-label={`Delete template ${template.name}`}
+                      onClick={() => deleteWorkoutTemplate(template.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+                <div className="library-card-meta">
+                  <span className="library-meta-pill">
+                    {template.splitId ? 'Split linked' : 'Custom template'}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No templates yet"
+            body="Save a workout as a template to reuse full sessions quickly."
           />
         )}
       </section>

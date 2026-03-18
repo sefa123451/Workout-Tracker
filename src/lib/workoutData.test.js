@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   buildProgressHistory,
+  buildSplitProgressHistory,
+  buildWorkoutHistoryCsv,
   filterProgressHistoryByDays,
   getEntryMetrics,
   getDashboardSummary,
   getProgressWindowSummary,
+  getSplitProgressWindowSummary,
   isValidDateInput,
   parseSet,
   validateImportedData,
@@ -45,6 +48,34 @@ describe('metric helpers', () => {
       bestReps: 8,
       totalVolume: 870,
     });
+  });
+
+  it('builds workout history CSV rows with split and notes data', () => {
+    const csv = buildWorkoutHistoryCsv(
+      [
+        {
+          id: 'w1',
+          date: '2024-01-12',
+          splitId: 'push',
+          notes: 'Top set felt easy',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [
+                { weight: 80, reps: 8 },
+                { weight: 82.5, reps: 6 },
+              ],
+            },
+          ],
+        },
+      ],
+      [{ id: 'bench', name: 'Bench press' }],
+      [{ id: 'push', name: 'Push' }],
+    );
+
+    expect(csv).toContain('Date,Split,Exercise,Set,Weight,Reps,Volume,Notes');
+    expect(csv).toContain('2024-01-12,Push,Bench press,1,80,8,640,Top set felt easy');
+    expect(csv).toContain('2024-01-12,Push,Bench press,2,82.5,6,495,Top set felt easy');
   });
 });
 
@@ -96,6 +127,7 @@ describe('import validation', () => {
           id: 'w1',
           date: '2024-01-12',
           splitId: '',
+          notes: 'Felt sharp and steady.',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },
@@ -112,11 +144,13 @@ describe('import validation', () => {
         },
       ],
       splits: [],
+      templates: [],
       workouts: [
         {
           id: 'w1',
           date: '2024-01-12',
           splitId: '',
+          notes: 'Felt sharp and steady.',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },
@@ -164,6 +198,56 @@ describe('import validation', () => {
             defaultSets: 4,
           },
         ],
+      },
+    ]);
+  });
+
+  it('accepts valid templates and rejects duplicate template names', () => {
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Bench press' }],
+        templates: [
+          {
+            id: 'template-1',
+            name: 'Push template',
+            entries: [{ exerciseId: '1', sets: [{ weight: 80, reps: 8 }] }],
+          },
+          {
+            id: 'template-2',
+            name: ' push template ',
+            entries: [{ exerciseId: '1', sets: [{ weight: 82.5, reps: 6 }] }],
+          },
+        ],
+        workouts: [],
+      }),
+    ).toEqual({
+      error: 'Imported templates contain duplicate names.',
+    });
+
+    const result = validateImportedData({
+      exercises: [{ id: '1', name: 'Bench press' }],
+      templates: [
+        {
+          id: 'template-1',
+          name: 'Push template',
+          splitId: '',
+          notes: 'Top sets first',
+          createdAt: '2024-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: '1', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      workouts: [],
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.value.templates).toEqual([
+      {
+        id: 'template-1',
+        name: 'Push template',
+        splitId: '',
+        notes: 'Top sets first',
+        createdAt: '2024-01-12T10:00:00.000Z',
+        entries: [{ exerciseId: '1', sets: [{ weight: 80, reps: 8 }] }],
       },
     ]);
   });
@@ -241,6 +325,80 @@ describe('progress history', () => {
       averageVolume: 525,
       bestWeight: 110,
       latestWeight: 110,
+    });
+  });
+});
+
+describe('split progress history', () => {
+  const workouts = [
+    {
+      id: 'w1',
+      date: '2024-01-05',
+      splitId: 'push',
+      createdAt: '2024-01-05T08:00:00.000Z',
+      entries: [
+        {
+          exerciseId: 'bench',
+          sets: [{ weight: 80, reps: 8 }],
+        },
+      ],
+    },
+    {
+      id: 'w2',
+      date: '2024-01-12',
+      splitId: 'push',
+      notes: 'Felt stronger this week.',
+      createdAt: '2024-01-12T08:00:00.000Z',
+      entries: [
+        {
+          exerciseId: 'bench',
+          sets: [{ weight: 85, reps: 8 }],
+        },
+        {
+          exerciseId: 'press',
+          sets: [{ weight: 40, reps: 10 }],
+        },
+      ],
+    },
+  ];
+
+  it('builds split history with split-level comparisons and volume prs', () => {
+    const history = buildSplitProgressHistory(workouts, 'push');
+
+    expect(history).toHaveLength(2);
+    expect(history[0].metrics).toEqual({
+      totalVolume: 1080,
+      totalSets: 2,
+      totalExercises: 2,
+    });
+    expect(history[0].notes).toBe('Felt stronger this week.');
+    expect(history[0].improvements).toEqual({
+      volume: true,
+      sets: true,
+      exercises: true,
+    });
+    expect(history[0].personalRecords).toEqual({
+      volume: true,
+    });
+  });
+
+  it('summarizes split windows with average sets and volume deltas', () => {
+    const history = buildSplitProgressHistory(workouts, 'push');
+    const summary = getSplitProgressWindowSummary(history);
+
+    expect(summary).toMatchObject({
+      sessionCount: 2,
+      personalRecordCount: 2,
+      averageVolume: 860,
+      averageSets: 1.5,
+      bestVolume: 1080,
+      latestSets: 2,
+      latestExercises: 2,
+    });
+    expect(summary.comparison).toMatchObject({
+      volumeDelta: 440,
+      setsDelta: 1,
+      exerciseDelta: 1,
     });
   });
 });

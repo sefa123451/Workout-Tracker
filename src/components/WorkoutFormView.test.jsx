@@ -1,18 +1,24 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import WorkoutFormView from './WorkoutFormView.jsx';
+
+afterEach(() => {
+  cleanup();
+});
 
 function renderWorkoutFormView(overrides = {}) {
   const props = {
     exercises: [],
     splits: [],
+    templates: [],
     workouts: [],
     workoutForm: {
       date: '2024-01-12',
       splitId: '',
+      notes: '',
       skippedEntries: [],
       entries: [
         {
@@ -22,12 +28,21 @@ function renderWorkoutFormView(overrides = {}) {
         },
       ],
     },
+    selectedWorkoutTemplateId: '',
+    editingTemplateId: null,
+    templateDraftName: '',
     editingWorkoutId: null,
     workoutMessage: { type: '', text: '' },
     setWorkoutForm: vi.fn(),
+    setSelectedWorkoutTemplateId: vi.fn(),
+    setTemplateDraftName: vi.fn(),
     updateWorkoutEntry: vi.fn(),
     applyLatestWorkoutToEntry: vi.fn(),
     handleWorkoutSplitChange: vi.fn(),
+    loadWorkoutTemplate: vi.fn(),
+    saveCurrentWorkoutAsTemplate: vi.fn(),
+    updateSelectedWorkoutTemplate: vi.fn(),
+    handleTemplateEditorSubmit: vi.fn((event) => event.preventDefault()),
     handleWorkoutSubmit: vi.fn((event) => event.preventDefault()),
     resetWorkoutForm: vi.fn(),
     createSet: vi.fn(() => ({ id: 'new-set', weight: '', reps: '' })),
@@ -70,6 +85,7 @@ describe('WorkoutFormView', () => {
       workoutForm: {
         date: '2024-01-12',
         splitId: '',
+        notes: '',
         skippedEntries: [],
         entries: [
           {
@@ -104,6 +120,7 @@ describe('WorkoutFormView', () => {
       workoutForm: {
         date: '2024-01-12',
         splitId: 'legs',
+        notes: '',
         skippedEntries: [
           {
             id: 'entry-skipped',
@@ -120,5 +137,47 @@ describe('WorkoutFormView', () => {
     await user.click(screen.getByRole('button', { name: 'Restore Back squat' }));
 
     expect(props.setWorkoutForm).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets you type workout notes', async () => {
+    const user = userEvent.setup();
+    const props = renderWorkoutFormView({
+      exercises: [{ id: 'bench', name: 'Bench press' }],
+    });
+
+    const notesField = screen.getAllByLabelText('Notes').at(-1);
+    await user.type(notesField, 'Felt strong today');
+
+    expect(props.setWorkoutForm).toHaveBeenCalled();
+  });
+
+  it('shows update template action when a template is selected', async () => {
+    const user = userEvent.setup();
+    const props = renderWorkoutFormView({
+      exercises: [{ id: 'bench', name: 'Bench press' }],
+      templates: [{ id: 'template-1', name: 'Push template' }],
+      selectedWorkoutTemplateId: 'template-1',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Update template' }));
+
+    expect(props.updateSelectedWorkoutTemplate).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows dedicated template editor controls when editing a template', async () => {
+    const user = userEvent.setup();
+    const props = renderWorkoutFormView({
+      exercises: [{ id: 'bench', name: 'Bench press' }],
+      editingTemplateId: 'template-1',
+      templateDraftName: 'Upper A',
+    });
+
+    expect(screen.getByRole('heading', { name: 'Edit template' })).toBeTruthy();
+    expect(screen.getByLabelText('Template name')).toBeTruthy();
+    expect(screen.queryByLabelText('Workout date')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Save template' }));
+
+    expect(props.handleTemplateEditorSubmit).toHaveBeenCalledTimes(1);
   });
 });
