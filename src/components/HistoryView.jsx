@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import EmptyState from './EmptyState.jsx';
 
 export default function HistoryView({
@@ -19,6 +19,13 @@ export default function HistoryView({
   const activeDays = historyHeatmap.filter((day) => day.count > 0).length;
   const totalSessions = historyHeatmap.reduce((sum, day) => sum + day.count, 0);
   const peakVolume = historyHeatmap.reduce((peak, day) => Math.max(peak, day.volume), 0);
+  const initialSelectedDate =
+    [...historyHeatmap].reverse().find((day) => day.count > 0)?.date ?? '';
+  const [selectedHistoryDate, setSelectedHistoryDate] = useState(initialSelectedDate);
+  const selectedDayWorkouts = useMemo(
+    () => sortedWorkouts.filter((workout) => workout.date === selectedHistoryDate),
+    [selectedHistoryDate, sortedWorkouts],
+  );
 
   return (
     <main className="content-grid history-layout">
@@ -46,11 +53,17 @@ export default function HistoryView({
                 </div>
                 <div className="history-heatmap-grid" aria-label="History training calendar">
                   {historyHeatmap.map((day) => (
-                    <div
+                    <button
                       key={day.date}
-                      className={`dashboard-heatmap-cell level-${day.level}`}
+                      type="button"
+                      className={
+                        day.date === selectedHistoryDate
+                          ? `dashboard-heatmap-cell level-${day.level} history-heatmap-cell active`
+                          : `dashboard-heatmap-cell level-${day.level} history-heatmap-cell`
+                      }
                       title={`${formatDisplayDate(day.date)} • ${day.count} ${day.count === 1 ? 'session' : 'sessions'} • ${formatNumber(day.volume)} volume`}
                       aria-label={`${formatDisplayDate(day.date)} with ${day.count} ${day.count === 1 ? 'session' : 'sessions'}`}
+                      onClick={() => setSelectedHistoryDate(day.date)}
                     />
                   ))}
                 </div>
@@ -101,6 +114,66 @@ export default function HistoryView({
                 )}
               </article>
             </div>
+
+            {selectedHistoryDate && (
+              <article className="history-insight-card history-day-card">
+                <div className="section-heading compact-heading">
+                  <div>
+                    <p className="section-label">Selected day</p>
+                    <h2>{formatDisplayDate(selectedHistoryDate)}</h2>
+                  </div>
+                  <div className="dashboard-heatmap-meta history-heatmap-meta">
+                    <span>
+                      {selectedDayWorkouts.length} {selectedDayWorkouts.length === 1 ? 'session' : 'sessions'}
+                    </span>
+                    <span>
+                      {formatNumber(
+                        selectedDayWorkouts.reduce(
+                          (sum, workout) =>
+                            sum +
+                            workout.entries.reduce(
+                              (entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume,
+                              0,
+                            ),
+                          0,
+                        ),
+                      )}{' '}
+                      volume
+                    </span>
+                  </div>
+                </div>
+                {selectedDayWorkouts.length ? (
+                  <div className="history-day-workouts">
+                    {selectedDayWorkouts.map((workout) => {
+                      const sessionVolume = workout.entries.reduce(
+                        (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
+                        0,
+                      );
+
+                      return (
+                        <article key={`selected-${workout.id}`} className="history-day-workout-card">
+                          <div>
+                            <strong>{workout.splitId ? getSplitName(workout.splitId) : 'Custom workout'}</strong>
+                            <p>
+                              {workout.entries.length} {workout.entries.length === 1 ? 'exercise' : 'exercises'}
+                            </p>
+                          </div>
+                          <div className="activity-metrics history-entry-metrics">
+                            <span>Vol {formatNumber(sessionVolume)}</span>
+                            <span>Sets {workout.entries.reduce((sum, entry) => sum + entry.sets.length, 0)}</span>
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <EmptyState
+                    title="No sessions on this day"
+                    body="Pick a highlighted training day to inspect its workouts."
+                  />
+                )}
+              </article>
+            )}
 
             {sortedWorkouts.map((workout) => {
               const sessionVolume = workout.entries.reduce(
@@ -174,6 +247,12 @@ export default function HistoryView({
                       <strong>{workout.entries.length}</strong>
                     </div>
                   </div>
+                  {(workout.mood || workout.effort) && (
+                    <div className="library-card-meta">
+                      {workout.mood ? <span className="library-meta-pill">Mood {workout.mood}</span> : null}
+                      {workout.effort ? <span className="library-meta-pill">Effort {workout.effort}</span> : null}
+                    </div>
+                  )}
                   {workout.notes ? (
                     <div className="history-session-note">
                       <span className="section-label">Session note</span>

@@ -105,6 +105,15 @@ export default function ProgressView({
     : 0;
   const exerciseSignalLabels = getExerciseSignalLabels(latestSession);
   const splitSignalLabels = getSplitSignalLabels(latestSplitSession);
+  const recentExercisePrSessions = selectedExerciseWindowHistory.filter(
+    (session) =>
+      session.personalRecords.weight ||
+      session.personalRecords.reps ||
+      session.personalRecords.volume,
+  );
+  const recentSplitPrSessions = selectedSplitWindowHistory.filter(
+    (session) => session.personalRecords.volume,
+  );
 
   return (
     <main className="content-grid progress-layout">
@@ -338,6 +347,27 @@ export default function ProgressView({
                           </p>
                         </div>
                       </div>
+                      <div className="progress-pr-feed">
+                        {recentSplitPrSessions.length ? (
+                          recentSplitPrSessions.slice(0, 3).map((session) => (
+                            <article key={`split-pr-${session.workoutId}`} className="progress-pr-card">
+                              <div>
+                                <span className="metric-label">PR session</span>
+                                <strong>{formatDisplayDate(session.date)}</strong>
+                              </div>
+                              <div className="tag-row">
+                                <span className="tag pr-tag">Volume PR</span>
+                              </div>
+                            </article>
+                          ))
+                        ) : (
+                          <div className="progress-pr-card progress-pr-card-empty">
+                            <span className="metric-label">PR summary</span>
+                            <strong>No PR yet</strong>
+                            <p>Push this split a bit further to surface the next high.</p>
+                          </div>
+                        )}
+                      </div>
                       <ProgressChart sessions={selectedSplitWindowHistory} metric="volume" />
                       <div className="previous-row">
                         {selectedSplitWindowSummary?.comparison ? (
@@ -536,6 +566,29 @@ export default function ProgressView({
                           : 'Stable compared with the previous entry'}
                       </p>
                     </div>
+                  </div>
+                  <div className="progress-pr-feed">
+                    {recentExercisePrSessions.length ? (
+                      recentExercisePrSessions.slice(0, 3).map((session) => (
+                        <article key={`exercise-pr-${session.workoutId}`} className="progress-pr-card">
+                          <div>
+                            <span className="metric-label">PR session</span>
+                            <strong>{formatDisplayDate(session.date)}</strong>
+                          </div>
+                          <div className="tag-row">
+                            {session.personalRecords.weight && <span className="tag pr-tag">Weight PR</span>}
+                            {session.personalRecords.reps && <span className="tag pr-tag">Reps PR</span>}
+                            {session.personalRecords.volume && <span className="tag pr-tag">Volume PR</span>}
+                          </div>
+                        </article>
+                      ))
+                    ) : (
+                      <div className="progress-pr-card progress-pr-card-empty">
+                        <span className="metric-label">PR summary</span>
+                        <strong>No PR yet</strong>
+                        <p>Keep logging this exercise to build a clearer best-lift story.</p>
+                      </div>
+                    )}
                   </div>
                   <ProgressChart sessions={selectedExerciseWindowHistory} metric={selectedProgressMetric} />
                   <div className="previous-row">

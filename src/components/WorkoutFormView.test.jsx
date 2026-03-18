@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import WorkoutFormView from './WorkoutFormView.jsx';
 
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
 });
 
@@ -19,12 +20,14 @@ function renderWorkoutFormView(overrides = {}) {
       date: '2024-01-12',
       splitId: '',
       notes: '',
+      mood: '',
+      effort: '',
       skippedEntries: [],
       entries: [
         {
           id: 'entry-1',
           exerciseId: '',
-          sets: [{ id: 'set-1', weight: '', reps: '' }],
+          sets: [{ id: 'set-1', weight: '', reps: '', completed: false }],
         },
       ],
     },
@@ -86,12 +89,14 @@ describe('WorkoutFormView', () => {
         date: '2024-01-12',
         splitId: '',
         notes: '',
+        mood: '',
+        effort: '',
         skippedEntries: [],
         entries: [
           {
             id: 'entry-1',
             exerciseId: 'squat',
-            sets: [{ id: 'set-1', weight: '', reps: '' }],
+            sets: [{ id: 'set-1', weight: '', reps: '', completed: false }],
           },
         ],
       },
@@ -121,11 +126,13 @@ describe('WorkoutFormView', () => {
         date: '2024-01-12',
         splitId: 'legs',
         notes: '',
+        mood: '',
+        effort: '',
         skippedEntries: [
           {
             id: 'entry-skipped',
             exerciseId: 'squat',
-            sets: [{ id: 'set-1', weight: '', reps: '' }],
+            sets: [{ id: 'set-1', weight: '', reps: '', completed: false }],
           },
         ],
         entries: [],
@@ -149,6 +156,46 @@ describe('WorkoutFormView', () => {
     await user.type(notesField, 'Felt strong today');
 
     expect(props.setWorkoutForm).toHaveBeenCalled();
+  });
+
+  it('shows session context fields, quick progression actions, and a rest timer', async () => {
+    vi.useFakeTimers();
+    const props = renderWorkoutFormView({
+      exercises: [{ id: 'bench', name: 'Bench press' }],
+      workoutForm: {
+        date: '2024-01-12',
+        splitId: '',
+        notes: '',
+        mood: '',
+        effort: '',
+        skippedEntries: [],
+        entries: [
+          {
+            id: 'entry-1',
+            exerciseId: 'bench',
+            sets: [{ id: 'set-1', weight: '80', reps: '8', completed: false }],
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByLabelText('Mood')).toBeTruthy();
+    expect(screen.getByLabelText('Effort')).toBeTruthy();
+    expect(screen.getByText('Rest timer')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add 2.5 kilograms to set 1 for Bench press' }));
+    expect(props.updateWorkoutEntry).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(props.updateWorkoutEntry).toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start 60 second rest timer for set 1 of Bench press' }));
+    expect(screen.getByText('01:00')).toBeTruthy();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByText('00:59')).toBeTruthy();
   });
 
   it('shows update template action when a template is selected', async () => {

@@ -92,6 +92,31 @@ describe('App integration flows', () => {
     expect(screen.getByText('Felt strong on the top sets.')).toBeTruthy();
   });
 
+  it('saves workout mood and effort and shows them in history', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    await user.selectOptions(screen.getByLabelText('Mood'), 'Great');
+    await user.selectOptions(screen.getByLabelText('Effort'), 'Hard');
+    await user.selectOptions(screen.getByLabelText('Exercise'), 'bench');
+    await user.type(screen.getByLabelText('Weight'), '80');
+    await user.type(screen.getByLabelText('Reps'), '8');
+    await user.click(screen.getByRole('button', { name: 'Save workout' }));
+
+    expect(screen.getByText('Mood Great')).toBeTruthy();
+    expect(screen.getByText('Effort Hard')).toBeTruthy();
+  });
+
   it('creates a workout from a split and shows the split in history', async () => {
     const user = userEvent.setup();
     renderAppWithStoredData({
@@ -133,7 +158,7 @@ describe('App integration flows', () => {
     await user.type(repInputs[1], '10');
     await user.click(screen.getByRole('button', { name: 'Save workout' }));
 
-    expect(screen.getByText('Push')).toBeTruthy();
+    expect(screen.getAllByText('Push').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Bench press').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Shoulder press').length).toBeGreaterThan(0);
   });
@@ -878,6 +903,9 @@ describe('App integration flows', () => {
     expect(screen.getByText('Split insights')).toBeTruthy();
     expect(screen.getByText('Templates that carry you')).toBeTruthy();
     expect(screen.getByText('Top split this month')).toBeTruthy();
+    expect(screen.getByText('Best periods')).toBeTruthy();
+    expect(screen.getByText('Best week')).toBeTruthy();
+    expect(screen.getByText('Best month')).toBeTruthy();
     expect(screen.getAllByText('Push').length).toBeGreaterThan(0);
   });
 
@@ -1101,6 +1129,10 @@ describe('App integration flows', () => {
     expect(screen.getByText('PR timeline')).toBeTruthy();
     expect(screen.getByText('Recent wins')).toBeTruthy();
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
+
+    await user.click(screen.getByLabelText('Mar 14, 2026 with 1 session'));
+    expect(screen.getByText('Selected day')).toBeTruthy();
+    expect(screen.getAllByText('Custom workout').length).toBeGreaterThan(0);
   });
 
   it('shows progress markers for an exercise with multiple workouts', async () => {
@@ -1147,6 +1179,7 @@ describe('App integration flows', () => {
     expect(screen.getByText('Peak session')).toBeTruthy();
     expect(screen.getByText('Wins in range')).toBeTruthy();
     expect(screen.getByText('Latest signal')).toBeTruthy();
+    expect(screen.getAllByText('PR session').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
     expect(screen.getByText('Weight up')).toBeTruthy();
     expect(screen.getAllByText(/vs/).length).toBeGreaterThan(0);
@@ -1286,6 +1319,7 @@ describe('App integration flows', () => {
     expect(screen.getByText('Peak session')).toBeTruthy();
     expect(screen.getByText('Wins in range')).toBeTruthy();
     expect(screen.getByText('Latest signal')).toBeTruthy();
+    expect(screen.getAllByText('PR session').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Volume PR').length).toBeGreaterThan(0);
     expect(screen.getByText('Strong push day.')).toBeTruthy();
   });

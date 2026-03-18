@@ -1,6 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import EmptyState from './EmptyState.jsx';
 import { getLatestExerciseSession } from '../lib/workoutData.js';
+
+const SESSION_MOODS = ['Great', 'Good', 'Steady', 'Low'];
+const SESSION_EFFORTS = ['Easy', 'Moderate', 'Hard', 'Max'];
+
+function formatTimerLabel(totalSeconds) {
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
 
 export default function WorkoutFormView({
   exercises,
@@ -34,6 +43,69 @@ export default function WorkoutFormView({
 }) {
   const selectedSplit = splits.find((split) => split.id === workoutForm.splitId) ?? null;
   const skippedEntries = workoutForm.skippedEntries ?? [];
+  const [restTimer, setRestTimer] = useState(null);
+
+  useEffect(() => {
+    if (!restTimer?.running) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setRestTimer((current) => {
+        if (!current?.running) {
+          return current;
+        }
+
+        if (current.remaining <= 1) {
+          return { ...current, remaining: 0, running: false };
+        }
+
+        return { ...current, remaining: current.remaining - 1 };
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [restTimer?.running]);
+
+  function adjustSetValue(entryId, setId, field, amount) {
+    updateWorkoutEntry(entryId, (currentEntry) => ({
+      ...currentEntry,
+      sets: currentEntry.sets.map((currentSet) => {
+        if (currentSet.id !== setId) {
+          return currentSet;
+        }
+
+        const baseValue = Number.parseFloat(String(currentSet[field] ?? '').trim());
+        const nextValue = Number.isFinite(baseValue) ? baseValue + amount : amount;
+
+        return {
+          ...currentSet,
+          [field]:
+            field === 'reps'
+              ? String(Math.max(0, Math.round(nextValue)))
+              : String(Math.max(0, Number(nextValue.toFixed(2)))),
+        };
+      }),
+    }));
+  }
+
+  function toggleSetCompleted(entryId, setId, checked) {
+    updateWorkoutEntry(entryId, (currentEntry) => ({
+      ...currentEntry,
+      sets: currentEntry.sets.map((currentSet) =>
+        currentSet.id === setId ? { ...currentSet, completed: checked } : currentSet,
+      ),
+    }));
+  }
+
+  function startRestTimer(duration, label) {
+    setRestTimer({
+      duration,
+      remaining: duration,
+      label,
+      running: true,
+    });
+  }
 
   return (
     <main className="content-grid logging-layout">
@@ -123,6 +195,70 @@ export default function WorkoutFormView({
                 </select>
               </label>
             </div>
+
+            {!editingTemplateId && (
+              <div className="logging-meta-bar">
+                <label className="field field-compact">
+                  <span>Mood</span>
+                  <select
+                    value={workoutForm.mood ?? ''}
+                    onChange={(event) =>
+                      setWorkoutForm((current) => ({ ...current, mood: event.target.value }))
+                    }
+                  >
+                    <option value="">Optional mood</option>
+                    {SESSION_MOODS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field field-compact">
+                  <span>Effort</span>
+                  <select
+                    value={workoutForm.effort ?? ''}
+                    onChange={(event) =>
+                      setWorkoutForm((current) => ({ ...current, effort: event.target.value }))
+                    }
+                  >
+                    <option value="">Optional effort</option>
+                    {SESSION_EFFORTS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="rest-timer-card" role="status" aria-live="polite">
+                  <span className="metric-label">Rest timer</span>
+                  <strong>{formatTimerLabel(restTimer?.remaining ?? 0)}</strong>
+                  <p>{restTimer?.label ?? 'Start a timer from any set row'}</p>
+                  <div className="rest-timer-actions">
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      onClick={() =>
+                        setRestTimer((current) =>
+                          current
+                            ? { ...current, remaining: current.remaining + 30, running: true }
+                            : { duration: 30, remaining: 30, label: 'Quick 30s reset', running: true },
+                        )
+                      }
+                    >
+                      +30s
+                    </button>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      onClick={() => setRestTimer(null)}
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <label className="field">
               <span>Notes</span>
@@ -268,7 +404,7 @@ export default function WorkoutFormView({
 
                     <div className="sets-stack">
                       {entry.sets.map((set, setIndex) => (
-                        <div key={set.id} className="set-row">
+                        <div key={set.id} className={set.completed ? 'set-row set-row-complete' : 'set-row'}>
                           <div className="set-row-label">Set {setIndex + 1}</div>
                           <label className="field">
                             <span className="set-field-label">Weight</span>
@@ -311,6 +447,58 @@ export default function WorkoutFormView({
                             />
                           </label>
                           <div className="set-actions">
+                            <label className="set-done-toggle">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(set.completed)}
+                                onChange={(event) =>
+                                  toggleSetCompleted(entry.id, set.id, event.target.checked)
+                                }
+                              />
+                              <span>{set.completed ? 'Done' : 'Open'}</span>
+                            </label>
+                            <button
+                              type="button"
+                              className="ghost-button action-button"
+                              aria-label={`Add 2.5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                              onClick={() => adjustSetValue(entry.id, set.id, 'weight', 2.5)}
+                            >
+                              +2.5 kg
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button action-button"
+                              aria-label={`Add 5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                              onClick={() => adjustSetValue(entry.id, set.id, 'weight', 5)}
+                            >
+                              +5 kg
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button action-button"
+                              aria-label={`Add one rep to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                              onClick={() => adjustSetValue(entry.id, set.id, 'reps', 1)}
+                            >
+                              +1 rep
+                            </button>
+                            <div className="set-timer-buttons" aria-label={`Rest timer shortcuts for set ${setIndex + 1}`}>
+                              {[60, 90, 120].map((duration) => (
+                                <button
+                                  key={duration}
+                                  type="button"
+                                  className="ghost-button action-button"
+                                  aria-label={`Start ${duration} second rest timer for set ${setIndex + 1} of ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                  onClick={() =>
+                                    startRestTimer(
+                                      duration,
+                                      `${selectedExerciseName || `Exercise ${entryIndex + 1}`} • Set ${setIndex + 1}`,
+                                    )
+                                  }
+                                >
+                                  {duration}s
+                                </button>
+                              ))}
+                            </div>
                             <button
                               type="button"
                               className="ghost-button"

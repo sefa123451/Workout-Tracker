@@ -7,6 +7,10 @@ const dashboardDateFormatter = new Intl.DateTimeFormat(undefined, {
 const weekdayLabelFormatter = new Intl.DateTimeFormat(undefined, {
   weekday: 'short',
 });
+const monthLabelFormatter = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  year: 'numeric',
+});
 
 export function createId() {
   if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
@@ -21,6 +25,7 @@ export function createSet() {
     id: createId(),
     weight: '',
     reps: '',
+    completed: false,
   };
 }
 
@@ -37,6 +42,7 @@ export function createSetFromValues(weight, reps) {
     id: createId(),
     weight: String(weight),
     reps: String(reps),
+    completed: false,
   };
 }
 
@@ -59,6 +65,8 @@ export function createWorkoutForm() {
     date: getTodayInputValue(),
     splitId: '',
     notes: '',
+    mood: '',
+    effort: '',
     entries: [createWorkoutEntry()],
     skippedEntries: [],
   };
@@ -69,6 +77,8 @@ export function createWorkoutFormFromTemplate(template) {
     date: getTodayInputValue(),
     splitId: typeof template.splitId === 'string' ? template.splitId : '',
     notes: typeof template.notes === 'string' ? template.notes : '',
+    mood: '',
+    effort: '',
     entries: template.entries.map((entry) => ({
       id: createId(),
       exerciseId: entry.exerciseId,
@@ -78,6 +88,7 @@ export function createWorkoutFormFromTemplate(template) {
               id: createId(),
               weight: String(set.weight),
               reps: String(set.reps),
+              completed: false,
             }))
           : [createSet()],
     })),
@@ -90,6 +101,8 @@ export function createWorkoutFormFromWorkout(workout) {
     date: workout.date,
     splitId: typeof workout.splitId === 'string' ? workout.splitId : '',
     notes: typeof workout.notes === 'string' ? workout.notes : '',
+    mood: typeof workout.mood === 'string' ? workout.mood : '',
+    effort: typeof workout.effort === 'string' ? workout.effort : '',
     entries: workout.entries.map((entry) => ({
       id: createId(),
       exerciseId: entry.exerciseId,
@@ -99,6 +112,7 @@ export function createWorkoutFormFromWorkout(workout) {
               id: createId(),
               weight: String(set.weight),
               reps: String(set.reps),
+              completed: false,
             }))
           : [createSet()],
     })),
@@ -327,7 +341,7 @@ export function buildWorkoutHistoryCsv(workouts, exercises, splits) {
   const exerciseNameMap = new Map(exercises.map((exercise) => [exercise.id, exercise.name]));
   const splitNameMap = new Map(splits.map((split) => [split.id, split.name]));
   const rows = [
-    ['Date', 'Split', 'Exercise', 'Set', 'Weight', 'Reps', 'Volume', 'Notes'],
+    ['Date', 'Split', 'Exercise', 'Set', 'Weight', 'Reps', 'Volume', 'Mood', 'Effort', 'Notes'],
   ];
 
   workouts.forEach((workout) => {
@@ -335,6 +349,8 @@ export function buildWorkoutHistoryCsv(workouts, exercises, splits) {
       ? splitNameMap.get(workout.splitId) ?? 'Unknown split (deleted)'
       : 'Custom workout';
     const notes = typeof workout.notes === 'string' ? workout.notes.trim() : '';
+    const mood = typeof workout.mood === 'string' ? workout.mood.trim() : '';
+    const effort = typeof workout.effort === 'string' ? workout.effort.trim() : '';
 
     workout.entries.forEach((entry) => {
       const exerciseName = exerciseNameMap.get(entry.exerciseId) ?? 'Unknown exercise (deleted)';
@@ -348,6 +364,8 @@ export function buildWorkoutHistoryCsv(workouts, exercises, splits) {
           set.weight,
           set.reps,
           Number(set.weight) * Number(set.reps),
+          mood,
+          effort,
           notes,
         ]);
       });
@@ -511,11 +529,16 @@ export function normalizeWorkout(rawWorkout) {
     return null;
   }
 
+  const mood = typeof rawWorkout.mood === 'string' ? rawWorkout.mood.trim() : '';
+  const effort = typeof rawWorkout.effort === 'string' ? rawWorkout.effort.trim() : '';
+
   return {
     id: typeof rawWorkout.id === 'string' && rawWorkout.id ? rawWorkout.id : createId(),
     date,
     splitId: typeof rawWorkout.splitId === 'string' ? rawWorkout.splitId : '',
     notes: typeof rawWorkout.notes === 'string' ? rawWorkout.notes.trim() : '',
+    mood,
+    effort,
     createdAt:
       typeof rawWorkout.createdAt === 'string' && rawWorkout.createdAt
         ? rawWorkout.createdAt
@@ -828,6 +851,39 @@ function getWeekKey(dateValue) {
   return getInputValueFromDate(getStartOfWeek(parseInputDate(dateValue)));
 }
 
+function getMonthKey(dateValue) {
+  const date = parseInputDate(dateValue);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getCurrentTrainingDayStreak(workouts) {
+  const uniqueWorkoutDays = Array.from(new Set(workouts.map((workout) => workout.date))).sort(
+    (left, right) => right.localeCompare(left),
+  );
+
+  if (!uniqueWorkoutDays.length) {
+    return 0;
+  }
+
+  let streak = 1;
+  let cursor = parseInputDate(uniqueWorkoutDays[0]);
+  cursor.setHours(0, 0, 0, 0);
+
+  for (let index = 1; index < uniqueWorkoutDays.length; index += 1) {
+    const previousDay = new Date(cursor);
+    previousDay.setDate(previousDay.getDate() - 1);
+
+    if (getInputValueFromDate(previousDay) !== uniqueWorkoutDays[index]) {
+      break;
+    }
+
+    streak += 1;
+    cursor = previousDay;
+  }
+
+  return streak;
+}
+
 export function buildTrainingHeatmap(workouts, days = 28) {
   const recentActivityByDate = new Map();
 
@@ -922,11 +978,31 @@ export function getDashboardSummary(workouts) {
   const splitCounts = new Map();
   const splitMonthlyCounts = new Map();
   const splitMonthlyVolumes = new Map();
+  const weekSummaries = new Map();
+  const monthSummaries = new Map();
 
   for (const workout of workouts) {
     if (workout.splitId) {
       splitCounts.set(workout.splitId, (splitCounts.get(workout.splitId) ?? 0) + 1);
     }
+
+    const workoutVolume = workout.entries.reduce(
+      (entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume,
+      0,
+    );
+    const weekKey = getWeekKey(workout.date);
+    const monthKey = getMonthKey(workout.date);
+    const weekSummary = weekSummaries.get(weekKey) ?? { volume: 0, count: 0 };
+    const monthSummary = monthSummaries.get(monthKey) ?? { volume: 0, count: 0 };
+
+    weekSummaries.set(weekKey, {
+      volume: weekSummary.volume + workoutVolume,
+      count: weekSummary.count + 1,
+    });
+    monthSummaries.set(monthKey, {
+      volume: monthSummary.volume + workoutVolume,
+      count: monthSummary.count + 1,
+    });
 
     for (const entry of workout.entries) {
       exerciseIds.add(entry.exerciseId);
@@ -1100,6 +1176,82 @@ export function getDashboardSummary(workouts) {
     }
   }
 
+  const recentSplitHistory = workouts.filter((workout) => {
+    const cutoff = new Date();
+    cutoff.setHours(0, 0, 0, 0);
+    cutoff.setDate(cutoff.getDate() - 29);
+    return parseInputDate(workout.date) >= cutoff && workout.splitId;
+  });
+  const recentSplitStats = new Map();
+
+  for (const workout of recentSplitHistory) {
+    const workoutVolume = workout.entries.reduce(
+      (entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume,
+      0,
+    );
+    const current = recentSplitStats.get(workout.splitId) ?? { volume: 0, count: 0, latestDate: '' };
+
+    recentSplitStats.set(workout.splitId, {
+      volume: current.volume + workoutVolume,
+      count: current.count + 1,
+      latestDate: workout.date > current.latestDate ? workout.date : current.latestDate,
+    });
+  }
+
+  let strongestRecentSplit = null;
+
+  for (const [splitId, info] of recentSplitStats.entries()) {
+    const averageVolume = info.volume / info.count;
+
+    if (
+      !strongestRecentSplit ||
+      averageVolume > strongestRecentSplit.averageVolume ||
+      (averageVolume === strongestRecentSplit.averageVolume && info.latestDate > strongestRecentSplit.latestDate)
+    ) {
+      strongestRecentSplit = { splitId, ...info, averageVolume };
+    }
+  }
+
+  let bestWeek = null;
+
+  for (const [weekKey, info] of weekSummaries.entries()) {
+    if (!bestWeek || info.volume > bestWeek.volume) {
+      bestWeek = { key: weekKey, ...info };
+    }
+  }
+
+  let bestMonth = null;
+
+  for (const [monthKey, info] of monthSummaries.entries()) {
+    if (!bestMonth || info.volume > bestMonth.volume) {
+      bestMonth = { key: monthKey, ...info };
+    }
+  }
+
+  let mostImprovedExercise = null;
+
+  for (const exerciseId of exerciseIds) {
+    const recentHistory = filterProgressHistoryByDays(buildProgressHistory(workouts, exerciseId), 90);
+    const summary = getProgressWindowSummary(recentHistory);
+
+    if (!summary?.comparison) {
+      continue;
+    }
+
+    if (
+      !mostImprovedExercise ||
+      summary.comparison.volumeDelta > mostImprovedExercise.volumeDelta
+    ) {
+      mostImprovedExercise = {
+        exerciseId,
+        volumeDelta: summary.comparison.volumeDelta,
+        weightDelta: summary.comparison.weightDelta,
+        repsDelta: summary.comparison.repsDelta,
+        sessionCount: summary.sessionCount,
+      };
+    }
+  }
+
   const trainingHeatmap = buildTrainingHeatmap(workouts, 28);
   const latestPersonalRecords = getRecentPersonalRecords(workouts, 30, 3);
 
@@ -1122,9 +1274,18 @@ export function getDashboardSummary(workouts) {
     longestActiveWeekStreak,
     mostUsedSplit,
     topSplitThisMonth,
+    strongestRecentSplit,
+    bestWeek,
+    bestMonth,
+    mostImprovedExercise,
+    currentTrainingDayStreak: getCurrentTrainingDayStreak(workouts),
     trainingHeatmap,
     bestTrainingDayLabel: bestDay.volume ? bestDay.label : '',
     bestTrainingDayVolume: bestDay.volume,
+    bestWeekLabel: bestWeek ? formatDisplayDate(bestWeek.key) : '',
+    bestMonthLabel: bestMonth
+      ? monthLabelFormatter.format(new Date(`${bestMonth.key}-01T00:00:00`))
+      : '',
     weeklyVolumeTrend: weeklyTrend,
   };
 }

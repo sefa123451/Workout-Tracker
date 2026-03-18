@@ -57,6 +57,8 @@ describe('metric helpers', () => {
           id: 'w1',
           date: '2024-01-12',
           splitId: 'push',
+          mood: 'Great',
+          effort: 'Hard',
           notes: 'Top set felt easy',
           entries: [
             {
@@ -73,9 +75,9 @@ describe('metric helpers', () => {
       [{ id: 'push', name: 'Push' }],
     );
 
-    expect(csv).toContain('Date,Split,Exercise,Set,Weight,Reps,Volume,Notes');
-    expect(csv).toContain('2024-01-12,Push,Bench press,1,80,8,640,Top set felt easy');
-    expect(csv).toContain('2024-01-12,Push,Bench press,2,82.5,6,495,Top set felt easy');
+    expect(csv).toContain('Date,Split,Exercise,Set,Weight,Reps,Volume,Mood,Effort,Notes');
+    expect(csv).toContain('2024-01-12,Push,Bench press,1,80,8,640,Great,Hard,Top set felt easy');
+    expect(csv).toContain('2024-01-12,Push,Bench press,2,82.5,6,495,Great,Hard,Top set felt easy');
   });
 });
 
@@ -128,6 +130,8 @@ describe('import validation', () => {
           date: '2024-01-12',
           splitId: '',
           notes: 'Felt sharp and steady.',
+          mood: 'Good',
+          effort: 'Moderate',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },
@@ -151,6 +155,8 @@ describe('import validation', () => {
           date: '2024-01-12',
           splitId: '',
           notes: 'Felt sharp and steady.',
+          mood: 'Good',
+          effort: 'Moderate',
           createdAt: '2024-01-12T10:00:00.000Z',
           entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
         },

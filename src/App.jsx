@@ -1140,6 +1140,8 @@ function App() {
         date: form.date,
         splitId: form.splitId,
         notes: typeof form.notes === 'string' ? form.notes.trim() : '',
+        mood: typeof form.mood === 'string' ? form.mood.trim() : '',
+        effort: typeof form.effort === 'string' ? form.effort.trim() : '',
         entries: normalizedEntries,
       },
     };
@@ -1180,6 +1182,8 @@ function App() {
       ...duplicatedForm,
       date: getTodayInputValue(),
       notes: '',
+      mood: '',
+      effort: '',
     });
     setWorkoutMessage({
       type: 'success',
@@ -1585,6 +1589,8 @@ function App() {
                   date: normalizedWorkout.value.date,
                   splitId: normalizedWorkout.value.splitId,
                   notes: normalizedWorkout.value.notes,
+                  mood: normalizedWorkout.value.mood,
+                  effort: normalizedWorkout.value.effort,
                   entries: normalizedWorkout.value.entries,
                 }
               : workout,
@@ -1599,6 +1605,8 @@ function App() {
         date: normalizedWorkout.value.date,
         splitId: normalizedWorkout.value.splitId,
         notes: normalizedWorkout.value.notes,
+        mood: normalizedWorkout.value.mood,
+        effort: normalizedWorkout.value.effort,
         createdAt: new Date().toISOString(),
         entries: normalizedWorkout.value.entries,
       };

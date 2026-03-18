@@ -75,6 +75,9 @@ export default function DashboardView({
         helper: 'Most logged split',
       }
     : null;
+  const mostImprovedExerciseName = dashboardSummary.mostImprovedExercise
+    ? getExerciseName(dashboardSummary.mostImprovedExercise.exerciseId)
+    : '--';
 
   return (
     <main className="content-grid dashboard-grid">
@@ -418,6 +421,53 @@ export default function DashboardView({
               </span>
               <span>
                 Month volume <strong>{formatNumber(dashboardSummary.totalVolumeThisMonth)}</strong>
+              </span>
+            </div>
+          </div>
+        </section>
+
+        <section className="panel panel-highlight">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Performance</p>
+              <h2>Best periods</h2>
+            </div>
+          </div>
+          <div className="dashboard-performance-card">
+            <div className="dashboard-performance-grid">
+              <div className="dashboard-performance-stat dashboard-performance-stat-primary">
+                <span>Best week</span>
+                <strong>{dashboardSummary.bestWeekLabel || '--'}</strong>
+                <p>
+                  {dashboardSummary.bestWeek
+                    ? `${formatNumber(dashboardSummary.bestWeek.volume)} volume • ${dashboardSummary.bestWeek.count} sessions`
+                    : 'No training week yet'}
+                </p>
+              </div>
+              <div className="dashboard-performance-stat">
+                <span>Best month</span>
+                <strong>{dashboardSummary.bestMonthLabel || '--'}</strong>
+                <p>
+                  {dashboardSummary.bestMonth
+                    ? `${formatNumber(dashboardSummary.bestMonth.volume)} volume • ${dashboardSummary.bestMonth.count} sessions`
+                    : 'No training month yet'}
+                </p>
+              </div>
+            </div>
+            <div className="dashboard-performance-meta">
+              <span>
+                Current streak <strong>{dashboardSummary.currentTrainingDayStreak} days</strong>
+              </span>
+              <span>
+                Most improved <strong>{mostImprovedExerciseName}</strong>
+              </span>
+              <span>
+                Recent split{' '}
+                <strong>
+                  {dashboardSummary.strongestRecentSplit
+                    ? getSplitName(dashboardSummary.strongestRecentSplit.splitId)
+                    : '--'}
+                </strong>
               </span>
             </div>
           </div>
