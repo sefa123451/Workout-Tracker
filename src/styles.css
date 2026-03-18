@@ -1181,6 +1181,24 @@ button {
   line-height: 1.06;
 }
 
+.stat-value-single-word {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  line-break: auto;
+}
+
+.stat-card-support .stat-value-single-word {
+  font-size: clamp(0.92rem, 1.08vw, 1.04rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+}
+
+.stat-card-compact .stat-value-single-word {
+  font-size: clamp(0.98rem, 1.18vw, 1.12rem);
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
 .stat-card-support .stat-value-long {
   font-size: clamp(1.18rem, 1.55vw, 1.48rem);
 }
@@ -1229,7 +1247,7 @@ button {
 }
 
 .stat-card-support {
-  min-height: 172px;
+  min-height: 182px;
 }
 
 .stat-card-support .stat-value {
@@ -1880,6 +1898,15 @@ button {
   letter-spacing: -0.03em;
   word-break: normal;
   overflow-wrap: normal;
+  text-wrap: pretty;
+}
+
+.exercise-card h3,
+.history-entry h3,
+.entry-card h3,
+.empty-state h3,
+.dashboard-focus-card h2,
+.dashboard-win-card strong {
   text-wrap: pretty;
 }
 
