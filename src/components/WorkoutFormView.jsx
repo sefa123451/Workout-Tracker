@@ -43,6 +43,15 @@ export default function WorkoutFormView({
 }) {
   const selectedSplit = splits.find((split) => split.id === workoutForm.splitId) ?? null;
   const skippedEntries = workoutForm.skippedEntries ?? [];
+  const plannedSetCount = workoutForm.entries.reduce((sum, entry) => sum + entry.sets.length, 0);
+  const draftTitle = editingTemplateId
+    ? templateDraftName || 'Untitled template'
+    : workoutForm.splitId
+      ? getSplitName(workoutForm.splitId)
+      : 'Custom workout';
+  const draftMeta = `${workoutForm.entries.length} ${
+    workoutForm.entries.length === 1 ? 'exercise' : 'exercises'
+  } • ${plannedSetCount} ${plannedSetCount === 1 ? 'set' : 'sets'}`;
   const [restTimer, setRestTimer] = useState(null);
 
   useEffect(() => {
@@ -196,104 +205,128 @@ export default function WorkoutFormView({
               </label>
             </div>
 
-            {!editingTemplateId && (
-              <div className="logging-meta-bar">
-                <label className="field field-compact">
-                  <span>Mood</span>
-                  <select
-                    value={workoutForm.mood ?? ''}
-                    onChange={(event) =>
-                      setWorkoutForm((current) => ({ ...current, mood: event.target.value }))
-                    }
-                  >
-                    <option value="">Optional mood</option>
-                    {SESSION_MOODS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="field field-compact">
-                  <span>Effort</span>
-                  <select
-                    value={workoutForm.effort ?? ''}
-                    onChange={(event) =>
-                      setWorkoutForm((current) => ({ ...current, effort: event.target.value }))
-                    }
-                  >
-                    <option value="">Optional effort</option>
-                    {SESSION_EFFORTS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="rest-timer-card" role="status" aria-live="polite">
-                  <span className="metric-label">Rest timer</span>
-                  <strong>{formatTimerLabel(restTimer?.remaining ?? 0)}</strong>
-                  <p>{restTimer?.label ?? 'Start a timer from any set row'}</p>
-                  <div className="rest-timer-actions">
-                    <button
-                      type="button"
-                      className="ghost-button action-button"
-                      onClick={() =>
-                        setRestTimer((current) =>
-                          current
-                            ? { ...current, remaining: current.remaining + 30, running: true }
-                            : { duration: 30, remaining: 30, label: 'Quick 30s reset', running: true },
-                        )
-                      }
-                    >
-                      +30s
-                    </button>
-                    <button
-                      type="button"
-                      className="ghost-button action-button"
-                      onClick={() => setRestTimer(null)}
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+            <div className="logging-overview-row" aria-label="Workout draft overview">
+              <div className="logging-overview-card logging-overview-card-primary">
+                <span className="metric-label">{editingTemplateId ? 'Template draft' : 'Workout draft'}</span>
+                <strong>{draftTitle}</strong>
+                <p>{draftMeta}</p>
               </div>
-            )}
+              <div className="logging-overview-card">
+                <span className="metric-label">Exercises</span>
+                <strong>{workoutForm.entries.length}</strong>
+                <p>{workoutForm.splitId ? 'Loaded for today' : 'Planned right now'}</p>
+              </div>
+              <div className="logging-overview-card">
+                <span className="metric-label">Sets</span>
+                <strong>{plannedSetCount}</strong>
+                <p>{plannedSetCount ? 'Ready to log' : 'Add one to begin'}</p>
+              </div>
+            </div>
 
-            <label className="field">
-              <span>Notes</span>
-              <textarea
-                value={workoutForm.notes ?? ''}
-                onChange={(event) =>
-                  setWorkoutForm((current) => ({ ...current, notes: event.target.value }))
-                }
-                placeholder="Optional notes about how the session felt, effort, or anything worth remembering"
-                rows="3"
-              />
-            </label>
+            <div className="logging-support-grid">
+              <label className="field logging-notes-field">
+                <span>Notes</span>
+                <textarea
+                  value={workoutForm.notes ?? ''}
+                  onChange={(event) =>
+                    setWorkoutForm((current) => ({ ...current, notes: event.target.value }))
+                  }
+                  placeholder="Optional notes about how the session felt, effort, or anything worth remembering"
+                  rows="3"
+                />
+              </label>
 
-            {workoutForm.splitId && (
-              <div className="suggestion-card split-summary-card">
-                <div className="suggestion-header">
-                  <div>
-                    <span className="metric-label">Selected split</span>
-                    <p>
-                      {getSplitName(workoutForm.splitId)}
-                      {selectedSplit
-                        ? ` • ${selectedSplit.exercises.length} ${
-                            selectedSplit.exercises.length === 1 ? 'exercise' : 'exercises'
-                          }`
-                        : ' • Split removed from the planner'}
-                    </p>
+              <div className="logging-support-stack">
+                {!editingTemplateId && (
+                  <div className="session-context-card">
+                    <div className="session-context-grid">
+                      <label className="field field-compact">
+                        <span>Mood</span>
+                        <select
+                          value={workoutForm.mood ?? ''}
+                          onChange={(event) =>
+                            setWorkoutForm((current) => ({ ...current, mood: event.target.value }))
+                          }
+                        >
+                          <option value="">Optional mood</option>
+                          {SESSION_MOODS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field field-compact">
+                        <span>Effort</span>
+                        <select
+                          value={workoutForm.effort ?? ''}
+                          onChange={(event) =>
+                            setWorkoutForm((current) => ({ ...current, effort: event.target.value }))
+                          }
+                        >
+                          <option value="">Optional effort</option>
+                          {SESSION_EFFORTS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="rest-timer-card" role="status" aria-live="polite">
+                      <span className="metric-label">Rest timer</span>
+                      <strong>{formatTimerLabel(restTimer?.remaining ?? 0)}</strong>
+                      <p>{restTimer?.label ?? 'Start a timer from any set row'}</p>
+                      <div className="rest-timer-actions">
+                        <button
+                          type="button"
+                          className="ghost-button action-button"
+                          onClick={() =>
+                            setRestTimer((current) =>
+                              current
+                                ? { ...current, remaining: current.remaining + 30, running: true }
+                                : { duration: 30, remaining: 30, label: 'Quick 30s reset', running: true },
+                            )
+                          }
+                        >
+                          +30s
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button action-button"
+                          onClick={() => setRestTimer(null)}
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                {selectedSplit && selectedSplit.exercises.length === 0 && (
-                  <div className="empty-inline">
-                    <p>This split is empty. Add exercises in the planner or build today manually.</p>
+                )}
+
+                {workoutForm.splitId && (
+                  <div className="suggestion-card split-summary-card">
+                    <div className="suggestion-header">
+                      <div>
+                        <span className="metric-label">Selected split</span>
+                        <p>
+                          {getSplitName(workoutForm.splitId)}
+                          {selectedSplit
+                            ? ` • ${selectedSplit.exercises.length} ${
+                                selectedSplit.exercises.length === 1 ? 'exercise' : 'exercises'
+                              }`
+                            : ' • Split removed from the planner'}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedSplit && selectedSplit.exercises.length === 0 && (
+                      <div className="empty-inline">
+                        <p>This split is empty. Add exercises in the planner or build today manually.</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
+            </div>
 
             <div className="stack entry-stack">
               {workoutForm.entries.map((entry, entryIndex) => {
@@ -334,66 +367,68 @@ export default function WorkoutFormView({
                       )}
                     </div>
 
-                    <label className="field">
-                      <span>Exercise</span>
-                      <select
-                        value={entry.exerciseId}
-                        onChange={(event) =>
-                          updateWorkoutEntry(entry.id, (currentEntry) => ({
-                            ...currentEntry,
-                            exerciseId: event.target.value,
-                          }))
-                        }
-                      >
-                        <option value="">Select an exercise</option>
-                        {entry.exerciseId &&
-                          !exercises.some((exercise) => exercise.id === entry.exerciseId) && (
-                            <option value={entry.exerciseId}>Unknown exercise (deleted)</option>
-                          )}
-                        {exercises.map((exercise) => (
-                          <option key={exercise.id} value={exercise.id}>
-                            {exercise.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    {latestSession && (
-                      <div className="suggestion-card session-reference-card">
-                        <div className="suggestion-header">
-                          <div>
-                            <span className="metric-label">Last workout</span>
-                            <p>
-                              {formatDisplayDate(latestSession.date)} • Vol{' '}
-                              {formatNumber(latestSession.metrics.totalVolume)}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            className="ghost-button action-button"
-                            aria-label={`Use last workout values for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                            onClick={() => applyLatestWorkoutToEntry(entry.id, latestSession)}
-                          >
-                            Use last
-                          </button>
-                        </div>
-                        <div className="last-session-metrics">
-                          <span>Wt {formatNumber(latestSession.metrics.bestWeight)}</span>
-                          <span>Reps {formatNumber(latestSession.metrics.bestReps)}</span>
-                          <span>
-                            {latestSession.sets.length}{' '}
-                            {latestSession.sets.length === 1 ? 'set' : 'sets'}
-                          </span>
-                        </div>
-                        <ul className="set-list compact-set-list">
-                          {latestSession.sets.map((set, index) => (
-                            <li key={`${latestSession.workoutId}-${index}`}>
-                              Set {index + 1}: {formatNumber(set.weight)} × {formatNumber(set.reps)}
-                            </li>
+                    <div className={latestSession ? 'entry-support-grid entry-support-grid-with-reference' : 'entry-support-grid'}>
+                      <label className="field">
+                        <span>Exercise</span>
+                        <select
+                          value={entry.exerciseId}
+                          onChange={(event) =>
+                            updateWorkoutEntry(entry.id, (currentEntry) => ({
+                              ...currentEntry,
+                              exerciseId: event.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select an exercise</option>
+                          {entry.exerciseId &&
+                            !exercises.some((exercise) => exercise.id === entry.exerciseId) && (
+                              <option value={entry.exerciseId}>Unknown exercise (deleted)</option>
+                            )}
+                          {exercises.map((exercise) => (
+                            <option key={exercise.id} value={exercise.id}>
+                              {exercise.name}
+                            </option>
                           ))}
-                        </ul>
-                      </div>
-                    )}
+                        </select>
+                      </label>
+
+                      {latestSession && (
+                        <div className="suggestion-card session-reference-card">
+                          <div className="suggestion-header">
+                            <div>
+                              <span className="metric-label">Last workout</span>
+                              <p>
+                                {formatDisplayDate(latestSession.date)} • Vol{' '}
+                                {formatNumber(latestSession.metrics.totalVolume)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              className="ghost-button action-button"
+                              aria-label={`Use last workout values for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                              onClick={() => applyLatestWorkoutToEntry(entry.id, latestSession)}
+                            >
+                              Use last
+                            </button>
+                          </div>
+                          <div className="last-session-metrics">
+                            <span>Wt {formatNumber(latestSession.metrics.bestWeight)}</span>
+                            <span>Reps {formatNumber(latestSession.metrics.bestReps)}</span>
+                            <span>
+                              {latestSession.sets.length}{' '}
+                              {latestSession.sets.length === 1 ? 'set' : 'sets'}
+                            </span>
+                          </div>
+                          <ul className="set-list compact-set-list">
+                            {latestSession.sets.map((set, index) => (
+                              <li key={`${latestSession.workoutId}-${index}`}>
+                                Set {index + 1}: {formatNumber(set.weight)} × {formatNumber(set.reps)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="set-grid-head" aria-hidden="true">
                       <span>Set</span>
@@ -447,112 +482,118 @@ export default function WorkoutFormView({
                             />
                           </label>
                           <div className="set-actions">
-                            <label className="set-done-toggle">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(set.completed)}
-                                onChange={(event) =>
-                                  toggleSetCompleted(entry.id, set.id, event.target.checked)
-                                }
-                              />
-                              <span>{set.completed ? 'Done' : 'Open'}</span>
-                            </label>
-                            <button
-                              type="button"
-                              className="ghost-button action-button"
-                              aria-label={`Add 2.5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                              onClick={() => adjustSetValue(entry.id, set.id, 'weight', 2.5)}
-                            >
-                              +2.5 kg
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button action-button"
-                              aria-label={`Add 5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                              onClick={() => adjustSetValue(entry.id, set.id, 'weight', 5)}
-                            >
-                              +5 kg
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button action-button"
-                              aria-label={`Add one rep to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                              onClick={() => adjustSetValue(entry.id, set.id, 'reps', 1)}
-                            >
-                              +1 rep
-                            </button>
-                            <div className="set-timer-buttons" aria-label={`Rest timer shortcuts for set ${setIndex + 1}`}>
-                              {[60, 90, 120].map((duration) => (
-                                <button
-                                  key={duration}
-                                  type="button"
-                                  className="ghost-button action-button"
-                                  aria-label={`Start ${duration} second rest timer for set ${setIndex + 1} of ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                                  onClick={() =>
-                                    startRestTimer(
-                                      duration,
-                                      `${selectedExerciseName || `Exercise ${entryIndex + 1}`} • Set ${setIndex + 1}`,
-                                    )
+                            <div className="set-actions-primary">
+                              <label className="set-done-toggle">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(set.completed)}
+                                  onChange={(event) =>
+                                    toggleSetCompleted(entry.id, set.id, event.target.checked)
                                   }
-                                >
-                                  {duration}s
-                                </button>
-                              ))}
+                                />
+                                <span>{set.completed ? 'Done' : 'Open'}</span>
+                              </label>
+                              <button
+                                type="button"
+                                className="ghost-button action-button set-step-button"
+                                aria-label={`Add 2.5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                onClick={() => adjustSetValue(entry.id, set.id, 'weight', 2.5)}
+                              >
+                                +2.5 kg
+                              </button>
+                              <button
+                                type="button"
+                                className="ghost-button action-button set-step-button"
+                                aria-label={`Add 5 kilograms to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                onClick={() => adjustSetValue(entry.id, set.id, 'weight', 5)}
+                              >
+                                +5 kg
+                              </button>
+                              <button
+                                type="button"
+                                className="ghost-button action-button set-step-button"
+                                aria-label={`Add one rep to set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                onClick={() => adjustSetValue(entry.id, set.id, 'reps', 1)}
+                              >
+                                +1 rep
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              aria-label={`Copy set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                              onClick={() =>
-                                updateWorkoutEntry(entry.id, (currentEntry) => ({
-                                  ...currentEntry,
-                                  sets: [
-                                    ...currentEntry.sets,
-                                    createSetFromValues(set.weight, set.reps),
-                                  ],
-                                }))
-                              }
-                            >
-                              Copy set
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              aria-label={
-                                entry.sets.length === 1 && setIndex === 0
-                                  ? `Clear set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
-                                  : `Remove set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
-                              }
-                              onClick={() =>
-                                updateWorkoutEntry(entry.id, (currentEntry) => ({
-                                  ...currentEntry,
-                                  sets:
-                                    currentEntry.sets.length === 1
-                                      ? [createSet()]
-                                      : currentEntry.sets.filter((currentSet) => currentSet.id !== set.id),
-                                }))
-                              }
-                            >
-                              {entry.sets.length === 1 && setIndex === 0 ? 'Clear set' : 'Remove set'}
-                            </button>
+                            <div className="set-actions-secondary">
+                              <div className="set-timer-buttons" aria-label={`Rest timer shortcuts for set ${setIndex + 1}`}>
+                                {[60, 90, 120].map((duration) => (
+                                  <button
+                                    key={duration}
+                                    type="button"
+                                    className="ghost-button action-button set-timer-button"
+                                    aria-label={`Start ${duration} second rest timer for set ${setIndex + 1} of ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                    onClick={() =>
+                                      startRestTimer(
+                                        duration,
+                                        `${selectedExerciseName || `Exercise ${entryIndex + 1}`} • Set ${setIndex + 1}`,
+                                      )
+                                    }
+                                  >
+                                    {duration}s
+                                  </button>
+                                ))}
+                              </div>
+                              <button
+                                type="button"
+                                className="ghost-button set-inline-button"
+                                aria-label={`Copy set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                                onClick={() =>
+                                  updateWorkoutEntry(entry.id, (currentEntry) => ({
+                                    ...currentEntry,
+                                    sets: [
+                                      ...currentEntry.sets,
+                                      createSetFromValues(set.weight, set.reps),
+                                    ],
+                                  }))
+                                }
+                              >
+                                Copy set
+                              </button>
+                              <button
+                                type="button"
+                                className="ghost-button set-inline-button"
+                                aria-label={
+                                  entry.sets.length === 1 && setIndex === 0
+                                    ? `Clear set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
+                                    : `Remove set ${setIndex + 1} for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`
+                                }
+                                onClick={() =>
+                                  updateWorkoutEntry(entry.id, (currentEntry) => ({
+                                    ...currentEntry,
+                                    sets:
+                                      currentEntry.sets.length === 1
+                                        ? [createSet()]
+                                        : currentEntry.sets.filter((currentSet) => currentSet.id !== set.id),
+                                  }))
+                                }
+                              >
+                                {entry.sets.length === 1 && setIndex === 0 ? 'Clear set' : 'Remove set'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
                     </div>
 
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      aria-label={`Add a set for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
-                      onClick={() =>
-                        updateWorkoutEntry(entry.id, (currentEntry) => ({
-                          ...currentEntry,
-                          sets: [...currentEntry.sets, createSet()],
-                        }))
-                      }
-                    >
-                      Add set
-                    </button>
+                    <div className="entry-card-footer">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        aria-label={`Add a set for ${selectedExerciseName || `exercise ${entryIndex + 1}`}`}
+                        onClick={() =>
+                          updateWorkoutEntry(entry.id, (currentEntry) => ({
+                            ...currentEntry,
+                            sets: [...currentEntry.sets, createSet()],
+                          }))
+                        }
+                      >
+                        Add set
+                      </button>
+                    </div>
                   </article>
                 );
               })}

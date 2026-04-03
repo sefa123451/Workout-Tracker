@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.jsx';
@@ -34,11 +34,22 @@ describe('App integration flows', () => {
 
   it('creates an exercise from the exercise view', async () => {
     const user = userEvent.setup();
-    renderAppWithStoredData();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'existing-exercise',
+          name: 'Existing exercise',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
-    await user.type(screen.getByLabelText('Exercise name'), 'Back squat');
-    await user.click(screen.getByRole('button', { name: 'Add exercise' }));
+    const exerciseNameInput = screen.getByLabelText('Exercise name');
+    const exerciseForm = exerciseNameInput.closest('form');
+    await user.type(exerciseNameInput, 'Back squat');
+    await user.click(within(exerciseForm).getByRole('button', { name: 'Add exercise' }));
 
     expect(screen.getByText('Added Back squat.')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
@@ -759,7 +770,16 @@ describe('App integration flows', () => {
   });
 
   it('shows an error for invalid JSON imports', async () => {
-    renderAppWithStoredData();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'existing-exercise',
+          name: 'Existing exercise',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
 
     const fileInput = document.querySelector('input[type="file"]');
     const file = new File(['{'], 'broken.json', { type: 'application/json' });
@@ -882,27 +902,21 @@ describe('App integration flows', () => {
       ],
     });
 
-    const workoutsThisWeekCard = screen.getByText('Workouts this week').closest('.stat-card');
-    const mostTrainedCard = screen.getByText('Most trained exercise').closest('.stat-card');
-    const recentPrCard = screen.getByText('PR hits').closest('.stat-card');
+    const workoutsCard = screen.getAllByText('Workouts').map(el => el.closest('.db-stat')).find(Boolean);
+    expect(workoutsCard.textContent).toContain('2');
 
-    expect(workoutsThisWeekCard.textContent).toContain('2');
-    expect(mostTrainedCard.textContent).toContain('Back squat');
-    expect(mostTrainedCard.textContent).toContain('3 entries');
+    const recentPrCard = screen.getByText('Recent PRs').closest('.db-stat');
     expect(recentPrCard.textContent).toContain('3');
     expect(recentPrCard.textContent).toContain('Last 30 days');
-    expect(screen.getByText('Latest PRs')).toBeTruthy();
+
     expect(screen.getByText('Volume by day')).toBeTruthy();
     expect(screen.getByText('Training calendar')).toBeTruthy();
     expect(screen.getByText('Last 28 days')).toBeTruthy();
     expect(screen.getByText('This week vs last')).toBeTruthy();
-    expect(screen.getByText('PRs this week')).toBeTruthy();
-    expect(screen.getByText('Keep the rhythm')).toBeTruthy();
-    expect(screen.getByText('This month')).toBeTruthy();
     expect(screen.getByLabelText('Training heatmap')).toBeTruthy();
     expect(screen.getByText('Split insights')).toBeTruthy();
-    expect(screen.getByText('Templates that carry you')).toBeTruthy();
-    expect(screen.getByText('Top split this month')).toBeTruthy();
+    expect(screen.getByText('Reuse a session')).toBeTruthy();
+    expect(screen.getByText('Top this month')).toBeTruthy();
     expect(screen.getByText('Best periods')).toBeTruthy();
     expect(screen.getByText('Best week')).toBeTruthy();
     expect(screen.getByText('Best month')).toBeTruthy();

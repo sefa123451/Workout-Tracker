@@ -9,9 +9,31 @@ import {
   getProgressWindowSummary,
   getSplitProgressWindowSummary,
   isValidDateInput,
+  mergeImportedData,
   parseSet,
+  readStoredData,
+  STORAGE_KEY,
   validateImportedData,
 } from './workoutData.js';
+
+function createMockLocalStorage() {
+  const storage = new Map();
+
+  return {
+    getItem(key) {
+      return storage.has(key) ? storage.get(key) : null;
+    },
+    setItem(key, value) {
+      storage.set(key, String(value));
+    },
+    removeItem(key) {
+      storage.delete(key);
+    },
+    clear() {
+      storage.clear();
+    },
+  };
+}
 
 describe('validation helpers', () => {
   it('rejects invalid dates', () => {
@@ -30,6 +52,90 @@ describe('validation helpers', () => {
     expect(parseSet({ weight: '40', reps: '8.5' })).toEqual({
       error: 'Reps must be a whole number.',
     });
+  });
+});
+
+describe('stored data bootstrap', () => {
+  it('returns realistic demo data when storage is empty', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T12:00:00.000Z'));
+    vi.stubGlobal('window', { localStorage: createMockLocalStorage() });
+
+    const data = readStoredData();
+
+    expect(data.exercises.length).toBeGreaterThanOrEqual(16);
+    expect(data.splits.length).toBe(4);
+    expect(data.templates.length).toBe(3);
+    expect(data.workouts.length).toBeGreaterThanOrEqual(28);
+    expect(data.workouts.length).toBeLessThanOrEqual(32);
+    expect(data.workouts[0].date).toBe('2026-04-02');
+  });
+
+  it('falls back to demo data when stored collections are present but empty', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T12:00:00.000Z'));
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          exercises: [],
+          splits: [],
+          templates: [],
+          workouts: [],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.exercises.length).toBeGreaterThan(0);
+    expect(data.workouts.length).toBeGreaterThan(0);
+    expect(data.workouts[0].date).toBe('2026-04-02');
+  });
+
+  it('preserves explicit stored data instead of replacing it with demo content', () => {
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          exercises: [{ id: 'exercise-1', name: 'Custom squat' }],
+          splits: [],
+          templates: [],
+          workouts: [
+            {
+              id: 'workout-1',
+              date: '2026-03-01',
+              splitId: '',
+              notes: '',
+              mood: '',
+              effort: '',
+              createdAt: '2026-03-01T08:00:00.000Z',
+              entries: [{ exerciseId: 'exercise-1', sets: [{ weight: 100, reps: 5 }] }],
+            },
+          ],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.exercises).toEqual([
+      {
+        id: 'exercise-1',
+        name: 'Custom squat',
+        createdAt: expect.any(String),
+      },
+    ]);
+    expect(data.workouts).toHaveLength(1);
+    expect(data.workouts[0].id).toBe('workout-1');
   });
 });
 
@@ -118,6 +224,41 @@ describe('import validation', () => {
       }),
     ).toEqual({
       error: 'Imported workouts contain invalid dates, entries, or set values.',
+    });
+  });
+
+  it('rejects duplicate IDs in imported collections', () => {
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Squat' }],
+        workouts: [
+          {
+            id: 'w1',
+            date: '2024-01-12',
+            entries: [{ exerciseId: '1', sets: [{ weight: 100, reps: 5 }] }],
+          },
+          {
+            id: 'w1',
+            date: '2024-01-13',
+            entries: [{ exerciseId: '1', sets: [{ weight: 102.5, reps: 5 }] }],
+          },
+        ],
+      }),
+    ).toEqual({
+      error: 'Imported workouts contain duplicate IDs.',
+    });
+
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Squat' }],
+        splits: [
+          { id: 'split-1', name: 'Push', exercises: [] },
+          { id: 'split-1', name: 'Pull', exercises: [] },
+        ],
+        workouts: [],
+      }),
+    ).toEqual({
+      error: 'Imported splits contain duplicate IDs.',
     });
   });
 
@@ -256,6 +397,45 @@ describe('import validation', () => {
         entries: [{ exerciseId: '1', sets: [{ weight: 80, reps: 8 }] }],
       },
     ]);
+  });
+
+  it('rejects imported workouts and templates with duplicate exercise entries', () => {
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Bench press' }],
+        templates: [
+          {
+            id: 'template-1',
+            name: 'Push template',
+            entries: [
+              { exerciseId: '1', sets: [{ weight: 80, reps: 8 }] },
+              { exerciseId: '1', sets: [{ weight: 82.5, reps: 6 }] },
+            ],
+          },
+        ],
+        workouts: [],
+      }),
+    ).toEqual({
+      error: 'Imported templates contain empty names, invalid entries, or invalid set values.',
+    });
+
+    expect(
+      validateImportedData({
+        exercises: [{ id: '1', name: 'Bench press' }],
+        workouts: [
+          {
+            id: 'w1',
+            date: '2024-01-12',
+            entries: [
+              { exerciseId: '1', sets: [{ weight: 80, reps: 8 }] },
+              { exerciseId: '1', sets: [{ weight: 82.5, reps: 6 }] },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      error: 'Imported workouts contain invalid dates, entries, or set values.',
+    });
   });
 });
 
@@ -448,6 +628,50 @@ describe('dashboard insights', () => {
   });
 });
 
+describe('merge import', () => {
+  it('does not append duplicate imported workout IDs more than once', () => {
+    const merged = mergeImportedData(
+      {
+        exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T00:00:00.000Z' }],
+        splits: [],
+        templates: [],
+        workouts: [],
+      },
+      {
+        exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T00:00:00.000Z' }],
+        splits: [],
+        templates: [],
+        workouts: [
+          {
+            id: 'w1',
+            date: '2024-01-12',
+            splitId: '',
+            notes: '',
+            mood: '',
+            effort: '',
+            createdAt: '2024-01-12T08:00:00.000Z',
+            entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+          },
+          {
+            id: 'w1',
+            date: '2024-01-13',
+            splitId: '',
+            notes: '',
+            mood: '',
+            effort: '',
+            createdAt: '2024-01-13T08:00:00.000Z',
+            entries: [{ exerciseId: 'bench', sets: [{ weight: 82.5, reps: 8 }] }],
+          },
+        ],
+      },
+    );
+
+    expect(merged.workouts).toHaveLength(1);
+    expect(merged.workouts[0].id).toBe('w1');
+  });
+});
+
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });

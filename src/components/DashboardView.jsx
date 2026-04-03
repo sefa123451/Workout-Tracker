@@ -1,6 +1,5 @@
 import React from 'react';
 import EmptyState from './EmptyState.jsx';
-import StatCard from './StatCard.jsx';
 
 export default function DashboardView({
   exercises,
@@ -25,16 +24,11 @@ export default function DashboardView({
   lastUsedTemplate,
   startWorkoutFromLastUsedTemplate,
 }) {
-  const focusTitle = latestWorkout ? getSplitName(latestWorkout.splitId) : 'Next session';
-  const focusSubtitle = latestWorkout
-    ? `${latestWorkout.entries.length} ${latestWorkout.entries.length === 1 ? 'exercise' : 'exercises'}`
-    : 'Build your next workout';
-  const focusMeta = latestWorkout
-    ? formatDisplayDate(latestWorkout.date)
-    : dashboardSummary.lastTrainingDay
-      ? formatDisplayDate(dashboardSummary.lastTrainingDay)
-      : 'No recent session';
-  const currentSplitName = latestWorkout ? getSplitName(latestWorkout.splitId) : '--';
+  const suggestedSplitId =
+    latestWorkout?.splitId && latestWorkout.splitId !== ''
+      ? latestWorkout.splitId
+      : splits[0]?.id ?? '';
+  const suggestedSplitName = suggestedSplitId ? getSplitName(suggestedSplitId) : '';
   const latestWorkoutVolume = latestWorkout
     ? latestWorkout.entries.reduce(
         (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
@@ -45,265 +39,187 @@ export default function DashboardView({
     ...dashboardSummary.weeklyVolumeTrend.map((day) => day.volume),
     1,
   );
-  const suggestedSplitId =
-    latestWorkout?.splitId && latestWorkout.splitId !== ''
-      ? latestWorkout.splitId
-      : splits[0]?.id ?? '';
-  const suggestedSplitName = suggestedSplitId ? getSplitName(suggestedSplitId) : '';
-  const volumeDeltaPositive = dashboardSummary.volumeDeltaVsLastWeek >= 0;
-  const workoutDeltaPositive = dashboardSummary.workoutDeltaVsLastWeek >= 0;
   const heatmapActiveDays = dashboardSummary.trainingHeatmap.filter((day) => day.count > 0).length;
-  const heatmapSessionCount = dashboardSummary.trainingHeatmap.reduce(
-    (sum, day) => sum + day.count,
-    0,
-  );
-  const heatmapPeakVolume = dashboardSummary.trainingHeatmap.reduce(
-    (peak, day) => Math.max(peak, day.volume),
-    0,
-  );
-  const splitInsightPrimary = dashboardSummary.topSplitThisMonth
-    ? {
-        title: getSplitName(dashboardSummary.topSplitThisMonth.splitId),
-        value: `${formatNumber(dashboardSummary.topSplitThisMonth.volume)}`,
-        helper: `${dashboardSummary.topSplitThisMonth.count} ${dashboardSummary.topSplitThisMonth.count === 1 ? 'session' : 'sessions'} this month`,
-      }
-    : null;
-  const splitInsightSecondary = dashboardSummary.mostUsedSplit
-    ? {
-        title: getSplitName(dashboardSummary.mostUsedSplit.splitId),
-        value: String(dashboardSummary.mostUsedSplit.count),
-        helper: 'Most logged split',
-      }
-    : null;
   const mostImprovedExerciseName = dashboardSummary.mostImprovedExercise
     ? getExerciseName(dashboardSummary.mostImprovedExercise.exerciseId)
-    : '--';
+    : null;
 
   return (
-    <main className="content-grid dashboard-grid">
-      <section className="panel dashboard-panel dashboard-main-panel">
-        <div className="dashboard-hero-card">
-          <div className="dashboard-hero-copy">
-            <p className="section-label">Weekly focus</p>
-            <h2 className="dashboard-hero-title">
-              {dashboardSummary.workoutsThisWeek
-                ? (
-                  <>
-                    <span>
-                      {dashboardSummary.workoutsThisWeek} workout
-                      {dashboardSummary.workoutsThisWeek === 1 ? '' : 's'}
-                    </span>
-                    <span>in motion</span>
-                  </>
-                )
-                : 'Ready for a fresh week'}
-            </h2>
-            <p className="dashboard-hero-text">
-              {dashboardSummary.totalVolumeThisWeek
-                ? `${formatNumber(dashboardSummary.totalVolumeThisWeek)} total volume so far`
-                : 'Log a session to bring this dashboard to life'}
-            </p>
-          </div>
-          <div className="dashboard-hero-metrics">
-            <div className="hero-mini-stat">
-              <span>Volume</span>
-              <strong>{formatNumber(dashboardSummary.totalVolumeThisWeek)}</strong>
-            </div>
-            <div className="hero-mini-stat">
-              <span>Avg session</span>
-              <strong>
-                {dashboardSummary.workoutsThisWeek
-                  ? formatNumber(dashboardSummary.averageVolumeThisWeek)
-                  : '--'}
-              </strong>
-            </div>
-          </div>
+    <main className="db">
+      {/* ---- TOP STATS ROW ---- */}
+      <section className="db-stats-row">
+        <div className="db-stat">
+          <span className="db-stat-label">Volume this week</span>
+          <strong className="db-stat-value">{formatNumber(dashboardSummary.totalVolumeThisWeek)}</strong>
+          <span className="db-stat-delta">
+            {dashboardSummary.volumeDeltaVsLastWeek >= 0 ? '+' : ''}
+            {formatNumber(dashboardSummary.volumeDeltaVsLastWeek)} vs last week
+          </span>
         </div>
-        <div className="weekly-trend-card">
-          <div className="weekly-trend-header">
-            <div>
-              <p className="section-label">Weekly trend</p>
-              <h3>Volume by day</h3>
-            </div>
-            <span>{formatNumber(dashboardSummary.totalVolumeThisWeek)}</span>
-          </div>
-          <div className="weekly-trend-bars" aria-label="Weekly volume trend">
-            {dashboardSummary.weeklyVolumeTrend.map((day) => (
-              <div key={day.date} className="weekly-trend-bar-group">
-                <div className="weekly-trend-rail">
-                  <div
-                    className="weekly-trend-bar"
-                    style={{ height: `${Math.max((day.volume / weeklyTrendMax) * 100, day.volume ? 14 : 6)}%` }}
-                  />
-                </div>
-                <strong>{formatNumber(day.volume)}</strong>
-                <span>{day.label}</span>
-              </div>
-            ))}
-          </div>
+        <div className="db-stat">
+          <span className="db-stat-label">Workouts</span>
+          <strong className="db-stat-value">{dashboardSummary.workoutsThisWeek}</strong>
+          <span className="db-stat-delta">{dashboardSummary.workoutsThisMonth} this month</span>
         </div>
-
-        <div className="dashboard-heatmap-card">
-          <div className="section-heading compact-heading">
-            <div>
-              <p className="section-label">Training calendar</p>
-              <h2>Last 28 days</h2>
-            </div>
-            <div className="dashboard-heatmap-meta">
-              <span>{heatmapActiveDays} active days</span>
-              <span>{heatmapSessionCount} sessions</span>
-              <span>{heatmapPeakVolume ? `${formatNumber(heatmapPeakVolume)} peak` : 'No peak yet'}</span>
-            </div>
-          </div>
-          <div className="dashboard-heatmap-grid" aria-label="Training heatmap">
-            {dashboardSummary.trainingHeatmap.map((day) => (
-              <div
-                key={day.date}
-                className={`dashboard-heatmap-cell level-${day.level}`}
-                title={`${formatDisplayDate(day.date)} • ${day.count} ${day.count === 1 ? 'session' : 'sessions'} • ${formatNumber(day.volume)} volume`}
-                aria-label={`${formatDisplayDate(day.date)} with ${day.count} ${day.count === 1 ? 'session' : 'sessions'}`}
-              />
-            ))}
-          </div>
-          <div className="dashboard-heatmap-legend">
-            <span>Light</span>
-            <div className="dashboard-heatmap-scale" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((level) => (
-                <span key={level} className={`dashboard-heatmap-cell level-${level}`} />
-              ))}
-            </div>
-            <span>Heavy</span>
-          </div>
+        <div className="db-stat">
+          <span className="db-stat-label">Active streak</span>
+          <strong className="db-stat-value">{dashboardSummary.activeWeekStreak}</strong>
+          <span className="db-stat-delta">
+            {dashboardSummary.activeWeekStreak === 1 ? 'week' : 'weeks'} in a row
+          </span>
         </div>
-
-        <div className="dashboard-stat-stack">
-          <div className="dashboard-lower-grid">
-            <div className="stats-grid stats-grid-featured">
-              <StatCard
-                label="Volume this week"
-                value={formatNumber(dashboardSummary.totalVolumeThisWeek)}
-                className="stat-card-hero stat-card-accent"
-                helper={dashboardSummary.workoutsThisWeek ? 'This week' : 'No workouts yet'}
-              />
-              <StatCard
-                label="Workouts this week"
-                value={String(dashboardSummary.workoutsThisWeek)}
-                className="stat-card-hero"
-                helper={dashboardSummary.workoutsThisWeek ? 'This week' : 'No workouts yet'}
-              />
-            </div>
-
-            <div className="stats-grid stats-grid-support">
-              <StatCard
-                label="Last training day"
-                className="stat-card-support"
-                value={
-                  dashboardSummary.lastTrainingDay
-                    ? formatDisplayDate(dashboardSummary.lastTrainingDay)
-                    : '--'
-                }
-                helper={dashboardSummary.lastTrainingDay ? 'Latest' : 'No workouts yet'}
-              />
-              <StatCard
-                label="Most trained exercise"
-                className="stat-card-support"
-                value={
-                  dashboardSummary.mostTrainedExercise
-                    ? getExerciseName(dashboardSummary.mostTrainedExercise.exerciseId)
-                    : '--'
-                }
-                helper={
-                  dashboardSummary.mostTrainedExercise
-                    ? `${dashboardSummary.mostTrainedExercise.count} entries`
-                    : 'No history yet'
-                }
-              />
-              <StatCard
-                label="Current split"
-                className="stat-card-support"
-                value={currentSplitName}
-                helper={latestWorkout ? 'Latest session' : 'No split yet'}
-              />
-            </div>
-
-            <div className="stats-grid stats-grid-secondary">
-              <StatCard
-                label="Exercises"
-                className="stat-card-compact"
-                value={String(exercises.length)}
-                helper={exercises.length ? 'Library' : 'Empty'}
-              />
-              <StatCard
-                label="Workouts"
-                className="stat-card-compact"
-                value={String(workouts.length)}
-                helper={workouts.length ? 'All time' : 'Empty'}
-              />
-              <StatCard
-                label="Sets logged"
-                className="stat-card-compact"
-                value={String(totalSetsLogged)}
-                helper={totalSetsLogged ? 'All time' : 'Empty'}
-              />
-              <StatCard
-                label="PR hits"
-                className="stat-card-compact"
-                value={String(dashboardSummary.recentPrHits)}
-                helper={dashboardSummary.recentPrHits ? 'Last 30 days' : 'No recent PRs'}
-              />
-            </div>
-          </div>
-
+        <div className="db-stat">
+          <span className="db-stat-label">Recent PRs</span>
+          <strong className="db-stat-value">{dashboardSummary.recentPrHits}</strong>
+          <span className="db-stat-delta">Last 30 days</span>
         </div>
-        <div className="data-actions dashboard-actions">
-          <button type="button" className="secondary-button" onClick={exportAppData}>
-            Export JSON
-          </button>
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Import JSON
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden-input"
-            onChange={handleImportFile}
-          />
-        </div>
-        {dataMessage.text && (
-          <p
-            className={
-              dataMessage.type === 'error'
-                ? 'feedback error'
-                : dataMessage.type === 'warning'
-                  ? 'feedback warning'
-                  : 'feedback success'
-            }
-            role={dataMessage.type === 'error' ? 'alert' : 'status'}
-            aria-live={dataMessage.type === 'error' ? 'assertive' : 'polite'}
-          >
-            {dataMessage.text}
-          </p>
-        )}
       </section>
 
-      <div className="dashboard-side-stack">
-        <section className="panel panel-highlight dashboard-focus-panel">
-          <div className="dashboard-focus-card">
-            <div className="dashboard-focus-topline">
-              <p className="section-label">Current focus</p>
-              <span className="dashboard-focus-badge">{focusMeta}</span>
+      {/* ---- MAIN CONTENT GRID ---- */}
+      <div className="db-grid">
+
+        {/* -- LEFT COLUMN -- */}
+        <div className="db-col-primary">
+
+          {/* Weekly Focus */}
+          <section className="db-card db-card-hero">
+            <div className="db-card-hero-top">
+              <div>
+                <span className="db-label">Weekly focus</span>
+                <h2 className="db-card-hero-title">
+                  {dashboardSummary.workoutsThisWeek
+                    ? <>{dashboardSummary.workoutsThisWeek} workout{dashboardSummary.workoutsThisWeek === 1 ? '' : 's'} <span>this week</span></>
+                    : 'Fresh week ahead'}
+                </h2>
+              </div>
+              {dashboardSummary.bestTrainingDayLabel && (
+                <span className="db-badge">
+                  Best day: {dashboardSummary.bestTrainingDayLabel}
+                </span>
+              )}
             </div>
-            <h2>{focusTitle}</h2>
-            <p className="dashboard-focus-copy">{focusSubtitle}</p>
-            <div className="dashboard-focus-stats">
+            <p className="db-card-hero-sub">
+              {dashboardSummary.totalVolumeThisWeek
+                ? `${formatNumber(dashboardSummary.totalVolumeThisWeek)} total volume · avg ${dashboardSummary.workoutsThisWeek ? formatNumber(dashboardSummary.averageVolumeThisWeek) : '--'} per session`
+                : 'Log your first session to see your weekly rhythm.'}
+            </p>
+          </section>
+
+          {/* Weekly Trend Chart */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Weekly trend</span>
+                <h3 className="db-card-title">Volume by day</h3>
+              </div>
+              <strong className="db-card-header-value">{formatNumber(dashboardSummary.totalVolumeThisWeek)}</strong>
+            </div>
+            <div className="db-bars" aria-label="Weekly volume trend">
+              {dashboardSummary.weeklyVolumeTrend.map((day) => (
+                <div key={day.date} className="db-bar-col">
+                  <div className="db-bar-track">
+                    <div
+                      className="db-bar-fill"
+                      style={{ height: `${Math.max((day.volume / weeklyTrendMax) * 100, day.volume ? 14 : 4)}%` }}
+                    />
+                  </div>
+                  <span className="db-bar-value">{formatNumber(day.volume)}</span>
+                  <span className="db-bar-label">{day.label}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Heatmap Calendar */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Training calendar</span>
+                <h3 className="db-card-title">Last 28 days</h3>
+              </div>
+              <span className="db-meta-pill">{heatmapActiveDays} active days</span>
+            </div>
+            <div className="db-heatmap" aria-label="Training heatmap">
+              {dashboardSummary.trainingHeatmap.map((day) => (
+                <div
+                  key={day.date}
+                  className={`db-heatmap-cell level-${day.level}`}
+                  title={`${formatDisplayDate(day.date)} · ${day.count} session${day.count === 1 ? '' : 's'} · ${formatNumber(day.volume)} vol`}
+                />
+              ))}
+            </div>
+            <div className="db-heatmap-legend">
+              <span>Less</span>
+              <div className="db-heatmap-scale">
+                {[0, 1, 2, 3, 4].map((level) => (
+                  <span key={level} className={`db-heatmap-cell level-${level}`} />
+                ))}
+              </div>
+              <span>More</span>
+            </div>
+          </section>
+
+          {/* Performance Records */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Performance</span>
+                <h3 className="db-card-title">Best periods</h3>
+              </div>
+            </div>
+            <div className="db-kpi-grid">
+              <div className="db-kpi db-kpi-featured">
+                <span>Best week</span>
+                <strong>{dashboardSummary.bestWeekLabel || '--'}</strong>
+                <p>
+                  {dashboardSummary.bestWeek
+                    ? `${formatNumber(dashboardSummary.bestWeek.volume)} vol · ${dashboardSummary.bestWeek.count} sessions`
+                    : 'No data yet'}
+                </p>
+              </div>
+              <div className="db-kpi">
+                <span>Best month</span>
+                <strong>{dashboardSummary.bestMonthLabel || '--'}</strong>
+                <p>
+                  {dashboardSummary.bestMonth
+                    ? `${formatNumber(dashboardSummary.bestMonth.volume)} vol · ${dashboardSummary.bestMonth.count} sessions`
+                    : 'No data yet'}
+                </p>
+              </div>
+            </div>
+            <div className="db-pill-row">
+              <span className="db-meta-pill">
+                Longest streak: <strong>{dashboardSummary.longestActiveWeekStreak} weeks</strong>
+              </span>
+              {mostImprovedExerciseName && (
+                <span className="db-meta-pill">
+                  Most improved: <strong>{mostImprovedExerciseName}</strong>
+                </span>
+              )}
+            </div>
+          </section>
+        </div>
+
+        {/* -- RIGHT COLUMN -- */}
+        <div className="db-col-secondary">
+
+          {/* Quick Start */}
+          <section className="db-card db-card-action">
+            <div>
+              <span className="db-label">Quick start</span>
+              <h3 className="db-card-title">
+                {latestWorkout ? getSplitName(latestWorkout.splitId) : 'Start training'}
+              </h3>
+              <p className="db-card-sub">
+                {latestWorkout
+                  ? `${latestWorkout.entries.length} exercises · ${formatDisplayDate(latestWorkout.date)}`
+                  : 'Pick a split or start a custom workout'}
+              </p>
+            </div>
+            <div className="db-quick-stats">
               <div>
                 <span>Exercises</span>
-                <strong>{latestWorkout ? latestWorkout.entries.length : exercises.length}</strong>
+                <strong>{exercises.length}</strong>
               </div>
               <div>
                 <span>Workouts</span>
@@ -314,335 +230,208 @@ export default function DashboardView({
                 <strong>{totalSetsLogged}</strong>
               </div>
             </div>
-            <div className="actions">
+            <div className="db-action-buttons">
               <button
                 type="button"
-                className="secondary-button"
+                className="primary-button"
                 onClick={() => startWorkoutFromSplit(suggestedSplitId)}
               >
-                {suggestedSplitId ? `Start ${suggestedSplitName}` : 'Start custom workout'}
+                {suggestedSplitId ? `Start ${suggestedSplitName}` : 'Start workout'}
               </button>
               {latestWorkout && (
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={repeatLatestWorkout}
-                >
+                <button type="button" className="ghost-button" onClick={repeatLatestWorkout}>
                   Repeat last workout
                 </button>
               )}
               {lastUsedTemplate && (
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={startWorkoutFromLastUsedTemplate}
-                >
+                <button type="button" className="ghost-button" onClick={startWorkoutFromLastUsedTemplate}>
                   Start last template
                 </button>
               )}
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Momentum</p>
-              <h2>This week vs last</h2>
+          {/* Momentum */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Momentum</span>
+                <h3 className="db-card-title">This week vs last</h3>
+              </div>
             </div>
-          </div>
-          <div className="dashboard-momentum-card">
-            <div className="dashboard-momentum-grid">
-              <div className="dashboard-momentum-stat">
-                <span>Volume</span>
+            <div className="db-momentum-grid">
+              <div className="db-momentum-item db-momentum-primary">
+                <span>Volume delta</span>
                 <strong>
-                  {volumeDeltaPositive ? '+' : ''}
+                  {dashboardSummary.volumeDeltaVsLastWeek >= 0 ? '+' : ''}
                   {formatNumber(dashboardSummary.volumeDeltaVsLastWeek)}
                 </strong>
-                <p>
-                  {formatNumber(dashboardSummary.totalVolumeThisWeek)} this week
-                  {' • '}
-                  {formatNumber(dashboardSummary.totalVolumeLastWeek)} last week
-                </p>
+                <p>{formatNumber(dashboardSummary.totalVolumeThisWeek)} vs {formatNumber(dashboardSummary.totalVolumeLastWeek)}</p>
               </div>
-              <div className="dashboard-momentum-stat">
-                <span>Sessions</span>
+              <div className="db-momentum-item">
+                <span>Sessions delta</span>
                 <strong>
-                  {workoutDeltaPositive ? '+' : ''}
+                  {dashboardSummary.workoutDeltaVsLastWeek >= 0 ? '+' : ''}
                   {dashboardSummary.workoutDeltaVsLastWeek}
                 </strong>
-                <p>
-                  {dashboardSummary.workoutsThisWeek} this week
-                  {' • '}
-                  {dashboardSummary.workoutsLastWeek} last week
-                </p>
+                <p>{dashboardSummary.workoutsThisWeek} vs {dashboardSummary.workoutsLastWeek}</p>
               </div>
             </div>
-            <div className="dashboard-momentum-meta">
-              <span>
-                PRs this week <strong>{dashboardSummary.currentWeekPrHits}</strong>
-              </span>
-              <span>
-                Best day{' '}
-                <strong>
-                  {dashboardSummary.bestTrainingDayLabel || '--'}
-                  {dashboardSummary.bestTrainingDayVolume
-                    ? ` • ${formatNumber(dashboardSummary.bestTrainingDayVolume)}`
-                    : ''}
-                </strong>
-              </span>
+            <div className="db-pill-row">
+              <span className="db-meta-pill">PRs this week: <strong>{dashboardSummary.currentWeekPrHits}</strong></span>
+              <span className="db-meta-pill">Month volume: <strong>{formatNumber(dashboardSummary.totalVolumeThisMonth)}</strong></span>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Consistency</p>
-              <h2>Keep the rhythm</h2>
-            </div>
-          </div>
-          <div className="dashboard-consistency-card">
-            <div className="dashboard-consistency-top">
-              <div className="dashboard-consistency-stat">
-                <span>Active weeks</span>
-                <strong>{dashboardSummary.activeWeekStreak}</strong>
-                <p>{dashboardSummary.activeWeekStreak === 1 ? 'week in a row' : 'weeks in a row'}</p>
-              </div>
-              <div className="dashboard-consistency-stat">
-                <span>Best run</span>
-                <strong>{dashboardSummary.longestActiveWeekStreak}</strong>
-                <p>{dashboardSummary.longestActiveWeekStreak === 1 ? 'week best' : 'weeks best'}</p>
-              </div>
-            </div>
-            <div className="dashboard-consistency-meta">
-              <span>
-                This month <strong>{dashboardSummary.workoutsThisMonth} workouts</strong>
-              </span>
-              <span>
-                Month volume <strong>{formatNumber(dashboardSummary.totalVolumeThisMonth)}</strong>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Performance</p>
-              <h2>Best periods</h2>
-            </div>
-          </div>
-          <div className="dashboard-performance-card">
-            <div className="dashboard-performance-grid">
-              <div className="dashboard-performance-stat dashboard-performance-stat-primary">
-                <span>Best week</span>
-                <strong>{dashboardSummary.bestWeekLabel || '--'}</strong>
-                <p>
-                  {dashboardSummary.bestWeek
-                    ? `${formatNumber(dashboardSummary.bestWeek.volume)} volume • ${dashboardSummary.bestWeek.count} sessions`
-                    : 'No training week yet'}
-                </p>
-              </div>
-              <div className="dashboard-performance-stat">
-                <span>Best month</span>
-                <strong>{dashboardSummary.bestMonthLabel || '--'}</strong>
-                <p>
-                  {dashboardSummary.bestMonth
-                    ? `${formatNumber(dashboardSummary.bestMonth.volume)} volume • ${dashboardSummary.bestMonth.count} sessions`
-                    : 'No training month yet'}
-                </p>
-              </div>
-            </div>
-            <div className="dashboard-performance-meta">
-              <span>
-                Current streak <strong>{dashboardSummary.currentTrainingDayStreak} days</strong>
-              </span>
-              <span>
-                Most improved <strong>{mostImprovedExerciseName}</strong>
-              </span>
-              <span>
-                Recent split{' '}
-                <strong>
-                  {dashboardSummary.strongestRecentSplit
-                    ? getSplitName(dashboardSummary.strongestRecentSplit.splitId)
-                    : '--'}
-                </strong>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Split insights</p>
-              <h2>Templates that carry you</h2>
-            </div>
-          </div>
-          <div className="dashboard-split-insights-card">
-            <div className="dashboard-split-insight dashboard-split-insight-primary">
-              <div className="dashboard-split-insight-top">
-                <span className="metric-label">Top split this month</span>
-                <span className="dashboard-split-insight-value">
-                  {splitInsightPrimary ? splitInsightPrimary.value : '--'}
-                </span>
-              </div>
-              <strong>{splitInsightPrimary ? splitInsightPrimary.title : '--'}</strong>
-              <p>
-                {splitInsightPrimary
-                  ? `${splitInsightPrimary.helper}`
-                  : 'Log more split-based workouts to surface a monthly leader.'}
-              </p>
-            </div>
-            <div className="dashboard-split-insight dashboard-split-insight-secondary">
-              <div className="dashboard-split-insight-top">
-                <span className="metric-label">Most used overall</span>
-                <span className="dashboard-split-insight-value">
-                  {splitInsightSecondary ? splitInsightSecondary.value : '--'}
-                </span>
-              </div>
-              <strong>{splitInsightSecondary ? splitInsightSecondary.title : '--'}</strong>
-              <p>
-                {splitInsightSecondary
-                  ? 'Logged more often than every other split'
-                  : 'Your history has no recurring split yet.'}
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Quick templates</p>
-              <h2>Reuse a session</h2>
-            </div>
-          </div>
-          {templates.length ? (
-            <div className="dashboard-template-list">
-              {templates.slice(0, 3).map((template) => (
-                <article key={template.id} className="dashboard-template-card">
-                  <div>
-                    <strong>{template.name}</strong>
-                    <p>
-                      {template.entries.length} {template.entries.length === 1 ? 'exercise' : 'exercises'}
-                    </p>
-                    {lastUsedTemplate?.id === template.id && <p>Last used</p>}
-                  </div>
-                  <button
-                    type="button"
-                    className="ghost-button action-button"
-                    onClick={() => loadWorkoutTemplate(template.id)}
-                  >
-                    Use template
-                  </button>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No templates yet"
-              body="Save one workout as a template to reuse it here."
-            />
-          )}
-        </section>
-
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Recent wins</p>
-              <h2>Latest PRs</h2>
-            </div>
-          </div>
-          {dashboardSummary.latestPersonalRecords.length ? (
-            <div className="dashboard-wins-list">
-              {dashboardSummary.latestPersonalRecords.map((record) => (
-                <article
-                  key={`${record.exerciseId}-${record.date}-${record.labels.join('-')}`}
-                  className="dashboard-win-card"
-                >
-                  <div>
-                    <strong>{getExerciseName(record.exerciseId)}</strong>
-                    <p>{formatDisplayDate(record.date)}</p>
-                  </div>
-                  <div className="tag-row">
-                    {record.labels.map((label) => (
-                      <span key={label} className="tag pr-tag">
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No recent PRs"
-              body="Keep logging to surface fresh wins here."
-            />
-          )}
-        </section>
-
-        <section className="panel panel-highlight">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Recent activity</p>
-              <h2>Latest session</h2>
-            </div>
-          </div>
-          {latestWorkout ? (
-            <article className="workout-card latest-workout-card">
-              <div className="workout-card-header">
+          {/* Split Insights */}
+          {(dashboardSummary.topSplitThisMonth || dashboardSummary.mostUsedSplit) && (
+            <section className="db-card">
+              <div className="db-card-header">
                 <div>
-                  <strong>{formatDisplayDate(latestWorkout.date)}</strong>
-                  <p className="activity-subtitle">Recent session</p>
-                </div>
-                <div className="workout-card-title">
-                  {latestWorkout.splitId ? <span>{getSplitName(latestWorkout.splitId)}</span> : null}
-                  <span>{latestWorkout.entries.length} exercises</span>
+                  <span className="db-label">Split insights</span>
+                  <h3 className="db-card-title">Your go-to splits</h3>
                 </div>
               </div>
-              <div className="activity-highlight-row">
-                <div className="activity-highlight-stat">
-                  <span>Volume</span>
-                  <strong>{formatNumber(latestWorkoutVolume)}</strong>
-                </div>
-                <div className="activity-highlight-stat">
-                  <span>Moves</span>
-                  <strong>{latestWorkout.entries.length}</strong>
-                </div>
-              </div>
-              <div className="workout-entry-list latest-workout-list">
-                {latestWorkout.entries.map((entry) => {
-                  const metrics = getEntryMetrics(entry);
-
-                  return (
-                    <div
-                      key={`${latestWorkout.id}-${entry.exerciseId}`}
-                      className="history-entry latest-activity-entry"
-                    >
-                      <div>
-                        <h3>{getExerciseName(entry.exerciseId)}</h3>
-                        <div className="activity-metrics">
-                          <span>Wt {formatNumber(metrics.bestWeight)}</span>
-                          <span>Rp {formatNumber(metrics.bestReps)}</span>
-                          <span>Vol {formatNumber(metrics.totalVolume)}</span>
-                        </div>
-                      </div>
+              <div className="db-split-list">
+                {dashboardSummary.topSplitThisMonth && (
+                  <div className="db-split-row db-split-primary">
+                    <div>
+                      <span>Top this month</span>
+                      <strong>{getSplitName(dashboardSummary.topSplitThisMonth.splitId)}</strong>
                     </div>
-                  );
-                })}
+                    <span className="db-meta-pill">
+                      {formatNumber(dashboardSummary.topSplitThisMonth.volume)} vol · {dashboardSummary.topSplitThisMonth.count} sessions
+                    </span>
+                  </div>
+                )}
+                {dashboardSummary.mostUsedSplit && (
+                  <div className="db-split-row">
+                    <div>
+                      <span>Most used overall</span>
+                      <strong>{getSplitName(dashboardSummary.mostUsedSplit.splitId)}</strong>
+                    </div>
+                    <span className="db-meta-pill">{dashboardSummary.mostUsedSplit.count} sessions</span>
+                  </div>
+                )}
               </div>
-            </article>
-          ) : (
-            <EmptyState
-              title="No workouts yet"
-              body="Log your first session to fill the dashboard."
-            />
+            </section>
           )}
-        </section>
+
+          {/* Templates */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Templates</span>
+                <h3 className="db-card-title">Reuse a session</h3>
+              </div>
+            </div>
+            {templates.length ? (
+              <div className="db-template-list">
+                {templates.slice(0, 3).map((template) => (
+                  <div key={template.id} className="db-template-row">
+                    <div>
+                      <strong>{template.name}</strong>
+                      <p>
+                        {template.entries.length} exercise{template.entries.length === 1 ? '' : 's'}
+                        {lastUsedTemplate?.id === template.id ? ' · Last used' : ''}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="ghost-button action-button"
+                      onClick={() => loadWorkoutTemplate(template.id)}
+                    >
+                      Use template
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No templates" body="Save a workout as template to reuse it here." />
+            )}
+          </section>
+
+          {/* Recent Wins */}
+          <section className="db-card">
+            <div className="db-card-header">
+              <div>
+                <span className="db-label">Recent wins</span>
+                <h3 className="db-card-title">Personal records</h3>
+              </div>
+            </div>
+            {dashboardSummary.latestPersonalRecords.length ? (
+              <div className="db-wins-list">
+                {dashboardSummary.latestPersonalRecords.map((record) => (
+                  <div
+                    key={`${record.exerciseId}-${record.date}-${record.labels.join('-')}`}
+                    className="db-win-row"
+                  >
+                    <div>
+                      <strong>{getExerciseName(record.exerciseId)}</strong>
+                      <p>{formatDisplayDate(record.date)}</p>
+                    </div>
+                    <div className="tag-row">
+                      {record.labels.map((label) => (
+                        <span key={label} className="tag pr-tag">{label}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No recent PRs" body="Keep logging to surface wins here." />
+            )}
+          </section>
+        </div>
       </div>
+
+      {/* ---- BOTTOM: LATEST SESSION ---- */}
+      {latestWorkout && (
+        <section className="db-card db-latest">
+          <div className="db-card-header">
+            <div>
+              <span className="db-label">Latest session</span>
+              <h3 className="db-card-title">{formatDisplayDate(latestWorkout.date)}</h3>
+            </div>
+            <div className="db-latest-meta">
+              {latestWorkout.splitId && <span className="db-meta-pill db-pill-accent">{getSplitName(latestWorkout.splitId)}</span>}
+              <span className="db-meta-pill">{latestWorkout.entries.length} exercises</span>
+              <span className="db-meta-pill">{formatNumber(latestWorkoutVolume)} vol</span>
+            </div>
+          </div>
+          <div className="db-latest-entries">
+            {latestWorkout.entries.map((entry) => {
+              const metrics = getEntryMetrics(entry);
+              return (
+                <div key={`${latestWorkout.id}-${entry.exerciseId}`} className="db-latest-entry">
+                  <strong>{getExerciseName(entry.exerciseId)}</strong>
+                  <div className="db-latest-entry-metrics">
+                    <span>{formatNumber(metrics.bestWeight)} kg</span>
+                    <span>{formatNumber(metrics.bestReps)} reps</span>
+                    <span>{formatNumber(metrics.totalVolume)} vol</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ---- DATA ACTIONS ---- */}
+      <div className="db-footer-actions">
+        <button type="button" className="ghost-button" onClick={exportAppData}>Export JSON</button>
+        <button type="button" className="ghost-button" onClick={() => fileInputRef.current?.click()}>Import JSON</button>
+        <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden-input" onChange={handleImportFile} />
+      </div>
+      {dataMessage.text && (
+        <p
+          className={dataMessage.type === 'error' ? 'feedback error' : dataMessage.type === 'warning' ? 'feedback warning' : 'feedback success'}
+          role={dataMessage.type === 'error' ? 'alert' : 'status'}
+          aria-live={dataMessage.type === 'error' ? 'assertive' : 'polite'}
+        >
+          {dataMessage.text}
+        </p>
+      )}
     </main>
   );
 }

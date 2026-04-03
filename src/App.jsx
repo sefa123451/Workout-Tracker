@@ -57,36 +57,12 @@ const THEME_STORAGE_KEY = 'workout-tracker-theme';
 const LAST_TEMPLATE_STORAGE_KEY = 'workout-tracker-last-template-id';
 const THEME_OPTIONS = ['system', 'light', 'dark'];
 const VIEW_META = {
-  dashboard: {
-    eyebrow: 'Dashboard',
-    title: 'Training cockpit',
-    copy: 'Your weekly rhythm, latest session, and core stats in one premium dashboard.',
-  },
-  exercises: {
-    eyebrow: 'Library',
-    title: 'Exercises and splits',
-    copy: 'Shape your movement library and keep split templates ready for fast logging.',
-  },
-  log: {
-    eyebrow: 'Workout logging',
-    title: 'Log today with flow',
-    copy: 'Choose a split, fill your sets, and keep training data clean and fast to enter.',
-  },
-  history: {
-    eyebrow: 'History',
-    title: 'Session archive',
-    copy: 'Review what you trained, how it felt in volume, and what should happen next.',
-  },
-  progress: {
-    eyebrow: 'Progress',
-    title: 'Strength over time',
-    copy: 'Track trends, personal records, and recent changes without leaving the main app.',
-  },
-  settings: {
-    eyebrow: 'Settings',
-    title: 'Preferences and data',
-    copy: 'Manage theme behavior and keep your local workout data portable and safe.',
-  },
+  dashboard: { title: 'Good morning 👋' },
+  exercises: { title: 'Exercises & Splits' },
+  log: { title: 'Log workout' },
+  history: { title: 'History' },
+  progress: { title: 'Progress' },
+  settings: { title: 'Settings' },
 };
 
 function SidebarIcon({ icon }) {
@@ -186,7 +162,7 @@ function getInitialThemeMode() {
     return storedTheme;
   }
 
-  return 'dark';
+  return 'light';
 }
 
 function getInitialLastTemplateId() {
@@ -742,6 +718,54 @@ function App() {
     return `${normalizedBaseName} ${suffix}`;
   }
 
+  function openSplitPlanner(
+    nextForm,
+    {
+      editingId = null,
+      message = { type: '', text: '' },
+    } = {},
+  ) {
+    setEditingSplitId(editingId);
+    setSplitForm(nextForm);
+    setSplitMessage(message);
+    setActiveView('exercises');
+  }
+
+  function showExerciseLibraryMessage(message) {
+    setExerciseMessage(message);
+    setActiveView('exercises');
+  }
+
+  function showSplitLibraryMessage(message) {
+    setSplitMessage(message);
+    setActiveView('exercises');
+  }
+
+  function buildSeededSplitForm(entries, fallbackName) {
+    const existingExerciseIds = new Set(exercises.map((exercise) => exercise.id));
+    const seededExercises = entries
+      .filter((entry) => existingExerciseIds.has(entry.exerciseId))
+      .map((entry) => createSplitExercise(entry.exerciseId, Math.max(entry.sets.length, 1)));
+
+    return {
+      seededExercises,
+      form: {
+        name: getUniqueSplitName(fallbackName),
+        exercises: seededExercises.length ? seededExercises : [createSplitExercise()],
+      },
+    };
+  }
+
+  function serializeTemplateEntries(entries) {
+    return entries.map((entry) => ({
+      exerciseId: entry.exerciseId,
+      sets: entry.sets.map((set) => ({
+        weight: set.weight,
+        reps: set.reps,
+      })),
+    }));
+  }
+
   function moveWorkoutTemplate(templateId, direction) {
     setTemplates((current) => {
       const fromIndex = current.findIndex((template) => template.id === templateId);
@@ -788,8 +812,7 @@ function App() {
     setTemplates((current) =>
       current.map((item) => (item.id === templateId ? { ...item, name: templateName } : item)),
     );
-    setExerciseMessage({ type: 'success', text: `Renamed template to ${templateName}.` });
-    setActiveView('exercises');
+    showExerciseLibraryMessage({ type: 'success', text: `Renamed template to ${templateName}.` });
   }
 
   function duplicateWorkoutTemplate(templateId) {
@@ -805,18 +828,11 @@ function App() {
       id: createId(),
       name: getUniqueTemplateName(`${template.name} copy`),
       createdAt: new Date().toISOString(),
-      entries: template.entries.map((entry) => ({
-        exerciseId: entry.exerciseId,
-        sets: entry.sets.map((set) => ({
-          weight: set.weight,
-          reps: set.reps,
-        })),
-      })),
+      entries: serializeTemplateEntries(template.entries),
     };
 
     setTemplates((current) => [...current, duplicatedTemplate]);
-    setExerciseMessage({ type: 'success', text: `Duplicated ${template.name}.` });
-    setActiveView('exercises');
+    showExerciseLibraryMessage({ type: 'success', text: `Duplicated ${template.name}.` });
   }
 
   function normalizeSplitEntries(form) {
@@ -889,7 +905,7 @@ function App() {
         ),
       );
       resetSplitForm(false);
-      setSplitMessage({ type: 'success', text: `Updated ${normalizedSplit.value.name}.` });
+      showSplitLibraryMessage({ type: 'success', text: `Updated ${normalizedSplit.value.name}.` });
     } else {
       const newSplit = {
         id: createId(),
@@ -900,10 +916,8 @@ function App() {
 
       setSplits((current) => [...current, newSplit]);
       resetSplitForm(false);
-      setSplitMessage({ type: 'success', text: `Added ${normalizedSplit.value.name}.` });
+      showSplitLibraryMessage({ type: 'success', text: `Added ${normalizedSplit.value.name}.` });
     }
-
-    setActiveView('exercises');
   }
 
   function startEditingSplit(splitId) {
@@ -914,10 +928,9 @@ function App() {
       return;
     }
 
-    setEditingSplitId(split.id);
-    setSplitForm(createSplitFormFromSplit(split));
-    setSplitMessage({ type: '', text: '' });
-    setActiveView('exercises');
+    openSplitPlanner(createSplitFormFromSplit(split), {
+      editingId: split.id,
+    });
   }
 
   function deleteSplit(splitId) {
@@ -1038,42 +1051,66 @@ function App() {
     });
   }
 
-  function startWorkoutFromSplit(splitId = '') {
+  function clearWorkoutComposerSelection() {
     setEditingWorkoutId(null);
     setEditingTemplateId(null);
     setTemplateDraftName('');
     setSelectedWorkoutTemplateId('');
-    setWorkoutMessage({ type: '', text: '' });
+  }
 
+  function openWorkoutComposer(
+    nextForm,
+    {
+      message = { type: '', text: '' },
+      selectedTemplateId = '',
+      editingTemplateId = null,
+      templateDraftName = '',
+      editingWorkoutId = null,
+      lastTemplateId,
+    } = {},
+  ) {
+    setEditingWorkoutId(editingWorkoutId);
+    setEditingTemplateId(editingTemplateId);
+    setTemplateDraftName(templateDraftName);
+    setSelectedWorkoutTemplateId(selectedTemplateId);
+
+    if (typeof lastTemplateId === 'string') {
+      setLastUsedTemplateId(lastTemplateId);
+    }
+
+    setWorkoutForm(nextForm);
+    setWorkoutMessage(message);
+    setActiveView('log');
+  }
+
+  function startWorkoutFromSplit(splitId = '') {
     if (!splitId) {
-      setWorkoutForm(createWorkoutForm());
-      setActiveView('log');
+      openWorkoutComposer(createWorkoutForm());
       return;
     }
 
     const split = splits.find((item) => item.id === splitId);
 
     if (!split) {
-      setWorkoutForm(createWorkoutForm());
-      setWorkoutMessage({ type: 'warning', text: 'Selected split is no longer available. Starting a custom workout instead.' });
-      setActiveView('log');
+      openWorkoutComposer(createWorkoutForm(), {
+        message: {
+          type: 'warning',
+          text: 'Selected split is no longer available. Starting a custom workout instead.',
+        },
+      });
       return;
     }
 
-    setWorkoutForm({
+    openWorkoutComposer({
       ...createWorkoutForm(),
       splitId,
       entries: buildWorkoutEntriesFromSplit(split),
     });
-    setActiveView('log');
   }
 
   function resetWorkoutForm(clearMessage = true) {
     setWorkoutForm(createWorkoutForm());
-    setSelectedWorkoutTemplateId('');
-    setEditingTemplateId(null);
-    setTemplateDraftName('');
-    setEditingWorkoutId(null);
+    clearWorkoutComposerSelection();
     if (clearMessage) {
       setWorkoutMessage({ type: '', text: '' });
     }
@@ -1155,13 +1192,9 @@ function App() {
       return;
     }
 
-    setEditingWorkoutId(workout.id);
-    setEditingTemplateId(null);
-    setTemplateDraftName('');
-    setSelectedWorkoutTemplateId('');
-    setWorkoutForm(createWorkoutFormFromWorkout(workout));
-    setWorkoutMessage({ type: '', text: '' });
-    setActiveView('log');
+    openWorkoutComposer(createWorkoutFormFromWorkout(workout), {
+      editingWorkoutId: workout.id,
+    });
   }
 
   function duplicateWorkout(workoutId) {
@@ -1174,30 +1207,25 @@ function App() {
 
     const duplicatedForm = createWorkoutFormFromWorkout(workout);
 
-    setEditingWorkoutId(null);
-    setEditingTemplateId(null);
-    setTemplateDraftName('');
-    setSelectedWorkoutTemplateId('');
-    setWorkoutForm({
+    openWorkoutComposer({
       ...duplicatedForm,
       date: getTodayInputValue(),
       notes: '',
       mood: '',
       effort: '',
+    }, {
+      message: {
+        type: 'success',
+        text: `Loaded a copy of ${formatDisplayDate(workout.date)}. Save it as a new workout when ready.`,
+      },
     });
-    setWorkoutMessage({
-      type: 'success',
-      text: `Loaded a copy of ${formatDisplayDate(workout.date)}. Save it as a new workout when ready.`,
-    });
-    setActiveView('log');
   }
 
   function saveWorkoutAsTemplate(workoutId) {
     const workout = workouts.find((item) => item.id === workoutId);
 
     if (!workout) {
-      setExerciseMessage({ type: 'error', text: 'Workout not found.' });
-      setActiveView('exercises');
+      showExerciseLibraryMessage({ type: 'error', text: 'Workout not found.' });
       return;
     }
 
@@ -1209,18 +1237,11 @@ function App() {
       splitId: workout.splitId,
       notes: workout.notes ?? '',
       createdAt: new Date().toISOString(),
-      entries: workout.entries.map((entry) => ({
-        exerciseId: entry.exerciseId,
-        sets: entry.sets.map((set) => ({
-          weight: set.weight,
-          reps: set.reps,
-        })),
-      })),
+      entries: serializeTemplateEntries(workout.entries),
     };
 
     setTemplates((current) => [...current, template]);
-    setExerciseMessage({ type: 'success', text: `Saved ${template.name}.` });
-    setActiveView('exercises');
+    showExerciseLibraryMessage({ type: 'success', text: `Saved ${template.name}.` });
   }
 
   function saveCurrentWorkoutAsTemplate() {
@@ -1306,18 +1327,15 @@ function App() {
     const template = templates.find((item) => item.id === templateId);
 
     if (!template) {
-      setExerciseMessage({ type: 'error', text: 'Template not found.' });
-      setActiveView('exercises');
+      showExerciseLibraryMessage({ type: 'error', text: 'Template not found.' });
       return;
     }
 
-    setEditingWorkoutId(null);
-    setEditingTemplateId(template.id);
-    setTemplateDraftName(template.name);
-    setSelectedWorkoutTemplateId(template.id);
-    setWorkoutForm(createWorkoutFormFromTemplate(template));
-    setWorkoutMessage({ type: '', text: '' });
-    setActiveView('log');
+    openWorkoutComposer(createWorkoutFormFromTemplate(template), {
+      editingTemplateId: template.id,
+      templateDraftName: template.name,
+      selectedTemplateId: template.id,
+    });
   }
 
   function handleTemplateEditorSubmit(event) {
@@ -1376,23 +1394,17 @@ function App() {
       ),
     );
     resetWorkoutForm();
-    setExerciseMessage({ type: 'success', text: `Updated ${nextTemplateName}.` });
-    setActiveView('exercises');
+    showExerciseLibraryMessage({ type: 'success', text: `Updated ${nextTemplateName}.` });
   }
 
   function createSplitFromTemplate(templateId) {
     const template = templates.find((item) => item.id === templateId);
 
     if (!template) {
-      setSplitMessage({ type: 'error', text: 'Template not found.' });
-      setActiveView('exercises');
+      showSplitLibraryMessage({ type: 'error', text: 'Template not found.' });
       return;
     }
 
-    const existingExerciseIds = new Set(exercises.map((exercise) => exercise.id));
-    const seededExercises = template.entries
-      .filter((entry) => existingExerciseIds.has(entry.exerciseId))
-      .map((entry) => createSplitExercise(entry.exerciseId, Math.max(entry.sets.length, 1)));
     const sourceSplit = template.splitId ? splits.find((split) => split.id === template.splitId) : null;
     const fallbackName = sourceSplit
       ? `${sourceSplit.name} copy`
@@ -1400,48 +1412,39 @@ function App() {
         ? template.name.replace(/template/i, 'split')
         : `${template.name} split`;
 
-    setEditingSplitId(null);
-    setSplitForm({
-      name: getUniqueSplitName(fallbackName),
-      exercises: seededExercises.length ? seededExercises : [createSplitExercise()],
+    const { seededExercises, form } = buildSeededSplitForm(template.entries, fallbackName);
+
+    openSplitPlanner(form, {
+      message: {
+        type: 'success',
+        text: seededExercises.length
+          ? 'Loaded template into the split planner.'
+          : 'Loaded template into the split planner. Add exercises to finish the split.',
+      },
     });
-    setSplitMessage({
-      type: 'success',
-      text: seededExercises.length
-        ? 'Loaded template into the split planner.'
-        : 'Loaded template into the split planner. Add exercises to finish the split.',
-    });
-    setActiveView('exercises');
   }
 
   function createSplitFromWorkout(workoutId) {
     const workout = workouts.find((item) => item.id === workoutId);
 
     if (!workout) {
-      setSplitMessage({ type: 'error', text: 'Workout not found.' });
-      setActiveView('exercises');
+      showSplitLibraryMessage({ type: 'error', text: 'Workout not found.' });
       return;
     }
 
-    const existingExerciseIds = new Set(exercises.map((exercise) => exercise.id));
-    const seededExercises = workout.entries
-      .filter((entry) => existingExerciseIds.has(entry.exerciseId))
-      .map((entry) => createSplitExercise(entry.exerciseId, Math.max(entry.sets.length, 1)));
     const sourceSplit = workout.splitId ? splits.find((split) => split.id === workout.splitId) : null;
     const fallbackName = sourceSplit ? `${sourceSplit.name} copy` : `${formatDisplayDate(workout.date)} split`;
 
-    setEditingSplitId(null);
-    setSplitForm({
-      name: getUniqueSplitName(fallbackName),
-      exercises: seededExercises.length ? seededExercises : [createSplitExercise()],
+    const { seededExercises, form } = buildSeededSplitForm(workout.entries, fallbackName);
+
+    openSplitPlanner(form, {
+      message: {
+        type: 'success',
+        text: seededExercises.length
+          ? 'Loaded workout as a new split template.'
+          : 'Loaded workout into the split planner. Add exercises to finish the template.',
+      },
     });
-    setSplitMessage({
-      type: 'success',
-      text: seededExercises.length
-        ? 'Loaded workout as a new split template.'
-        : 'Loaded workout into the split planner. Add exercises to finish the template.',
-    });
-    setActiveView('exercises');
   }
 
   function loadWorkoutTemplate(templateId) {
@@ -1454,17 +1457,14 @@ function App() {
       return;
     }
 
-    setEditingWorkoutId(null);
-    setEditingTemplateId(null);
-    setTemplateDraftName('');
-    setLastUsedTemplateId(template.id);
-    setSelectedWorkoutTemplateId(template.id);
-    setWorkoutForm(createWorkoutFormFromTemplate(template));
-    setWorkoutMessage({
-      type: 'success',
-      text: `Loaded ${template.name}. Save it as a new workout when ready.`,
+    openWorkoutComposer(createWorkoutFormFromTemplate(template), {
+      lastTemplateId: template.id,
+      selectedTemplateId: template.id,
+      message: {
+        type: 'success',
+        text: `Loaded ${template.name}. Save it as a new workout when ready.`,
+      },
     });
-    setActiveView('log');
   }
 
   function deleteWorkoutTemplate(templateId) {
@@ -1511,11 +1511,12 @@ function App() {
     const template = templates.find((item) => item.id === lastUsedTemplateId);
 
     if (!template) {
-      setLastUsedTemplateId('');
-      startWorkoutFromSplit('');
-      setWorkoutMessage({
-        type: 'warning',
-        text: 'Last used template is no longer available. Starting a custom workout instead.',
+      openWorkoutComposer(createWorkoutForm(), {
+        lastTemplateId: '',
+        message: {
+          type: 'warning',
+          text: 'Last used template is no longer available. Starting a custom workout instead.',
+        },
       });
       return;
     }
@@ -1632,8 +1633,8 @@ function App() {
               <span />
             </div>
             <div className="sidebar-brand-copy">
-              <p>Workout Tracker</p>
-              <strong>Training OS</strong>
+              <p>Your training</p>
+              <strong>Workout tracker</strong>
             </div>
           </div>
 
@@ -1657,7 +1658,7 @@ function App() {
 
           <div className="sidebar-footer">
             <div className="sidebar-footer-top">
-              <p className="sidebar-footer-label">Local first</p>
+              <p className="sidebar-footer-label">Saved locally</p>
               <span className="sidebar-footer-pulse" aria-hidden="true" />
             </div>
             <div className="sidebar-footer-value-row">
@@ -1670,15 +1671,10 @@ function App() {
 
         <div id="app-main-content" className="app-main" tabIndex={-1}>
           <header className="topbar">
-            <div className="topbar-copy">
-              <p className="eyebrow">{activeViewMeta.eyebrow}</p>
-              <h1>{activeViewMeta.title}</h1>
-              <p className="topbar-text">{activeViewMeta.copy}</p>
-            </div>
+            <span className="topbar-title">{activeViewMeta.title}</span>
             <div className="topbar-actions">
               <div className="topbar-chip">
-                <span>Today</span>
-                <strong>{formatCalendarDate(new Date())}</strong>
+                <span>{formatCalendarDate(new Date())}</span>
               </div>
               <div className="theme-switcher topbar-theme-switcher" role="group" aria-label="Theme">
                 {THEME_OPTIONS.map((option) => (
