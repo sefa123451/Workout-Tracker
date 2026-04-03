@@ -1656,9 +1656,18 @@ function App() {
             ))}
           </nav>
 
-          <div className="sidebar-footer">
+          <div className="sidebar-footer sidebar-footer-graphic">
+            <div className="sidebar-footer-illustration">
+              <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="40" r="15" fill="var(--accent)" opacity="0.1" />
+                <circle cx="100" cy="40" r="15" fill="var(--accent)" opacity="0.1" />
+                <path d="M35 40 H85" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" opacity="0.8" />
+                <path d="M45 25 V55 M75 25 V55" stroke="var(--accent)" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+                <circle cx="60" cy="40" r="6" fill="var(--accent)" />
+              </svg>
+            </div>
             <div className="sidebar-footer-top">
-              <p className="sidebar-footer-label">Saved locally</p>
+              <p className="sidebar-footer-label">Your Journey</p>
               <span className="sidebar-footer-pulse" aria-hidden="true" />
             </div>
             <div className="sidebar-footer-value-row">

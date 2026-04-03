@@ -49,7 +49,12 @@ export default function DashboardView({
       {/* ---- TOP STATS ROW ---- */}
       <section className="db-stats-row">
         <div className="db-stat">
-          <span className="db-stat-label">Volume this week</span>
+          <div className="db-stat-header">
+            <span className="db-stat-label">Volume this week</span>
+            <div className="db-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+          </div>
           <strong className="db-stat-value">{formatNumber(dashboardSummary.totalVolumeThisWeek)}</strong>
           <span className="db-stat-delta">
             {dashboardSummary.volumeDeltaVsLastWeek >= 0 ? '+' : ''}
@@ -57,19 +62,34 @@ export default function DashboardView({
           </span>
         </div>
         <div className="db-stat">
-          <span className="db-stat-label">Workouts</span>
+          <div className="db-stat-header">
+            <span className="db-stat-label">Workouts</span>
+            <div className="db-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </div>
+          </div>
           <strong className="db-stat-value">{dashboardSummary.workoutsThisWeek}</strong>
           <span className="db-stat-delta">{dashboardSummary.workoutsThisMonth} this month</span>
         </div>
         <div className="db-stat">
-          <span className="db-stat-label">Active streak</span>
+          <div className="db-stat-header">
+            <span className="db-stat-label">Active streak</span>
+            <div className="db-stat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19c2.5 0 4-2 4-4a8 8 0 1 0-15 0c0 2 1.5 4 4 4"></path><path d="M12 15v4"></path></svg>
+            </div>
+          </div>
           <strong className="db-stat-value">{dashboardSummary.activeWeekStreak}</strong>
           <span className="db-stat-delta">
             {dashboardSummary.activeWeekStreak === 1 ? 'week' : 'weeks'} in a row
           </span>
         </div>
         <div className="db-stat">
-          <span className="db-stat-label">Recent PRs</span>
+          <div className="db-stat-header">
+            <span className="db-stat-label">Recent PRs</span>
+            <div className="db-stat-icon db-stat-icon-accent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+            </div>
+          </div>
           <strong className="db-stat-value">{dashboardSummary.recentPrHits}</strong>
           <span className="db-stat-delta">Last 30 days</span>
         </div>
@@ -399,16 +419,21 @@ export default function DashboardView({
               <span className="db-meta-pill">{formatNumber(latestWorkoutVolume)} vol</span>
             </div>
           </div>
-          <div className="db-latest-entries">
+          <div className="db-latest-entries timeline-container">
             {latestWorkout.entries.map((entry) => {
               const metrics = getEntryMetrics(entry);
               return (
-                <div key={`${latestWorkout.id}-${entry.exerciseId}`} className="db-latest-entry">
-                  <strong>{getExerciseName(entry.exerciseId)}</strong>
-                  <div className="db-latest-entry-metrics">
-                    <span>{formatNumber(metrics.bestWeight)} kg</span>
-                    <span>{formatNumber(metrics.bestReps)} reps</span>
-                    <span>{formatNumber(metrics.totalVolume)} vol</span>
+                <div key={`${latestWorkout.id}-${entry.exerciseId}`} className="db-latest-entry timeline-item">
+                  <div className="timeline-node"></div>
+                  <div className="timeline-content">
+                    <strong>{getExerciseName(entry.exerciseId)}</strong>
+                    <div className="db-latest-entry-metrics">
+                      <span>{formatNumber(metrics.bestWeight)} kg</span>
+                      <span className="timeline-pipe">|</span>
+                      <span>{formatNumber(metrics.bestReps)} reps</span>
+                      <span className="timeline-pipe">|</span>
+                      <span>{formatNumber(metrics.totalVolume)} vol</span>
+                    </div>
                   </div>
                 </div>
               );
