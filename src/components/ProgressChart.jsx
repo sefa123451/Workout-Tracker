@@ -328,16 +328,7 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
                   {formatAxisValue(point.value)}
                 </text>
               )}
-              {isLatest && bestIsLatest && (
-                <text
-                  className="progress-chart-best-latest-label"
-                  x={point.x}
-                  y={point.y - 30}
-                  textAnchor="middle"
-                >
-                  Best = Latest
-                </text>
-              )}
+
               {isBest && !isLatest && (
                 <circle
                   className="progress-chart-point-best"
