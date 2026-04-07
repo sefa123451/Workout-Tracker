@@ -3,7 +3,9 @@ import {
   buildProgressHistory,
   buildSplitProgressHistory,
   buildWorkoutHistoryCsv,
+  estimateOneRepMax,
   filterProgressHistoryByDays,
+  getBodyweightSummary,
   getEntryMetrics,
   getDashboardSummary,
   getProgressWindowSummary,
@@ -13,6 +15,7 @@ import {
   parseSet,
   readStoredData,
   STORAGE_KEY,
+  suggestNextSets,
   validateImportedData,
 } from './workoutData.js';
 
@@ -132,10 +135,37 @@ describe('stored data bootstrap', () => {
         id: 'exercise-1',
         name: 'Custom squat',
         createdAt: expect.any(String),
+        targetWeight: null,
+        targetRepMin: null,
+        targetRepMax: null,
+        weightStep: 2.5,
       },
     ]);
     expect(data.workouts).toHaveLength(1);
     expect(data.workouts[0].id).toBe('workout-1');
+  });
+
+  it('normalizes a stored weekly workout goal', () => {
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          weeklyWorkoutGoal: 9,
+          exercises: [{ id: 'exercise-1', name: 'Custom squat' }],
+          splits: [],
+          templates: [],
+          workouts: [],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.weeklyWorkoutGoal).toBe(7);
   });
 });
 
@@ -184,6 +214,109 @@ describe('metric helpers', () => {
     expect(csv).toContain('Date,Split,Exercise,Set,Weight,Reps,Volume,Mood,Effort,Notes');
     expect(csv).toContain('2024-01-12,Push,Bench press,1,80,8,640,Great,Hard,Top set felt easy');
     expect(csv).toContain('2024-01-12,Push,Bench press,2,82.5,6,495,Great,Hard,Top set felt easy');
+  });
+
+  it('estimates one rep max from a set', () => {
+    expect(estimateOneRepMax(100, 5)).toBeCloseTo(116.67, 1);
+    expect(estimateOneRepMax(100, 1)).toBe(100);
+    expect(estimateOneRepMax(0, 5)).toBe(0);
+  });
+
+  it('builds a progress summary with best set and estimated one rep max', () => {
+    const summary = getProgressWindowSummary([
+      {
+        workoutId: 'w2',
+        date: '2024-01-19',
+        sets: [
+          { weight: 100, reps: 5 },
+          { weight: 90, reps: 8 },
+        ],
+        metrics: {
+          bestWeight: 100,
+          bestReps: 8,
+          totalVolume: 1220,
+        },
+        personalRecords: { weight: true, reps: false, volume: true },
+        improvements: { weight: true, reps: false, volume: true },
+      },
+      {
+        workoutId: 'w1',
+        date: '2024-01-12',
+        sets: [{ weight: 95, reps: 5 }],
+        metrics: {
+          bestWeight: 95,
+          bestReps: 5,
+          totalVolume: 475,
+        },
+        personalRecords: { weight: true, reps: true, volume: true },
+        improvements: { weight: false, reps: false, volume: false },
+      },
+    ]);
+
+    expect(summary.bestSetWeight).toBe(100);
+    expect(summary.bestSetReps).toBe(5);
+    expect(summary.bestSetDate).toBe('2024-01-19');
+    expect(summary.estimatedOneRepMax).toBeCloseTo(116.67, 1);
+    expect(summary.bestSessionVolume).toBe(1220);
+    expect(summary.bestSessionVolumeDate).toBe('2024-01-19');
+  });
+
+  it('builds a dashboard summary with weekly goal progress', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-06T12:00:00.000Z'));
+
+    const summary = getDashboardSummary(
+      [
+        {
+          id: 'w1',
+          date: '2026-04-06',
+          splitId: '',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+        {
+          id: 'w2',
+          date: '2026-04-08',
+          splitId: '',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 82.5, reps: 8 }] }],
+        },
+      ],
+      4,
+    );
+
+    expect(summary.weeklyWorkoutGoal).toBe(4);
+    expect(summary.workoutsThisWeek).toBe(2);
+    expect(summary.weeklyGoalRemaining).toBe(2);
+    expect(summary.weeklyGoalProgress).toBe(0.5);
+    expect(summary.weeklyGoalReached).toBe(false);
+    expect(summary.daysElapsedThisWeek).toBe(1);
+    expect(summary.daysRemainingThisWeek).toBe(6);
+    expect(summary.weeklyGoalStatus).toBe('On pace');
+  });
+
+  it('builds weekly split plan progress for the dashboard', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-07T12:00:00.000Z'));
+
+    const summary = getDashboardSummary(
+      [
+        {
+          id: 'w1',
+          date: '2026-04-06',
+          splitId: 'push',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+      4,
+      [
+        { id: 'push', name: 'Push', weeklyTarget: 2, exercises: [] },
+        { id: 'pull', name: 'Pull', weeklyTarget: 1, exercises: [] },
+      ],
+    );
+
+    expect(summary.weeklySplitPlan).toEqual([
+      { splitId: 'push', target: 2, completed: 1, remaining: 1, reached: false },
+      { splitId: 'pull', target: 1, completed: 0, remaining: 1, reached: false },
+    ]);
   });
 });
 
@@ -264,6 +397,7 @@ describe('import validation', () => {
 
   it('normalizes valid imported data', () => {
     const result = validateImportedData({
+      bodyweightEntries: [{ id: 'bw-1', date: '2024-01-10', weight: 82.4 }],
       exercises: [{ id: '1', name: 'Squat' }],
       workouts: [
         {
@@ -281,11 +415,24 @@ describe('import validation', () => {
 
     expect(result.error).toBeUndefined();
     expect(result.value).toEqual({
+      weeklyWorkoutGoal: 4,
+      bodyweightEntries: [
+        {
+          id: 'bw-1',
+          date: '2024-01-10',
+          weight: 82.4,
+          createdAt: expect.any(String),
+        },
+      ],
       exercises: [
         {
           id: '1',
           name: 'Squat',
           createdAt: expect.any(String),
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
         },
       ],
       splits: [],
@@ -303,6 +450,51 @@ describe('import validation', () => {
         },
       ],
     });
+  });
+
+  it('summarizes bodyweight trends over the recent window', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-06T12:00:00.000Z'));
+
+    const summary = getBodyweightSummary([
+      { id: 'bw-1', date: '2026-03-10', weight: 84.5, createdAt: '2026-03-10T07:00:00.000Z' },
+      { id: 'bw-2', date: '2026-03-24', weight: 83.8, createdAt: '2026-03-24T07:00:00.000Z' },
+      { id: 'bw-3', date: '2026-04-05', weight: 83.1, createdAt: '2026-04-05T07:00:00.000Z' },
+    ]);
+
+    expect(summary.latestWeight).toBe(83.1);
+    expect(summary.deltaInRange).toBe(-1.4);
+    expect(summary.entryCount).toBe(3);
+    expect(summary.recentEntries).toHaveLength(3);
+  });
+
+  it('normalizes imported exercise goals', () => {
+    const result = validateImportedData({
+      exercises: [
+        {
+          id: '1',
+          name: 'Bench press',
+          targetWeight: '100',
+          targetRepMin: '6',
+          targetRepMax: '8',
+          weightStep: '1.25',
+        },
+      ],
+      workouts: [],
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.value.exercises).toEqual([
+      {
+        id: '1',
+        name: 'Bench press',
+        createdAt: expect.any(String),
+        targetWeight: 100,
+        targetRepMin: 6,
+        targetRepMax: 8,
+        weightStep: 1.25,
+      },
+    ]);
   });
 
   it('accepts valid splits and rejects duplicate split names', () => {
@@ -338,6 +530,7 @@ describe('import validation', () => {
         id: 'split-1',
         name: 'Leg day',
         createdAt: '2024-01-12T10:00:00.000Z',
+        weeklyTarget: 1,
         exercises: [
           {
             id: expect.any(String),
@@ -668,6 +861,200 @@ describe('merge import', () => {
 
     expect(merged.workouts).toHaveLength(1);
     expect(merged.workouts[0].id).toBe('w1');
+  });
+});
+
+describe('progressive overload suggestions', () => {
+  it('returns null when there is no previous workout for the exercise', () => {
+    expect(suggestNextSets([], 'squat')).toBeNull();
+    expect(suggestNextSets([], '')).toBeNull();
+  });
+
+  it('suggests weight increase when reps were consistent within each weight group', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'bench',
+            sets: [
+              { weight: 80, reps: 8 },
+              { weight: 80, reps: 8 },
+              { weight: 82.5, reps: 6 },
+              { weight: 82.5, reps: 6 },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'bench');
+
+    expect(suggestion).toEqual({
+      sets: [
+        { weight: 82.5, reps: 8 },
+        { weight: 82.5, reps: 8 },
+        { weight: 85, reps: 6 },
+        { weight: 85, reps: 6 },
+      ],
+      reason: 'Weight up',
+    });
+  });
+
+  it('suggests rep increase when reps dropped at the same weight', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'bench',
+            sets: [
+              { weight: 80, reps: 8 },
+              { weight: 80, reps: 7 },
+              { weight: 80, reps: 6 },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'bench');
+
+    expect(suggestion).toEqual({
+      sets: [
+        { weight: 80, reps: 8 },
+        { weight: 80, reps: 8 },
+        { weight: 80, reps: 7 },
+      ],
+      reason: 'Reps up',
+    });
+  });
+
+  it('suggests weight increase for a single set', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'squat',
+            sets: [{ weight: 100, reps: 5 }],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'squat');
+
+    expect(suggestion).toEqual({
+      sets: [{ weight: 102.5, reps: 5 }],
+      reason: 'Weight up',
+    });
+  });
+
+  it('uses the latest workout when multiple workouts exist', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-05',
+        createdAt: '2024-01-05T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'squat',
+            sets: [{ weight: 100, reps: 5 }],
+          },
+        ],
+      },
+      {
+        id: 'w2',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'squat',
+            sets: [{ weight: 110, reps: 5 }],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'squat');
+
+    expect(suggestion).toEqual({
+      sets: [{ weight: 112.5, reps: 5 }],
+      reason: 'Weight up',
+    });
+  });
+
+  it('uses exercise goals to suggest a weight increase from the target range', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'bench',
+            sets: [
+              { weight: 80, reps: 8 },
+              { weight: 80, reps: 8 },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'bench', {
+      targetRepMin: 6,
+      targetRepMax: 8,
+      weightStep: 1.25,
+    });
+
+    expect(suggestion).toEqual({
+      sets: [
+        { weight: 81.25, reps: 6 },
+        { weight: 81.25, reps: 6 },
+      ],
+      reason: 'Weight up',
+    });
+  });
+
+  it('uses exercise goals to suggest building reps before adding weight', () => {
+    const workouts = [
+      {
+        id: 'w1',
+        date: '2024-01-12',
+        createdAt: '2024-01-12T08:00:00.000Z',
+        entries: [
+          {
+            exerciseId: 'bench',
+            sets: [
+              { weight: 80, reps: 6 },
+              { weight: 80, reps: 5 },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const suggestion = suggestNextSets(workouts, 'bench', {
+      targetRepMin: 6,
+      targetRepMax: 8,
+      weightStep: 2.5,
+    });
+
+    expect(suggestion).toEqual({
+      sets: [
+        { weight: 80, reps: 6 },
+        { weight: 80, reps: 6 },
+      ],
+      reason: 'Build reps',
+    });
   });
 });
 

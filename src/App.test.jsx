@@ -76,6 +76,7 @@ describe('App integration flows', () => {
 
     expect(screen.getByText('Past sessions')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: /Show details for workout from/i }));
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
   });
 
@@ -99,6 +100,7 @@ describe('App integration flows', () => {
     await user.type(screen.getByLabelText('Reps'), '8');
     await user.click(screen.getByRole('button', { name: 'Save workout' }));
 
+    await user.click(screen.getByRole('button', { name: /Show details for workout from/i }));
     expect(screen.getByText('Session note')).toBeTruthy();
     expect(screen.getByText('Felt strong on the top sets.')).toBeTruthy();
   });
@@ -245,6 +247,110 @@ describe('App integration flows', () => {
     expect(screen.getByLabelText('Notes').value).toBe('');
   });
 
+  it('updates the weekly goal and reflects it on the dashboard', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-07T12:00:00.000Z'));
+    renderAppWithStoredData({
+      weeklyWorkoutGoal: 4,
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-04-06',
+          createdAt: '2026-04-06T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings' }));
+    fireEvent.change(screen.getByLabelText('Target sessions'), { target: { value: '5' } });
+    fireEvent.click(screen.getByRole('button', { name: 'dashboard' }));
+
+    expect(screen.getByRole('heading', { name: 'Week in progress' })).toBeTruthy();
+    const weeklyGoalProgress = screen.getByRole('progressbar', { name: 'Weekly goal progress' });
+    expect(weeklyGoalProgress.getAttribute('aria-valuenow')).toBe('1');
+    expect(weeklyGoalProgress.getAttribute('aria-valuemax')).toBe('5');
+    expect(screen.getByText('Behind pace')).toBeTruthy();
+    expect(screen.getByText('5d')).toBeTruthy();
+    expect(screen.getByText('Remaining')).toBeTruthy();
+  });
+
+  it('saves a bodyweight check-in in settings and shows it on the dashboard', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      bodyweightEntries: [],
+      exercises: [],
+      workouts: [],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'settings' }));
+    await user.type(screen.getByLabelText('Bodyweight (kg)'), '82.4');
+    await user.click(screen.getByRole('button', { name: 'Save bodyweight' }));
+
+    expect(screen.getByText(/Saved bodyweight check-in/i)).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'dashboard' }));
+    const bodyweightSection = screen.getByText('Bodyweight').closest('section');
+
+    expect(bodyweightSection).toBeTruthy();
+    expect(
+      within(bodyweightSection).getByRole('heading', { name: /82[.,]4 kg/i }),
+    ).toBeTruthy();
+  });
+
+  it('shows best set, estimated one rep max, and best session in progress', async () => {
+    const user = userEvent.setup();
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-03-30',
+          createdAt: '2026-03-30T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 95, reps: 5 }] }],
+        },
+        {
+          id: 'workout-2',
+          date: '2026-04-04',
+          createdAt: '2026-04-04T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [
+                { weight: 100, reps: 5 },
+                { weight: 90, reps: 8 },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'progress' }));
+
+    expect(await screen.findByText('Best set')).toBeTruthy();
+    expect(await screen.findByText('100 x 5')).toBeTruthy();
+    expect(screen.getByText('Est. 1RM')).toBeTruthy();
+    expect(screen.getByText(/116[.,]67/)).toBeTruthy();
+    const bestSessionCard = screen.getByText('Best session').closest('.stat-card');
+    expect(bestSessionCard).toBeTruthy();
+    expect(within(bestSessionCard).getByText(/1[.,]220/)).toBeTruthy();
+  });
+
   it('loads a workout into the split planner as a new template', async () => {
     const user = userEvent.setup();
     renderAppWithStoredData({
@@ -292,6 +398,7 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Use workout from .* as a split template/ }));
 
     expect(screen.getByRole('heading', { name: 'Split planner' })).toBeTruthy();
@@ -339,6 +446,7 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Save workout from .* as a template/ }));
 
     expect(screen.getByText('Saved Push template.')).toBeTruthy();
@@ -688,7 +796,7 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'Skip Bench press for today' }));
 
-    expect(screen.getByText('Skipped today')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Skipped' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Restore Bench press' })).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Restore Bench press' }));
@@ -755,7 +863,7 @@ describe('App integration flows', () => {
     expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Replace data' }));
 
-    expect(await screen.findByText('Imported 1 exercises, 0 splits, 0 templates, and 0 workouts.')).toBeTruthy();
+    expect(await screen.findByText('Imported 1 exercises, 0 splits, 0 templates, 0 workouts, and 0 bodyweight check-ins.')).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Imported exercise' })).toBeTruthy();
@@ -845,7 +953,7 @@ describe('App integration flows', () => {
     expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Merge data' }));
 
-    expect(await screen.findByText('Merged import. You now have 2 exercises, 0 splits, 2 templates, and 1 workouts.')).toBeTruthy();
+    expect(await screen.findByText('Merged import. You now have 2 exercises, 0 splits, 2 templates, 1 workouts, and 0 bodyweight check-ins.')).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Bench press' })).toBeTruthy();
@@ -873,6 +981,7 @@ describe('App integration flows', () => {
         {
           id: 'push',
           name: 'Push',
+          weeklyTarget: 2,
           createdAt: '2024-01-02T10:00:00.000Z',
           exercises: [{ id: 'split-1', exerciseId: 'squat', defaultSets: 1 }],
         },
@@ -902,25 +1011,48 @@ describe('App integration flows', () => {
       ],
     });
 
-    const workoutsCard = screen.getAllByText('Workouts').map(el => el.closest('.db-stat')).find(Boolean);
-    expect(workoutsCard.textContent).toContain('2');
-
-    const recentPrCard = screen.getByText('Recent PRs').closest('.db-stat');
-    expect(recentPrCard.textContent).toContain('3');
-    expect(recentPrCard.textContent).toContain('Last 30 days');
-
-    expect(screen.getByText('Volume by day')).toBeTruthy();
+    expect(screen.getByText('How this week is going')).toBeTruthy();
+    expect(screen.getByText('Week plan')).toBeTruthy();
+    expect(screen.getByText('Training snapshot')).toBeTruthy();
+    expect(screen.getByText('Splits and templates')).toBeTruthy();
+    expect(screen.getByText('Recommended next workout')).toBeTruthy();
     expect(screen.getByText('Training calendar')).toBeTruthy();
     expect(screen.getByText('Last 28 days')).toBeTruthy();
     expect(screen.getByText('This week vs last')).toBeTruthy();
     expect(screen.getByLabelText('Training heatmap')).toBeTruthy();
+    expect(screen.getByText('2 / 2 completed')).toBeTruthy();
+    expect(screen.getByText('Done')).toBeTruthy();
     expect(screen.getByText('Split insights')).toBeTruthy();
     expect(screen.getByText('Reuse a session')).toBeTruthy();
     expect(screen.getByText('Top this month')).toBeTruthy();
-    expect(screen.getByText('Best periods')).toBeTruthy();
     expect(screen.getByText('Best week')).toBeTruthy();
     expect(screen.getByText('Best month')).toBeTruthy();
     expect(screen.getAllByText('Push').length).toBeGreaterThan(0);
+  });
+
+  it('shows guided empty dashboard states when no activity exists', () => {
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [],
+      templates: [],
+      workouts: [],
+    });
+
+    expect(screen.getByRole('heading', { name: 'Start your first workout' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Week just started' })).toBeTruthy();
+    expect(screen.getByText('Start with one complete session')).toBeTruthy();
+    expect(screen.getByText('Your first training block sets the baseline')).toBeTruthy();
+    expect(screen.getByText('No templates yet')).toBeTruthy();
+    expect(screen.getByText('No bodyweight trend yet')).toBeTruthy();
+    expect(screen.getByText('Get your month started')).toBeTruthy();
+    expect(screen.getByText('Your calendar starts with the first session')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Nothing logged yet' })).toBeTruthy();
   });
 
   it('edits and then deletes a workout from history', async () => {
@@ -958,9 +1090,11 @@ describe('App integration flows', () => {
     await user.type(weightInput, '110');
     await user.click(screen.getByRole('button', { name: 'Save changes' }));
 
+    await user.click(screen.getByRole('button', { name: /Show details for workout from/i }));
     expect(screen.getByText('Set 1: 110 × 5')).toBeTruthy();
     expect(screen.getByText('Wt 110')).toBeTruthy();
 
+    await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
 
     expect(confirmSpy).toHaveBeenCalled();
@@ -995,12 +1129,14 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
 
     expect(screen.getByText('Workout history is empty')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Undo delete' }));
 
     expect(screen.getByRole('heading', { name: 'Back squat' })).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: /Show details for workout from/i }));
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
   });
 
@@ -1140,13 +1276,21 @@ describe('App integration flows', () => {
     expect(screen.getByText('Training calendar')).toBeTruthy();
     expect(screen.getByText('Last 12 weeks')).toBeTruthy();
     expect(screen.getByLabelText('History training calendar')).toBeTruthy();
-    expect(screen.getByText('PR timeline')).toBeTruthy();
-    expect(screen.getByText('Recent wins')).toBeTruthy();
-    expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
+    expect(screen.getByText('Selected day')).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'History detail panel' })).toBeTruthy();
 
     await user.click(screen.getByLabelText('Mar 14, 2026 with 1 session'));
     expect(screen.getByText('Selected day')).toBeTruthy();
     expect(screen.getAllByText('Custom workout').length).toBeGreaterThan(0);
+
+    await user.click(
+      within(screen.getByRole('group', { name: 'History detail panel' })).getByRole('button', {
+        name: 'PRs',
+      }),
+    );
+    expect(screen.getByText('PR timeline')).toBeTruthy();
+    expect(screen.getByText('Recent wins')).toBeTruthy();
+    expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
   });
 
   it('shows progress markers for an exercise with multiple workouts', async () => {
@@ -1189,13 +1333,19 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'progress' }));
 
     expect(screen.getByText('Volume trend')).toBeTruthy();
-    expect(screen.getByText('PR hits')).toBeTruthy();
-    expect(screen.getByText('Peak session')).toBeTruthy();
-    expect(screen.getByText('Wins in range')).toBeTruthy();
+    expect(screen.getByText(/PR hits|Latest signal focus/i)).toBeTruthy();
+    expect(screen.getByText('PR center')).toBeTruthy();
+    expect(
+      within(screen.getByRole('group', { name: 'Exercise PR filter' })).getByRole('button', {
+        name: 'Weight',
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText('Improvement story')).toBeTruthy();
+    expect(screen.getByText('Range change')).toBeTruthy();
     expect(screen.getByText('Latest signal')).toBeTruthy();
     expect(screen.getAllByText('PR session').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
-    expect(screen.getByText('Weight up')).toBeTruthy();
+    expect(screen.getAllByText('Weight up').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/vs/).length).toBeGreaterThan(0);
   });
 
@@ -1229,11 +1379,19 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'progress' }));
     expect(screen.getByText('Volume trend')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Weight' }));
+    await user.click(
+      within(screen.getByRole('group', { name: 'Progress metric' })).getByRole('button', {
+        name: 'Weight',
+      }),
+    );
     expect(screen.getByText('Weight trend')).toBeTruthy();
     expect(screen.getAllByText('Best weight').length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole('button', { name: 'Reps' }));
+    await user.click(
+      within(screen.getByRole('group', { name: 'Progress metric' })).getByRole('button', {
+        name: 'Reps',
+      }),
+    );
     expect(screen.getByText('Reps trend')).toBeTruthy();
     expect(screen.getAllByText('Best reps').length).toBeGreaterThan(0);
   });
@@ -1269,7 +1427,7 @@ describe('App integration flows', () => {
     fireEvent.click(screen.getByRole('button', { name: 'progress' }));
     fireEvent.click(screen.getByRole('button', { name: '7d' }));
 
-    expect(screen.getAllByText('7 days').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/7 days/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/No entries in the last 7 days/)).toBeNull();
   });
 
@@ -1330,8 +1488,8 @@ describe('App integration flows', () => {
 
     expect(screen.getByText('Push trend')).toBeTruthy();
     expect(screen.getByText('Avg sets')).toBeTruthy();
-    expect(screen.getByText('Peak session')).toBeTruthy();
-    expect(screen.getByText('Wins in range')).toBeTruthy();
+    expect(screen.getByText('Improvement story')).toBeTruthy();
+    expect(screen.getByText('Range change')).toBeTruthy();
     expect(screen.getByText('Latest signal')).toBeTruthy();
     expect(screen.getAllByText('PR session').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Volume PR').length).toBeGreaterThan(0);

@@ -14,6 +14,7 @@ function renderSplitManagerSection(overrides = {}) {
     splits: [],
     splitForm: {
       name: 'Push',
+      weeklyTarget: '2',
       exercises: [
         { id: 'split-1', exerciseId: 'bench', defaultSets: '3' },
         { id: 'split-2', exerciseId: 'press', defaultSets: '2' },
@@ -50,6 +51,7 @@ describe('SplitManagerSection', () => {
     const reorderUpdater = props.setSplitForm.mock.calls[0][0];
     const result = reorderUpdater({
       name: 'Push',
+      weeklyTarget: '2',
       exercises: [
         { id: 'split-1', exerciseId: 'bench', defaultSets: '3' },
         { id: 'split-2', exerciseId: 'press', defaultSets: '2' },
@@ -63,8 +65,8 @@ describe('SplitManagerSection', () => {
     const user = userEvent.setup();
     const props = renderSplitManagerSection({
       splits: [
-        { id: 'push', name: 'Push', exercises: [] },
-        { id: 'pull', name: 'Pull', exercises: [] },
+        { id: 'push', name: 'Push', weeklyTarget: 2, exercises: [] },
+        { id: 'pull', name: 'Pull', weeklyTarget: 1, exercises: [] },
       ],
     });
 
@@ -73,5 +75,14 @@ describe('SplitManagerSection', () => {
 
     expect(props.moveSavedSplit).toHaveBeenCalledWith('pull', 'up');
     expect(props.moveSavedSplit).toHaveBeenCalledWith('push', 'down');
+  });
+
+  it('shows weekly targets for saved splits', () => {
+    renderSplitManagerSection({
+      splits: [{ id: 'push', name: 'Push', weeklyTarget: 2, exercises: [] }],
+    });
+
+    expect(screen.getAllByText('Weekly target').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('2x').length).toBeGreaterThan(0);
   });
 });

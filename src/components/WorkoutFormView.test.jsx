@@ -102,6 +102,8 @@ describe('WorkoutFormView', () => {
       },
     });
 
+    await user.click(screen.getByRole('button', { name: 'Show proof' }));
+
     expect(screen.getByText('Last workout')).toBeTruthy();
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
 
@@ -139,7 +141,7 @@ describe('WorkoutFormView', () => {
       },
     });
 
-    expect(screen.getByText('Skipped today')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Skipped' })).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Restore Back squat' }));
 
@@ -156,6 +158,33 @@ describe('WorkoutFormView', () => {
     await user.type(notesField, 'Felt strong today');
 
     expect(props.setWorkoutForm).toHaveBeenCalled();
+  });
+
+  it('shows a clear setup-log-finish hierarchy for the active session', () => {
+    renderWorkoutFormView({
+      exercises: [{ id: 'bench', name: 'Bench press' }],
+      workoutForm: {
+        date: '2024-01-12',
+        splitId: '',
+        notes: '',
+        mood: '',
+        effort: '',
+        skippedEntries: [],
+        entries: [
+          {
+            id: 'entry-1',
+            exerciseId: 'bench',
+            sets: [{ id: 'set-1', weight: '80', reps: '8', completed: false }],
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByText('Session flow')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Session setup' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Active exercises' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Save this custom workout' })).toBeTruthy();
+    expect(screen.getByLabelText('Workout finish summary')).toBeTruthy();
   });
 
   it('shows session context fields, quick progression actions, and a rest timer', async () => {
@@ -181,7 +210,7 @@ describe('WorkoutFormView', () => {
 
     expect(screen.getByLabelText('Mood')).toBeTruthy();
     expect(screen.getByLabelText('Effort')).toBeTruthy();
-    expect(screen.getByText('Rest timer')).toBeTruthy();
+    expect(screen.getAllByText('Rest timer').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Add 2.5 kilograms to set 1 for Bench press' }));
     expect(props.updateWorkoutEntry).toHaveBeenCalled();
@@ -189,6 +218,7 @@ describe('WorkoutFormView', () => {
     fireEvent.click(screen.getByRole('checkbox'));
     expect(props.updateWorkoutEntry).toHaveBeenCalled();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Timer' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start 60 second rest timer for set 1 of Bench press' }));
     expect(screen.getByText('01:00')).toBeTruthy();
 
@@ -196,6 +226,95 @@ describe('WorkoutFormView', () => {
       vi.advanceTimersByTime(1000);
     });
     expect(screen.getByText('00:59')).toBeTruthy();
+  });
+
+  it('shows exercise goals when the selected exercise has a target', () => {
+    renderWorkoutFormView({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          targetWeight: 100,
+          targetRepMin: 6,
+          targetRepMax: 8,
+          weightStep: 2.5,
+        },
+      ],
+      workoutForm: {
+        date: '2024-01-12',
+        splitId: '',
+        notes: '',
+        mood: '',
+        effort: '',
+        skippedEntries: [],
+        entries: [
+          {
+            id: 'entry-1',
+            exerciseId: 'bench',
+            sets: [{ id: 'set-1', weight: '80', reps: '8', completed: false }],
+          },
+        ],
+      },
+    });
+
+    expect(screen.getByText('Keep this exercise on target')).toBeTruthy();
+    expect(screen.getByText(/Reps 6-8 • Target 100 kg • Step 2\.5 kg/)).toBeTruthy();
+  });
+
+  it('shows a goal-based suggestion and applies it', async () => {
+    const user = userEvent.setup();
+    const props = renderWorkoutFormView({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          targetWeight: 100,
+          targetRepMin: 6,
+          targetRepMax: 8,
+          weightStep: 1.25,
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2024-01-10',
+          createdAt: '2024-01-10T10:00:00.000Z',
+          entries: [
+            {
+              exerciseId: 'bench',
+              sets: [
+                { weight: 80, reps: 8 },
+                { weight: 80, reps: 8 },
+              ],
+            },
+          ],
+        },
+      ],
+      workoutForm: {
+        date: '2024-01-12',
+        splitId: '',
+        notes: '',
+        mood: '',
+        effort: '',
+        skippedEntries: [],
+        entries: [
+          {
+            id: 'entry-1',
+            exerciseId: 'bench',
+            sets: [{ id: 'set-1', weight: '', reps: '', completed: false }],
+          },
+        ],
+      },
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Show proof' }));
+    expect(screen.getByText('Suggested next sets')).toBeTruthy();
+    expect(screen.getByText('→ Set 1: 81.25 × 6')).toBeTruthy();
+    expect(screen.getByText('→ Set 2: 81.25 × 6')).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'Apply progressive overload suggestion for Bench press' }));
+
+    expect(props.updateWorkoutEntry).toHaveBeenCalled();
   });
 
   it('shows update template action when a template is selected', async () => {

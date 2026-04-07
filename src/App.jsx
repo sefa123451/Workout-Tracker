@@ -6,10 +6,8 @@ import ProgressView from './components/ProgressView.jsx';
 import SettingsView from './components/SettingsView.jsx';
 import WorkoutFormView from './components/WorkoutFormView.jsx';
 import {
-  STORAGE_KEY,
+  DEFAULT_WEEKLY_WORKOUT_GOAL,
   STORAGE_VERSION,
-  buildProgressHistory,
-  buildSplitProgressHistory,
   buildWorkoutHistoryCsv,
   buildWorkoutEntriesFromSplit,
   createId,
@@ -22,19 +20,13 @@ import {
   createWorkoutForm,
   createWorkoutFormFromTemplate,
   createWorkoutFormFromWorkout,
-  filterProgressHistoryByDays,
   formatCalendarDate,
   formatDelta,
   formatDisplayDate,
   formatNumber,
-  getRecentPersonalRecords,
   getTodayInputValue,
-  buildTrainingHeatmap,
-  getDashboardSummary,
   getEntryMetrics,
   mergeImportedData,
-  getProgressWindowSummary,
-  getSplitProgressWindowSummary,
   hasImprovement,
   hasPersonalRecord,
   isValidDateInput,
@@ -43,6 +35,9 @@ import {
   sortWorkouts,
   validateImportedData,
 } from './lib/workoutData.js';
+import { THEME_OPTIONS, useThemeMode } from './hooks/useThemeMode.js';
+import { useTrackerDerivedData } from './hooks/useTrackerDerivedData.js';
+import { useTrackerPersistence } from './hooks/useTrackerPersistence.js';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', a11yLabel: 'dashboard', icon: 'dashboard' },
@@ -53,9 +48,7 @@ const NAV_ITEMS = [
   { id: 'settings', label: 'Settings', a11yLabel: 'settings', icon: 'settings' },
 ];
 const PROGRESS_WINDOWS = [7, 30, 90];
-const THEME_STORAGE_KEY = 'workout-tracker-theme';
 const LAST_TEMPLATE_STORAGE_KEY = 'workout-tracker-last-template-id';
-const THEME_OPTIONS = ['system', 'light', 'dark'];
 const VIEW_META = {
   dashboard: { title: 'Good morning 👋' },
   exercises: { title: 'Exercises & Splits' },
@@ -143,28 +136,6 @@ function SidebarIcon({ icon }) {
   }
 }
 
-function getSystemTheme() {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function getInitialThemeMode() {
-  if (typeof window === 'undefined') {
-    return 'dark';
-  }
-
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-
-  if (THEME_OPTIONS.includes(storedTheme)) {
-    return storedTheme;
-  }
-
-  return 'light';
-}
-
 function getInitialLastTemplateId() {
   if (typeof window === 'undefined') {
     return '';
@@ -195,19 +166,25 @@ function moveItem(list, fromIndex, toIndex) {
 function App() {
   const [storedData] = useState(readStoredData);
   const [activeView, setActiveView] = useState('dashboard');
-  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
-  const [systemTheme, setSystemTheme] = useState(getSystemTheme);
+  const { themeMode, setThemeMode } = useThemeMode();
   const [exercises, setExercises] = useState(storedData.exercises);
   const [splits, setSplits] = useState(storedData.splits);
   const [templates, setTemplates] = useState(storedData.templates ?? []);
   const [workouts, setWorkouts] = useState(storedData.workouts);
+  const [bodyweightEntries, setBodyweightEntries] = useState(storedData.bodyweightEntries ?? []);
+  const [weeklyWorkoutGoal, setWeeklyWorkoutGoal] = useState(
+    storedData.weeklyWorkoutGoal ?? DEFAULT_WEEKLY_WORKOUT_GOAL,
+  );
   const fileInputRef = useRef(null);
   const undoRestoreRef = useRef(null);
-  const [storageWarning, setStorageWarning] = useState('');
   const [dataMessage, setDataMessage] = useState({ type: '', text: '' });
   const [undoNotice, setUndoNotice] = useState(null);
   const [pendingImport, setPendingImport] = useState(null);
   const [exerciseName, setExerciseName] = useState('');
+  const [exerciseTargetWeight, setExerciseTargetWeight] = useState('');
+  const [exerciseTargetRepMin, setExerciseTargetRepMin] = useState('');
+  const [exerciseTargetRepMax, setExerciseTargetRepMax] = useState('');
+  const [exerciseWeightStep, setExerciseWeightStep] = useState('2.5');
   const [editingExerciseId, setEditingExerciseId] = useState(null);
   const [exerciseMessage, setExerciseMessage] = useState({ type: '', text: '' });
   const [splitForm, setSplitForm] = useState(createSplitForm);
@@ -225,28 +202,14 @@ function App() {
   const [selectedSplitProgressId, setSelectedSplitProgressId] = useState('');
   const [selectedProgressWindow, setSelectedProgressWindow] = useState(30);
   const [selectedProgressMetric, setSelectedProgressMetric] = useState('volume');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          version: STORAGE_VERSION,
-          exercises,
-          splits,
-          templates,
-          workouts,
-        }),
-      );
-      setStorageWarning('');
-    } catch {
-      setStorageWarning('Changes could not be saved locally. Refreshing may restore older data.');
-    }
-  }, [exercises, splits, templates, workouts]);
+  const storageWarning = useTrackerPersistence({
+    bodyweightEntries,
+    exercises,
+    splits,
+    templates,
+    workouts,
+    weeklyWorkoutGoal,
+  });
 
   useEffect(() => {
     if (!selectedExerciseId && exercises.length > 0) {
@@ -269,25 +232,6 @@ function App() {
   }, [selectedSplitProgressId, splits]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      return;
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (event) => setSystemTheme(event.matches ? 'dark' : 'light');
-
-    setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
-
-    if (typeof mediaQuery.addEventListener === 'function') {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
-  }, []);
-
-  useEffect(() => {
     if (typeof window === 'undefined') {
       return;
     }
@@ -304,70 +248,49 @@ function App() {
       setLastUsedTemplateId('');
     }
   }, [lastUsedTemplateId, templates]);
-
-  const resolvedTheme = themeMode === 'system' ? systemTheme : themeMode;
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.dataset.theme = resolvedTheme;
-      document.documentElement.dataset.themeMode = themeMode;
-    }
-
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
-    }
-  }, [resolvedTheme, themeMode]);
-
-  const sortedWorkouts = sortWorkouts(workouts);
-  const selectedExerciseHistory = selectedExerciseId
-    ? buildProgressHistory(workouts, selectedExerciseId)
-    : [];
-  const selectedExerciseWindowHistory = filterProgressHistoryByDays(
+  const {
+    bodyweightSummary,
+    dashboardSummary,
+    getExerciseName,
+    getSplitName,
+    historyHeatmap,
+    historyPrTimeline,
+    lastUsedTemplate,
+    latestWorkout,
     selectedExerciseHistory,
-    selectedProgressWindow,
-  );
-  const selectedExerciseWindowSummary = getProgressWindowSummary(selectedExerciseWindowHistory);
-  const selectedSplitHistory = selectedSplitProgressId
-    ? buildSplitProgressHistory(workouts, selectedSplitProgressId)
-    : [];
-  const selectedSplitWindowHistory = filterProgressHistoryByDays(
+    selectedExerciseWindowHistory,
+    selectedExerciseWindowSummary,
     selectedSplitHistory,
+    selectedSplitWindowHistory,
+    selectedSplitWindowSummary,
+    sortedWorkouts,
+    totalSetsLogged,
+  } = useTrackerDerivedData({
+    exercises,
+    splits,
+    templates,
+    workouts,
+    bodyweightEntries,
+    weeklyWorkoutGoal,
+    lastUsedTemplateId,
+    selectedExerciseId,
+    selectedSplitProgressId,
     selectedProgressWindow,
-  );
-  const selectedSplitWindowSummary = getSplitProgressWindowSummary(selectedSplitWindowHistory);
-  const totalSetsLogged = workouts.reduce(
-    (sum, workout) => sum + workout.entries.reduce((entrySum, entry) => entrySum + entry.sets.length, 0),
-    0,
-  );
-  const latestWorkout = sortedWorkouts[0] ?? null;
-  const lastUsedTemplate = templates.find((template) => template.id === lastUsedTemplateId) ?? null;
-  const dashboardSummary = getDashboardSummary(sortedWorkouts);
-  const historyHeatmap = buildTrainingHeatmap(sortedWorkouts, 84);
-  const historyPrTimeline = getRecentPersonalRecords(sortedWorkouts, 90, 8);
+  });
   const activeViewMeta = VIEW_META[activeView] ?? VIEW_META.dashboard;
   const sidebarSummary = latestWorkout
     ? `Last log ${formatDisplayDate(latestWorkout.date)}`
     : 'Local-first tracker';
 
-  function getExerciseName(exerciseId) {
-    return exercises.find((exercise) => exercise.id === exerciseId)?.name ?? 'Unknown exercise (deleted)';
-  }
-
-  function getSplitName(splitId) {
-    if (!splitId) {
-      return 'Custom workout';
-    }
-
-    return splits.find((split) => split.id === splitId)?.name ?? 'Unknown split (deleted)';
-  }
-
   function exportAppData() {
     const exportPayload = {
       version: STORAGE_VERSION,
+      bodyweightEntries,
       exercises,
       splits,
       templates,
       workouts,
+      weeklyWorkoutGoal,
     };
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
       type: 'application/json',
@@ -439,15 +362,17 @@ function App() {
     const nextData =
       mode === 'merge'
         ? mergeImportedData(
-            { exercises, splits, templates, workouts },
+            { bodyweightEntries, exercises, splits, templates, workouts, weeklyWorkoutGoal },
             pendingImport.value,
           )
         : pendingImport.value;
 
+    setBodyweightEntries(nextData.bodyweightEntries ?? []);
     setExercises(nextData.exercises);
     setSplits(nextData.splits);
     setTemplates(nextData.templates ?? []);
     setWorkouts(nextData.workouts);
+    setWeeklyWorkoutGoal(nextData.weeklyWorkoutGoal ?? DEFAULT_WEEKLY_WORKOUT_GOAL);
     resetAppEditingState();
     setSelectedExerciseId(nextData.exercises[0]?.id ?? '');
     setActiveView('dashboard');
@@ -455,8 +380,8 @@ function App() {
       type: 'success',
       text:
         mode === 'merge'
-          ? `Merged import. You now have ${nextData.exercises.length} exercises, ${nextData.splits.length} splits, ${nextData.templates?.length ?? 0} templates, and ${nextData.workouts.length} workouts.`
-          : `Imported ${pendingImport.value.exercises.length} exercises, ${pendingImport.value.splits.length} splits, ${pendingImport.value.templates?.length ?? 0} templates, and ${pendingImport.value.workouts.length} workouts.`,
+          ? `Merged import. You now have ${nextData.exercises.length} exercises, ${nextData.splits.length} splits, ${nextData.templates?.length ?? 0} templates, ${nextData.workouts.length} workouts, and ${nextData.bodyweightEntries?.length ?? 0} bodyweight check-ins.`
+          : `Imported ${pendingImport.value.exercises.length} exercises, ${pendingImport.value.splits.length} splits, ${pendingImport.value.templates?.length ?? 0} templates, ${pendingImport.value.workouts.length} workouts, and ${pendingImport.value.bodyweightEntries?.length ?? 0} bodyweight check-ins.`,
     });
     clearUndoNotice();
     clearPendingImport();
@@ -504,8 +429,57 @@ function App() {
     }
   }
 
+  function saveBodyweightEntry(date, weightValue) {
+    const trimmedDate = typeof date === 'string' ? date : '';
+    const parsedWeight = Number(weightValue);
+
+    if (!isValidDateInput(trimmedDate)) {
+      setDataMessage({ type: 'error', text: 'Choose a valid bodyweight date.' });
+      return false;
+    }
+
+    if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
+      setDataMessage({ type: 'error', text: 'Bodyweight must be a positive number.' });
+      return false;
+    }
+
+    const normalizedWeight = Number(parsedWeight.toFixed(1));
+
+    setBodyweightEntries((current) => {
+      const existingEntry = current.find((entry) => entry.date === trimmedDate);
+
+      if (existingEntry) {
+        return current
+          .map((entry) =>
+            entry.date === trimmedDate ? { ...entry, weight: normalizedWeight } : entry,
+          )
+          .sort((left, right) => right.date.localeCompare(left.date));
+      }
+
+      return [
+        {
+          id: createId(),
+          date: trimmedDate,
+          weight: normalizedWeight,
+          createdAt: new Date().toISOString(),
+        },
+        ...current,
+      ].sort((left, right) => right.date.localeCompare(left.date));
+    });
+
+    setDataMessage({
+      type: 'success',
+      text: `Saved bodyweight check-in for ${formatDisplayDate(trimmedDate)}.`,
+    });
+    return true;
+  }
+
   function resetExerciseForm(clearMessage = true) {
     setExerciseName('');
+    setExerciseTargetWeight('');
+    setExerciseTargetRepMin('');
+    setExerciseTargetRepMax('');
+    setExerciseWeightStep('2.5');
     setEditingExerciseId(null);
     if (clearMessage) {
       setExerciseMessage({ type: '', text: '' });
@@ -535,9 +509,47 @@ function App() {
   function handleExerciseSubmit(event) {
     event.preventDefault();
     const normalizedName = exerciseName.trim();
+    const normalizedTargetWeight = exerciseTargetWeight.trim();
+    const normalizedTargetRepMin = exerciseTargetRepMin.trim();
+    const normalizedTargetRepMax = exerciseTargetRepMax.trim();
+    const normalizedWeightStep = exerciseWeightStep.trim();
 
     if (!normalizedName) {
       setExerciseMessage({ type: 'error', text: 'Exercise name cannot be empty.' });
+      return;
+    }
+
+    const parsedTargetWeight = normalizedTargetWeight ? Number(normalizedTargetWeight) : null;
+    const parsedTargetRepMin = normalizedTargetRepMin ? Number(normalizedTargetRepMin) : null;
+    const parsedTargetRepMax = normalizedTargetRepMax ? Number(normalizedTargetRepMax) : null;
+    const parsedWeightStep = normalizedWeightStep ? Number(normalizedWeightStep) : 2.5;
+
+    if (normalizedTargetWeight && (!Number.isFinite(parsedTargetWeight) || parsedTargetWeight <= 0)) {
+      setExerciseMessage({ type: 'error', text: 'Target weight must be a positive number.' });
+      return;
+    }
+
+    if (normalizedTargetRepMin && (!Number.isInteger(parsedTargetRepMin) || parsedTargetRepMin <= 0)) {
+      setExerciseMessage({ type: 'error', text: 'Target rep min must be a whole number.' });
+      return;
+    }
+
+    if (normalizedTargetRepMax && (!Number.isInteger(parsedTargetRepMax) || parsedTargetRepMax <= 0)) {
+      setExerciseMessage({ type: 'error', text: 'Target rep max must be a whole number.' });
+      return;
+    }
+
+    if (
+      parsedTargetRepMin !== null &&
+      parsedTargetRepMax !== null &&
+      parsedTargetRepMin > parsedTargetRepMax
+    ) {
+      setExerciseMessage({ type: 'error', text: 'Target rep min cannot be higher than target rep max.' });
+      return;
+    }
+
+    if (!Number.isFinite(parsedWeightStep) || parsedWeightStep <= 0) {
+      setExerciseMessage({ type: 'error', text: 'Weight step must be a positive number.' });
       return;
     }
 
@@ -555,7 +567,16 @@ function App() {
     if (editingExerciseId) {
       setExercises((current) =>
         current.map((exercise) =>
-          exercise.id === editingExerciseId ? { ...exercise, name: normalizedName } : exercise,
+          exercise.id === editingExerciseId
+            ? {
+                ...exercise,
+                name: normalizedName,
+                targetWeight: parsedTargetWeight,
+                targetRepMin: parsedTargetRepMin,
+                targetRepMax: parsedTargetRepMax,
+                weightStep: parsedWeightStep,
+              }
+            : exercise,
         ),
       );
       resetExerciseForm(false);
@@ -564,6 +585,10 @@ function App() {
       const newExercise = {
         id: createId(),
         name: normalizedName,
+        targetWeight: parsedTargetWeight,
+        targetRepMin: parsedTargetRepMin,
+        targetRepMax: parsedTargetRepMax,
+        weightStep: parsedWeightStep,
         createdAt: new Date().toISOString(),
       };
 
@@ -585,6 +610,10 @@ function App() {
 
     setEditingExerciseId(exercise.id);
     setExerciseName(exercise.name);
+    setExerciseTargetWeight(exercise.targetWeight ? String(exercise.targetWeight) : '');
+    setExerciseTargetRepMin(exercise.targetRepMin ? String(exercise.targetRepMin) : '');
+    setExerciseTargetRepMax(exercise.targetRepMax ? String(exercise.targetRepMax) : '');
+    setExerciseWeightStep(String(exercise.weightStep ?? 2.5));
     setExerciseMessage({ type: '', text: '' });
     setActiveView('exercises');
   }
@@ -616,6 +645,10 @@ function App() {
     const previousTemplates = templates;
     const previousEditingExerciseId = editingExerciseId;
     const previousExerciseName = exerciseName;
+    const previousExerciseTargetWeight = exerciseTargetWeight;
+    const previousExerciseTargetRepMin = exerciseTargetRepMin;
+    const previousExerciseTargetRepMax = exerciseTargetRepMax;
+    const previousExerciseWeightStep = exerciseWeightStep;
 
     setExercises((current) => current.filter((item) => item.id !== exerciseId));
     setSplits((current) =>
@@ -667,6 +700,10 @@ function App() {
       setTemplates(previousTemplates);
       setEditingExerciseId(previousEditingExerciseId);
       setExerciseName(previousExerciseName);
+      setExerciseTargetWeight(previousExerciseTargetWeight);
+      setExerciseTargetRepMin(previousExerciseTargetRepMin);
+      setExerciseTargetRepMax(previousExerciseTargetRepMax);
+      setExerciseWeightStep(previousExerciseWeightStep);
       setExerciseMessage({ type: 'success', text: `${exercise.name} restored.` });
     });
   }
@@ -837,6 +874,7 @@ function App() {
 
   function normalizeSplitEntries(form) {
     const normalizedName = form.name.trim();
+    const weeklyTarget = Number(form.weeklyTarget);
 
     if (!normalizedName) {
       return { error: 'Split name cannot be empty.' };
@@ -855,6 +893,10 @@ function App() {
 
     if (new Set(chosenExerciseIds).size !== chosenExerciseIds.length) {
       return { error: 'Use each exercise only once per split.' };
+    }
+
+    if (!Number.isInteger(weeklyTarget) || weeklyTarget < 1 || weeklyTarget > 7) {
+      return { error: 'Weekly target must be a whole number between 1 and 7.' };
     }
 
     const normalizedExercises = [];
@@ -884,6 +926,7 @@ function App() {
     return {
       value: {
         name: normalizedName,
+        weeklyTarget,
         exercises: normalizedExercises,
       },
     };
@@ -910,6 +953,7 @@ function App() {
       const newSplit = {
         id: createId(),
         name: normalizedSplit.value.name,
+        weeklyTarget: normalizedSplit.value.weeklyTarget,
         createdAt: new Date().toISOString(),
         exercises: normalizedSplit.value.exercises,
       };
@@ -1723,10 +1767,12 @@ function App() {
 
           {activeView === 'dashboard' && (
             <DashboardView
+              bodyweightSummary={bodyweightSummary}
               exercises={exercises}
               splits={splits}
               templates={templates}
               workouts={workouts}
+              weeklyWorkoutGoal={weeklyWorkoutGoal}
               totalSetsLogged={totalSetsLogged}
               dashboardSummary={dashboardSummary}
               latestWorkout={latestWorkout}
@@ -1752,6 +1798,14 @@ function App() {
               editingExerciseId={editingExerciseId}
               exerciseName={exerciseName}
               setExerciseName={setExerciseName}
+              exerciseTargetWeight={exerciseTargetWeight}
+              setExerciseTargetWeight={setExerciseTargetWeight}
+              exerciseTargetRepMin={exerciseTargetRepMin}
+              setExerciseTargetRepMin={setExerciseTargetRepMin}
+              exerciseTargetRepMax={exerciseTargetRepMax}
+              setExerciseTargetRepMax={setExerciseTargetRepMax}
+              exerciseWeightStep={exerciseWeightStep}
+              setExerciseWeightStep={setExerciseWeightStep}
               handleExerciseSubmit={handleExerciseSubmit}
               resetExerciseForm={resetExerciseForm}
               exerciseMessage={exerciseMessage}
@@ -1866,9 +1920,14 @@ function App() {
 
           {activeView === 'settings' && (
             <SettingsView
+              bodyweightEntries={bodyweightEntries}
+              bodyweightSummary={bodyweightSummary}
+              saveBodyweightEntry={saveBodyweightEntry}
               themeMode={themeMode}
               setThemeMode={setThemeMode}
               themeOptions={THEME_OPTIONS}
+              weeklyWorkoutGoal={weeklyWorkoutGoal}
+              setWeeklyWorkoutGoal={setWeeklyWorkoutGoal}
               dataMessage={dataMessage}
               storageWarning={storageWarning}
               pendingImport={pendingImport}

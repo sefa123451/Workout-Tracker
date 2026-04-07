@@ -14,6 +14,14 @@ function renderExerciseView(overrides = {}) {
     editingExerciseId: null,
     exerciseName: '',
     setExerciseName: vi.fn(),
+    exerciseTargetWeight: '',
+    setExerciseTargetWeight: vi.fn(),
+    exerciseTargetRepMin: '',
+    setExerciseTargetRepMin: vi.fn(),
+    exerciseTargetRepMax: '',
+    setExerciseTargetRepMax: vi.fn(),
+    exerciseWeightStep: '2.5',
+    setExerciseWeightStep: vi.fn(),
     handleExerciseSubmit: vi.fn((event) => event.preventDefault()),
     resetExerciseForm: vi.fn(),
     exerciseMessage: { type: '', text: '' },
@@ -32,6 +40,7 @@ function renderExerciseView(overrides = {}) {
     resetSplitForm: vi.fn(),
     startEditingSplit: vi.fn(),
     deleteSplit: vi.fn(),
+    moveSavedSplit: vi.fn(),
     createSplitExercise: vi.fn(() => ({ id: 'split-exercise-1', exerciseId: '', defaultSets: '3' })),
     getExerciseName: vi.fn(() => 'Back squat'),
     loadWorkoutTemplate: vi.fn(),
@@ -56,7 +65,7 @@ describe('ExerciseView', () => {
     expect(screen.getByText('Add your first movement to start logging.')).toBeTruthy();
   });
 
-  it('calls edit and delete handlers for saved exercises', async () => {
+  it('calls primary setup action and delete handlers for saved exercises', async () => {
     const user = userEvent.setup();
     const props = renderExerciseView({
       exercises: [
@@ -64,11 +73,15 @@ describe('ExerciseView', () => {
           id: 'squat',
           name: 'Back squat',
           createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
         },
       ],
     });
 
-    await user.click(screen.getByRole('button', { name: 'Edit Back squat' }));
+    await user.click(screen.getByRole('button', { name: 'Finish setup' }));
     await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
 
     expect(props.startEditingExercise).toHaveBeenCalledWith('squat');
@@ -83,11 +96,19 @@ describe('ExerciseView', () => {
           id: 'bench',
           name: 'Bench press',
           createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
         },
         {
           id: 'squat',
           name: 'Back squat',
           createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
         },
       ],
     });
@@ -97,6 +118,64 @@ describe('ExerciseView', () => {
 
     expect(props.moveExercise).toHaveBeenCalledWith('squat', 'up');
     expect(props.moveExercise).toHaveBeenCalledWith('bench', 'down');
+  });
+
+  it('shows saved exercise goals in the library', () => {
+    renderExerciseView({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: 100,
+          targetRepMin: 6,
+          targetRepMax: 8,
+          weightStep: 2.5,
+        },
+      ],
+    });
+
+    expect(screen.getByText('Goal 6-8 reps')).toBeTruthy();
+    expect(screen.getByText('Target 100 kg')).toBeTruthy();
+    expect(screen.getByText('Fully guided')).toBeTruthy();
+  });
+
+  it('surfaces missing target guidance on exercise cards', () => {
+    renderExerciseView({
+      exercises: [
+        {
+          id: 'row',
+          name: 'Barbell row',
+          createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
+        },
+      ],
+    });
+
+    expect(screen.getByText('Needs setup')).toBeTruthy();
+    expect(screen.getByText('What still needs setup: add goal guidance')).toBeTruthy();
+  });
+
+  it('shows partial guidance when only one target layer is set', () => {
+    renderExerciseView({
+      exercises: [
+        {
+          id: 'pullup',
+          name: 'Weighted pull-up',
+          createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: 20,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
+        },
+      ],
+    });
+
+    expect(screen.getByText('Partly guided')).toBeTruthy();
+    expect(screen.getByText('One guidance layer is still missing')).toBeTruthy();
   });
 
   it('calls move handlers for workout templates', async () => {
