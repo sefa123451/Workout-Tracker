@@ -1,8 +1,13 @@
 node_modules
 dist
 .DS_Store
+.vscode
+.idea
+*.log
 .env
 .env.*
 !.env.example
 coverage
 .vite
+playwright-report
+test-results
