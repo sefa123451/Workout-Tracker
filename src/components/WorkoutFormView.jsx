@@ -384,8 +384,7 @@ function WorkoutSetRow({
       <div className="set-row-main">
         <div className="set-row-top">
           <div className="set-row-label-wrap">
-            <div className="set-row-label">Set {setIndex + 1}</div>
-            <label className="set-done-toggle">
+            <label className="set-standard-checkbox">
               <input
                 type="checkbox"
                 checked={Boolean(set.completed)}
@@ -393,7 +392,7 @@ function WorkoutSetRow({
                   toggleSetCompleted(entryId, set.id, event.target.checked)
                 }
               />
-              <span>{set.completed ? 'Done' : 'Open'}</span>
+              <span className="set-row-label">Set {setIndex + 1}</span>
             </label>
           </div>
           <div className="set-actions-primary">

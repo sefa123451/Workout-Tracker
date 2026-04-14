@@ -1295,6 +1295,13 @@ describe('App integration flows', () => {
 
   it('shows progress markers for an exercise with multiple workouts', async () => {
     const user = userEvent.setup();
+    const recentDate = new Date();
+    recentDate.setHours(12, 0, 0, 0);
+    recentDate.setDate(recentDate.getDate() - 1);
+    const olderDate = new Date(recentDate);
+    olderDate.setDate(olderDate.getDate() - 4);
+    const recentDateValue = recentDate.toISOString().slice(0, 10);
+    const olderDateValue = olderDate.toISOString().slice(0, 10);
 
     renderAppWithStoredData({
       exercises: [
@@ -1307,8 +1314,8 @@ describe('App integration flows', () => {
       workouts: [
         {
           id: 'workout-1',
-          date: '2026-03-10',
-          createdAt: '2026-03-10T10:00:00.000Z',
+          date: olderDateValue,
+          createdAt: olderDate.toISOString(),
           entries: [
             {
               exerciseId: 'squat',
@@ -1318,8 +1325,8 @@ describe('App integration flows', () => {
         },
         {
           id: 'workout-2',
-          date: '2026-03-14',
-          createdAt: '2026-03-14T10:00:00.000Z',
+          date: recentDateValue,
+          createdAt: recentDate.toISOString(),
           entries: [
             {
               exerciseId: 'squat',
@@ -1334,7 +1341,7 @@ describe('App integration flows', () => {
 
     expect(screen.getByText('Volume trend')).toBeTruthy();
     expect(screen.getByText(/PR hits|Latest signal focus/i)).toBeTruthy();
-    expect(screen.getByText('PR center')).toBeTruthy();
+    expect(screen.getAllByText('PR center').length).toBeGreaterThan(0);
     expect(
       within(screen.getByRole('group', { name: 'Exercise PR filter' })).getByRole('button', {
         name: 'Weight',
@@ -1351,6 +1358,13 @@ describe('App integration flows', () => {
 
   it('switches the progress chart metric between volume, weight, and reps', async () => {
     const user = userEvent.setup();
+    const recentDate = new Date();
+    recentDate.setHours(12, 0, 0, 0);
+    recentDate.setDate(recentDate.getDate() - 1);
+    const olderDate = new Date(recentDate);
+    olderDate.setDate(olderDate.getDate() - 4);
+    const recentDateValue = recentDate.toISOString().slice(0, 10);
+    const olderDateValue = olderDate.toISOString().slice(0, 10);
 
     renderAppWithStoredData({
       exercises: [
@@ -1363,14 +1377,14 @@ describe('App integration flows', () => {
       workouts: [
         {
           id: 'workout-1',
-          date: '2026-03-10',
-          createdAt: '2026-03-10T10:00:00.000Z',
+          date: olderDateValue,
+          createdAt: olderDate.toISOString(),
           entries: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] }],
         },
         {
           id: 'workout-2',
-          date: '2026-03-14',
-          createdAt: '2026-03-14T10:00:00.000Z',
+          date: recentDateValue,
+          createdAt: recentDate.toISOString(),
           entries: [{ exerciseId: 'squat', sets: [{ weight: 110, reps: 6 }] }],
         },
       ],
@@ -1433,6 +1447,13 @@ describe('App integration flows', () => {
 
   it('shows split progress for logged split workouts', async () => {
     const user = userEvent.setup();
+    const recentDate = new Date();
+    recentDate.setHours(12, 0, 0, 0);
+    recentDate.setDate(recentDate.getDate() - 1);
+    const olderDate = new Date(recentDate);
+    olderDate.setDate(olderDate.getDate() - 4);
+    const recentDateValue = recentDate.toISOString().slice(0, 10);
+    const olderDateValue = olderDate.toISOString().slice(0, 10);
 
     renderAppWithStoredData({
       exercises: [
@@ -1461,9 +1482,9 @@ describe('App integration flows', () => {
       workouts: [
         {
           id: 'workout-1',
-          date: '2026-03-10',
+          date: olderDateValue,
           splitId: 'push',
-          createdAt: '2026-03-10T10:00:00.000Z',
+          createdAt: olderDate.toISOString(),
           entries: [
             { exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] },
             { exerciseId: 'press', sets: [{ weight: 40, reps: 10 }] },
@@ -1471,10 +1492,10 @@ describe('App integration flows', () => {
         },
         {
           id: 'workout-2',
-          date: '2026-03-14',
+          date: recentDateValue,
           splitId: 'push',
           notes: 'Strong push day.',
-          createdAt: '2026-03-14T10:00:00.000Z',
+          createdAt: recentDate.toISOString(),
           entries: [
             { exerciseId: 'bench', sets: [{ weight: 85, reps: 8 }] },
             { exerciseId: 'press', sets: [{ weight: 42.5, reps: 10 }] },

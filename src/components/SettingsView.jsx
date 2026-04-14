@@ -163,10 +163,26 @@ export default function SettingsView({
                   </select>
                 </label>
               </div>
-              <div className="settings-preference-block settings-preference-block-bodyweight">
+
+            </div>
+          </article>
+        </section>
+
+        <section id="settings-bodyweight" className="panel panel-highlight settings-panel">
+          <div className="section-heading">
+            <div>
+              <p className="section-label">Bodyweight check-ins</p>
+              <h2>Bodyweight check-ins</h2>
+              <p className="section-body">
+                Keep an ongoing log of your bodyweight to compare against performance.
+              </p>
+            </div>
+          </div>
+          <article className="settings-card">
+            <div className="settings-preference-block settings-preference-block-bodyweight">
                 <div className="settings-preference-copy">
-                  <span className="section-label">Bodyweight check-ins</span>
-                  <strong>Save a quick check-in without leaving your training defaults.</strong>
+                  <span className="section-label">Log a check-in</span>
+                  <strong>Save a quick check-in.</strong>
                   <p>Recent entries stay beside the form so the trend is always easy to read.</p>
                 </div>
                 <form
@@ -222,7 +238,6 @@ export default function SettingsView({
                   )}
                 </div>
               </div>
-            </div>
           </article>
         </section>
 

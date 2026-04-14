@@ -269,6 +269,34 @@ export default function ExerciseView({
           secondaryLabel: 'Review exercises',
         };
 
+  function scrollToExerciseForm() {
+    const formElement = document.getElementById('exercise-form');
+
+    if (!formElement || typeof formElement.scrollIntoView !== 'function') {
+      return;
+    }
+
+    formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function openExerciseEditor(exerciseId) {
+    startEditingExercise(exerciseId);
+    scrollToExerciseForm();
+  }
+
+  function isInteractiveTarget(target) {
+    return target instanceof Element
+      && Boolean(target.closest('button, a, input, select, textarea, label'));
+  }
+
+  function handleExerciseCardClick(exerciseId, event) {
+    if (isInteractiveTarget(event.target)) {
+      return;
+    }
+
+    openExerciseEditor(exerciseId);
+  }
+
   return (
     <main className="content-grid library-layout">
       <section className="library-setup-surface" aria-label="Library overview">
@@ -345,7 +373,8 @@ export default function ExerciseView({
                       : readinessTone === 'partial'
                         ? 'library-card-partial'
                         : 'library-card-needs-setup'
-                  }`}
+                  } library-card-interactive`}
+                  onClick={(event) => handleExerciseCardClick(exercise.id, event)}
                 >
                   <div className="exercise-card-header">
                     <div>
@@ -402,7 +431,7 @@ export default function ExerciseView({
                       className={`ghost-button action-button library-card-story-action ${
                         readinessTone === 'complete' ? '' : 'library-card-story-action-primary'
                       }`}
-                      onClick={() => startEditingExercise(exercise.id)}
+                      onClick={() => openExerciseEditor(exercise.id)}
                     >
                       {readiness.actionLabel}
                     </button>

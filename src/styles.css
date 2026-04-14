@@ -583,6 +583,7 @@ button { cursor: pointer; }
 .workout-entry-card, .history-workout-card, .progress-card, .latest-workout-card, .library-card { display: grid; gap: 14px; }
 .workout-entry-card .entry-card-header, .history-workout-card .workout-card-header, .progress-card .workout-card-header, .latest-workout-card .workout-card-header, .library-card .exercise-card-header { margin-bottom: 0; }
 .library-card-asset { gap: 12px; border: 1px solid var(--border-light); box-shadow: var(--shadow-xs); }
+.library-card-interactive { cursor: pointer; }
 .library-card-ready { background: linear-gradient(180deg, var(--bg-surface) 0%, var(--bg-muted) 100%); }
 .library-card-partial { border-color: rgba(34,197,94,0.14); background: linear-gradient(180deg, rgba(220,252,231,0.46) 0%, var(--bg-surface) 100%); box-shadow: var(--shadow-xs); }
 .library-card-needs-setup { border-color: rgba(217,119,6,0.22); background: linear-gradient(180deg, var(--warning-soft) 0%, var(--bg-surface) 100%); box-shadow: var(--shadow-sm); }
@@ -712,9 +713,11 @@ button { cursor: pointer; }
 .set-actions-primary, .set-actions-secondary { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; width: 100%; }
 .set-actions-primary { gap: 5px; }
 .set-actions-secondary { padding-top: 8px; border-top: 1px solid var(--border-light); opacity: 0.9; }
-.set-done-toggle { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 10px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: var(--bg-surface); color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; }
-.set-done-toggle:has(input:checked) { border-color: rgba(22,163,74,0.2); background: var(--success-soft); color: var(--success); }
-.set-done-toggle input { margin: 0; accent-color: var(--accent); }
+.set-standard-checkbox { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.set-standard-checkbox input { margin: 0; width: 22px; height: 22px; cursor: pointer; border-radius: var(--radius-xs); border: 2px solid var(--border-light); appearance: none; background: var(--bg-surface); position: relative; }
+.set-standard-checkbox input:checked { background: var(--accent); border-color: var(--accent); }
+.set-standard-checkbox input:checked::after { content: ''; position: absolute; left: 6px; top: 2px; width: 6px; height: 12px; border: solid white; border-width: 0 3px 3px 0; transform: rotate(45deg); }
+.set-standard-checkbox .set-row-label { cursor: pointer; font-size: 1rem; font-weight: 500; color: var(--text); }
 .set-timer-buttons { display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; padding-top: 2px; }
 .set-step-button, .set-timer-button, .set-inline-button { min-height: 34px; padding: 6px 10px; border-radius: var(--radius-pill); }
 .set-step-button { min-width: 0; font-size: 0.75rem; }
@@ -1254,12 +1257,15 @@ button { cursor: pointer; }
   .history-day-group-header { align-items: start; }
   .set-list li { padding: 8px 10px; font-size: 0.8125rem; }
   .activity-metrics span, .last-session-metrics span, .tag { padding: 4px 8px; font-size: 0.6875rem; }
-  .sidebar-nav { grid-template-columns: 1fr; }
-  .sidebar-nav-item { width: 100%; }
-  .topbar-chip, .topbar-theme-switcher { width: 100%; }
+  .sidebar-nav { display: flex; flex-wrap: wrap; justify-content: flex-start; overflow: visible; padding-bottom: 0; }
+  .sidebar-nav-item { width: auto; flex: 1 1 calc(33.333% - 6px); justify-content: center; text-align: center; flex-direction: column; padding: 10px 4px; gap: 4px; }
+  .sidebar-nav-icon { margin: 0 auto; }
+  .topbar-chip, .topbar-theme-switcher { width: auto; flex: 1; }
   .hero-control-row, .view-switcher, .theme-switcher { width: 100%; }
-  .primary-button, .secondary-button, .ghost-button, .view-button { width: 100%; }
-  .progress-toolbar .view-button { width: auto; }
+  .primary-button, .secondary-button, .ghost-button { width: 100%; }
+  .view-button { width: 100%; }
+  .theme-switcher .view-button,
+  .progress-toolbar .view-button { width: auto; flex: 1; min-width: 0; }
   .hero-controls { width: 100%; }
 }
 
@@ -1280,6 +1286,7 @@ button { cursor: pointer; }
   .chart-guidance p { font-size: 0.78125rem; }
   .field input, .field select, .field textarea { min-height: 40px; padding-inline: 12px; }
   .field textarea { min-height: 80px; }
+  .dashboard-heatmap-cell, .db-heatmap-cell { max-width: 24px; max-height: 24px; margin: 0 auto; }
   .chart-shell { padding: 10px; }
   .history-review-card { padding: 16px; }
   .history-review-metrics { grid-template-columns: 1fr; }
@@ -1295,7 +1302,7 @@ button { cursor: pointer; }
   .settings-card-intro p { display: none; }
   .settings-control-copy { max-width: none; }
   .settings-control-copy h2 { max-width: none; }
-  .settings-overview-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+  .settings-overview-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
   .settings-overview-card strong { font-size: 0.95rem; }
   .settings-overview-card .section-label { font-size: 0.625rem; }
   .settings-preference-copy p { display: none; }

@@ -88,6 +88,27 @@ describe('ExerciseView', () => {
     expect(props.deleteExercise).toHaveBeenCalledWith('squat');
   });
 
+  it('opens editing when clicking a saved exercise card item', async () => {
+    const user = userEvent.setup();
+    const props = renderExerciseView({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+          targetWeight: null,
+          targetRepMin: null,
+          targetRepMax: null,
+          weightStep: 2.5,
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('heading', { name: 'Back squat' }));
+
+    expect(props.startEditingExercise).toHaveBeenCalledWith('squat');
+  });
+
   it('calls move handlers for saved exercises', async () => {
     const user = userEvent.setup();
     const props = renderExerciseView({
@@ -118,6 +139,7 @@ describe('ExerciseView', () => {
 
     expect(props.moveExercise).toHaveBeenCalledWith('squat', 'up');
     expect(props.moveExercise).toHaveBeenCalledWith('bench', 'down');
+    expect(props.startEditingExercise).not.toHaveBeenCalled();
   });
 
   it('shows saved exercise goals in the library', () => {
