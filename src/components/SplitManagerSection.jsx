@@ -17,11 +17,7 @@ export default function SplitManagerSection({
 }) {
   function moveSplitExercise(fromIndex, toIndex) {
     setSplitForm((current) => {
-      if (
-        toIndex < 0 ||
-        toIndex >= current.exercises.length ||
-        fromIndex === toIndex
-      ) {
+      if (toIndex < 0 || toIndex >= current.exercises.length || fromIndex === toIndex) {
         return current;
       }
 
@@ -68,7 +64,8 @@ export default function SplitManagerSection({
             <p className="section-label">Saved splits</p>
             <h2>Saved splits</h2>
             <p className="section-body">
-              Keep repeatable weekly structures beside exercises and templates in the same setup system.
+              Keep repeatable weekly structures beside exercises and templates in the same setup
+              system.
             </p>
           </div>
         </div>
@@ -111,7 +108,9 @@ export default function SplitManagerSection({
                   </div>
                 </div>
                 <div className="library-card-story">
-                  <strong>{split.exercises.length ? 'Weekly structure ready' : 'Needs exercises'}</strong>
+                  <strong>
+                    {split.exercises.length ? 'Weekly structure ready' : 'Needs exercises'}
+                  </strong>
                   <p>
                     {split.exercises.length
                       ? `Built for ${split.weeklyTarget ?? 1} ${Number(split.weeklyTarget ?? 1) === 1 ? 'session' : 'sessions'} per week with default set guidance.`
@@ -126,7 +125,10 @@ export default function SplitManagerSection({
                   <div className="split-card-kpi">
                     <span>Default sets</span>
                     <strong>
-                      {split.exercises.reduce((sum, splitExercise) => sum + splitExercise.defaultSets, 0)}
+                      {split.exercises.reduce(
+                        (sum, splitExercise) => sum + splitExercise.defaultSets,
+                        0,
+                      )}
                     </strong>
                   </div>
                   <div className="split-card-kpi">
@@ -158,7 +160,8 @@ export default function SplitManagerSection({
                   <ul className="set-list">
                     {split.exercises.map((splitExercise) => (
                       <li key={splitExercise.id}>
-                        {getExerciseName(splitExercise.exerciseId)} • {splitExercise.defaultSets} default
+                        {getExerciseName(splitExercise.exerciseId)} • {splitExercise.defaultSets}{' '}
+                        default
                         {splitExercise.defaultSets === 1 ? ' set' : ' sets'}
                       </li>
                     ))}
@@ -187,10 +190,16 @@ export default function SplitManagerSection({
               ))}
             </div>
             <div className="library-state-actions">
-              <a className="primary-button action-button setup-link-button" href={splitEmptyState.primaryHref}>
+              <a
+                className="primary-button action-button setup-link-button"
+                href={splitEmptyState.primaryHref}
+              >
                 {splitEmptyState.primaryLabel}
               </a>
-              <a className="ghost-button action-button setup-link-button" href={splitEmptyState.secondaryHref}>
+              <a
+                className="ghost-button action-button setup-link-button"
+                href={splitEmptyState.secondaryHref}
+              >
                 {splitEmptyState.secondaryLabel}
               </a>
             </div>
@@ -198,7 +207,10 @@ export default function SplitManagerSection({
         )}
       </section>
 
-      <section id="split-planner" className="panel panel-wide panel-form library-panel library-builder-panel">
+      <section
+        id="split-planner"
+        className="panel panel-wide panel-form library-panel library-builder-panel"
+      >
         <div className="section-heading">
           <div>
             <p className="section-label">Next setup</p>
@@ -226,8 +238,13 @@ export default function SplitManagerSection({
           <form className="stack split-builder-form" onSubmit={handleSplitSubmit}>
             <div className="library-builder-intro">
               <div className="library-builder-intro-copy">
-                <strong>{editingSplitId ? 'Tighten the current split' : 'Shape the next repeatable plan'}</strong>
-                <p>Define the split name, weekly rhythm, and exercise order so workout starts stay consistent.</p>
+                <strong>
+                  {editingSplitId ? 'Tighten the current split' : 'Shape the next repeatable plan'}
+                </strong>
+                <p>
+                  Define the split name, weekly rhythm, and exercise order so workout starts stay
+                  consistent.
+                </p>
               </div>
               <div className="library-builder-intro-rail">
                 <span className="library-builder-chip">Split name</span>
@@ -239,7 +256,11 @@ export default function SplitManagerSection({
               <div className="split-builder-summary-card split-builder-summary-card-primary">
                 <span className="section-label">Planner</span>
                 <strong>{splitForm.exercises.length}</strong>
-                <p>{splitForm.exercises.length ? 'Exercises in this split' : 'Build a split from scratch'}</p>
+                <p>
+                  {splitForm.exercises.length
+                    ? 'Exercises in this split'
+                    : 'Build a split from scratch'}
+                </p>
               </div>
               <div className="split-builder-summary-card">
                 <span className="section-label">Weekly target</span>
@@ -362,11 +383,11 @@ export default function SplitManagerSection({
                   </div>
                 ))
               ) : (
-                  <div className="empty-inline">
-                    <p>No exercises yet. Add one below or save this split for later.</p>
-                  </div>
-                )}
-              </div>
+                <div className="empty-inline">
+                  <p>No exercises yet. Add one below or save this split for later.</p>
+                </div>
+              )}
+            </div>
 
             <div className="library-builder-actions">
               <button type="submit" className="primary-button">

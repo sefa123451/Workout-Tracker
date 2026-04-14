@@ -68,7 +68,10 @@ function getSessionStory({
   }
 
   if (workout.mood || workout.effort) {
-    const contextParts = [workout.mood ? `Mood ${workout.mood}` : null, workout.effort ? `Effort ${workout.effort}` : null].filter(Boolean);
+    const contextParts = [
+      workout.mood ? `Mood ${workout.mood}` : null,
+      workout.effort ? `Effort ${workout.effort}` : null,
+    ].filter(Boolean);
     return {
       title: 'Session context was logged here',
       body: `${contextParts.join(' • ')}. Review ${topEntryName} first if you want the clearest feel for how the day went.`,
@@ -214,19 +217,23 @@ export default function HistoryView({
                     <h2>Latest session</h2>
                   </div>
                   {latestWorkout ? (
-                    <span className="history-review-date">{formatDisplayDate(latestWorkout.date)}</span>
+                    <span className="history-review-date">
+                      {formatDisplayDate(latestWorkout.date)}
+                    </span>
                   ) : null}
                 </div>
                 {latestWorkout ? (
                   <>
                     <div className="history-review-copy">
                       <strong>
-                        {latestWorkout.splitId ? getSplitName(latestWorkout.splitId) : 'Custom workout'}
+                        {latestWorkout.splitId
+                          ? getSplitName(latestWorkout.splitId)
+                          : 'Custom workout'}
                       </strong>
                       <p>
                         {latestWorkout.entries.length}{' '}
-                        {latestWorkout.entries.length === 1 ? 'exercise' : 'exercises'} logged across{' '}
-                        {latestWorkoutSets} {latestWorkoutSets === 1 ? 'set' : 'sets'}.
+                        {latestWorkout.entries.length === 1 ? 'exercise' : 'exercises'} logged
+                        across {latestWorkoutSets} {latestWorkoutSets === 1 ? 'set' : 'sets'}.
                       </p>
                     </div>
                     <div className="history-review-metrics">
@@ -254,7 +261,10 @@ export default function HistoryView({
                       <span className="metric-label">At a glance</span>
                       <div className="tag-row">
                         {latestWorkout.entries.slice(0, 4).map((entry, index) => (
-                          <span key={`latest-${latestWorkout.id}-${entry.exerciseId}-${index}`} className="history-meta-pill">
+                          <span
+                            key={`latest-${latestWorkout.id}-${entry.exerciseId}-${index}`}
+                            className="history-meta-pill"
+                          >
                             Move {index + 1}: {getExerciseName(entry.exerciseId)}
                           </span>
                         ))}
@@ -268,7 +278,9 @@ export default function HistoryView({
                           setSelectedHistoryDate(latestWorkout.date);
                           setSelectedHistoryPanel('day');
                           setExpandedWorkoutIds((current) =>
-                            current.includes(latestWorkout.id) ? current : [latestWorkout.id, ...current],
+                            current.includes(latestWorkout.id)
+                              ? current
+                              : [latestWorkout.id, ...current],
                           );
                         }}
                       >
@@ -302,14 +314,16 @@ export default function HistoryView({
                     <div className="history-review-copy">
                       <strong>{getExerciseName(latestPrRecord.exerciseId)}</strong>
                       <p>
-                        {latestPrRecord.labels.join(' • ')} on {formatDisplayDate(latestPrRecord.date)}.
+                        {latestPrRecord.labels.join(' • ')} on{' '}
+                        {formatDisplayDate(latestPrRecord.date)}.
                       </p>
                     </div>
                   ) : (
                     <div className="history-review-copy">
                       <strong>{activeDays} active days in the last 12 weeks</strong>
                       <p>
-                        {totalSessions} sessions logged with a peak day of {formatNumber(peakVolume)} volume.
+                        {totalSessions} sessions logged with a peak day of{' '}
+                        {formatNumber(peakVolume)} volume.
                       </p>
                     </div>
                   )}
@@ -324,7 +338,9 @@ export default function HistoryView({
                       </div>
                     ) : (
                       <>
-                        <span className="history-meta-pill history-meta-pill-primary">{activeDays} active days</span>
+                        <span className="history-meta-pill history-meta-pill-primary">
+                          {activeDays} active days
+                        </span>
                         <span className="history-meta-pill">{totalSessions} sessions</span>
                         <span className="history-meta-pill">
                           Peak {peakVolume ? formatNumber(peakVolume) : '0'}
@@ -350,7 +366,8 @@ export default function HistoryView({
                         : 'Open recent wins'}
                     </strong>
                     <p>
-                      Jump into one day for session review, or switch to PRs when you want the biggest changes first.
+                      Jump into one day for session review, or switch to PRs when you want the
+                      biggest changes first.
                     </p>
                   </div>
                   <div className="history-review-actions history-review-actions-stacked">
@@ -386,9 +403,19 @@ export default function HistoryView({
                     <p className="section-label">
                       {selectedHistoryPanel === 'day' ? 'Selected day' : 'PR timeline'}
                     </p>
-                    <h2>{selectedHistoryPanel === 'day' ? formatDisplayDate(selectedHistoryDate) : 'Recent wins'}</h2>
+                    <h2>
+                      {selectedHistoryPanel === 'day'
+                        ? selectedHistoryDate
+                          ? formatDisplayDate(selectedHistoryDate)
+                          : 'Select a day'
+                        : 'Recent wins'}
+                    </h2>
                   </div>
-                  <div className="history-panel-switcher" role="group" aria-label="History detail panel">
+                  <div
+                    className="history-panel-switcher"
+                    role="group"
+                    aria-label="History detail panel"
+                  >
                     <button
                       type="button"
                       className={
@@ -419,32 +446,45 @@ export default function HistoryView({
                       <>
                         <div className="history-detail-copy">
                           <span className="metric-label">Review lens</span>
-                          <strong>{selectedDaySessionCount} {selectedDaySessionCount === 1 ? 'session' : 'sessions'} on this day</strong>
+                          <strong>
+                            {selectedDaySessionCount}{' '}
+                            {selectedDaySessionCount === 1 ? 'session' : 'sessions'} on this day
+                          </strong>
                           <p>
-                            {formatNumber(selectedDayVolume)} total volume. Start with the highest-output workout if you want the quickest recap.
+                            {formatNumber(selectedDayVolume)} total volume. Start with the
+                            highest-output workout if you want the quickest recap.
                           </p>
                         </div>
                         <div className="history-review-compact-list">
                           <span className="history-meta-pill history-meta-pill-primary">
-                            {selectedDaySessionCount} {selectedDaySessionCount === 1 ? 'session' : 'sessions'}
+                            {selectedDaySessionCount}{' '}
+                            {selectedDaySessionCount === 1 ? 'session' : 'sessions'}
                           </span>
-                          <span className="history-meta-pill">Vol {formatNumber(selectedDayVolume)}</span>
+                          <span className="history-meta-pill">
+                            Vol {formatNumber(selectedDayVolume)}
+                          </span>
                         </div>
                       </>
                     ) : (
                       <div className="history-detail-copy">
                         <span className="metric-label">Review lens</span>
                         <strong>Choose a highlighted day</strong>
-                        <p>Pick a training day in the calendar to open its workouts and session summaries.</p>
+                        <p>
+                          Pick a training day in the calendar to open its workouts and session
+                          summaries.
+                        </p>
                       </div>
                     )
                   ) : latestPrRecord ? (
                     <>
                       <div className="history-detail-copy">
                         <span className="metric-label">Review lens</span>
-                        <strong>{getExerciseName(latestPrRecord.exerciseId)} leads the latest wins</strong>
+                        <strong>
+                          {getExerciseName(latestPrRecord.exerciseId)} leads the latest wins
+                        </strong>
                         <p>
-                          Start here when you want the biggest meaningful changes before scanning the rest of the timeline.
+                          Start here when you want the biggest meaningful changes before scanning
+                          the rest of the timeline.
                         </p>
                       </div>
                       <div className="history-review-compact-list">
@@ -459,7 +499,9 @@ export default function HistoryView({
                     <div className="history-detail-copy">
                       <span className="metric-label">Review lens</span>
                       <strong>No PR timeline yet</strong>
-                      <p>Keep logging sessions and this panel will surface the biggest changes first.</p>
+                      <p>
+                        Keep logging sessions and this panel will surface the biggest changes first.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -487,16 +529,30 @@ export default function HistoryView({
                           );
 
                           return (
-                            <article key={`selected-${workout.id}`} className="history-day-workout-card">
+                            <article
+                              key={`selected-${workout.id}`}
+                              className="history-day-workout-card"
+                            >
                               <div>
-                                <strong>{workout.splitId ? getSplitName(workout.splitId) : 'Custom workout'}</strong>
+                                <strong>
+                                  {workout.splitId
+                                    ? getSplitName(workout.splitId)
+                                    : 'Custom workout'}
+                                </strong>
                                 <p>
-                                  {workout.entries.length} {workout.entries.length === 1 ? 'exercise' : 'exercises'}
+                                  {workout.entries.length}{' '}
+                                  {workout.entries.length === 1 ? 'exercise' : 'exercises'}
                                 </p>
                               </div>
                               <div className="activity-metrics history-entry-metrics">
                                 <span>Vol {formatNumber(sessionVolume)}</span>
-                                <span>Sets {workout.entries.reduce((sum, entry) => sum + entry.sets.length, 0)}</span>
+                                <span>
+                                  Sets{' '}
+                                  {workout.entries.reduce(
+                                    (sum, entry) => sum + entry.sets.length,
+                                    0,
+                                  )}
+                                </span>
                               </div>
                             </article>
                           );
@@ -590,7 +646,8 @@ export default function HistoryView({
                     </div>
                     <div className="history-review-compact-list">
                       <span className="history-meta-pill history-meta-pill-primary">
-                        {group.workouts.length} {group.workouts.length === 1 ? 'session' : 'sessions'}
+                        {group.workouts.length}{' '}
+                        {group.workouts.length === 1 ? 'session' : 'sessions'}
                       </span>
                       <span className="history-meta-pill">Vol {formatNumber(group.dayVolume)}</span>
                       <span className="history-meta-pill">Sets {group.daySets}</span>
@@ -599,233 +656,271 @@ export default function HistoryView({
 
                   <div className="history-day-group-list">
                     {group.workouts.map((workout) => {
-              const sessionVolume = workout.entries.reduce(
-                (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
-                0,
-              );
-              const sessionSets = workout.entries.reduce((sum, entry) => sum + entry.sets.length, 0);
-              const isExpanded = expandedWorkoutIds.includes(workout.id);
-              const visibleEntries = isExpanded ? workout.entries : workout.entries.slice(0, 2);
-              const hiddenEntryCount = workout.entries.length - visibleEntries.length;
-              const sessionPreview = workout.entries
-                .slice(0, 3)
-                .map((entry) => getExerciseName(entry.exerciseId))
-                .join(' • ');
-              const topEntry = workout.entries.reduce((bestEntry, entry) => {
-                if (!bestEntry) {
-                  return entry;
-                }
-
-                return getEntryMetrics(entry).totalVolume > getEntryMetrics(bestEntry).totalVolume
-                  ? entry
-                  : bestEntry;
-              }, null);
-              const topEntryName = topEntry ? getExerciseName(topEntry.exerciseId) : 'the first movement';
-              const topEntryVolume = topEntry ? getEntryMetrics(topEntry).totalVolume : 0;
-              const topEntryShare = sessionVolume > 0 ? topEntryVolume / sessionVolume : 0;
-              const isLatestWorkout = latestWorkout?.id === workout.id;
-              const sessionSignal = getSessionSignal(
-                workout,
-                sessionVolume,
-                averageSessionVolume,
-                isLatestWorkout,
-              );
-              const sessionStory = getSessionStory({
-                workout,
-                sessionVolume,
-                sessionSets,
-                topEntryName,
-                topEntryVolume,
-                topEntryShare,
-                averageSessionVolume,
-                isLatest: isLatestWorkout,
-                formatNumber,
-                getSplitName,
-              });
-              const sessionCardClassName = [
-                'workout-card',
-                'history-workout-card',
-                sessionSignal.tone === 'accent' ? 'history-workout-card-featured' : '',
-                sessionSignal.tone === 'support' ? 'history-workout-card-support' : '',
-              ]
-                .filter(Boolean)
-                .join(' ');
-
-              return (
-                <article key={workout.id} className={sessionCardClassName}>
-                  <div className="workout-card-header">
-                    <div className="workout-card-title history-card-title">
-                      <strong>{formatDisplayDate(workout.date)}</strong>
-                      {workout.splitId ? <span>{getSplitName(workout.splitId)}</span> : null}
-                      <span>{workout.entries.length} exercises</span>
-                    </div>
-                    <div className="history-actions">
-                      <span className={`history-session-signal history-session-signal-${sessionSignal.tone}`}>
-                        {sessionSignal.label}
-                      </span>
-                      <button
-                        type="button"
-                        className="ghost-button action-button"
-                        aria-label={`Edit workout from ${formatDisplayDate(workout.date)}`}
-                        onClick={() => startEditingWorkout(workout.id)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button action-button"
-                        aria-label={`Duplicate workout from ${formatDisplayDate(workout.date)}`}
-                        onClick={() => duplicateWorkout(workout.id)}
-                      >
-                        Duplicate
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button action-button"
-                        aria-label={`More actions for workout from ${formatDisplayDate(workout.date)}`}
-                        aria-expanded={openWorkoutActionId === workout.id}
-                        onClick={() =>
-                          setOpenWorkoutActionId((current) => (current === workout.id ? '' : workout.id))
+                      const sessionVolume = workout.entries.reduce(
+                        (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
+                        0,
+                      );
+                      const sessionSets = workout.entries.reduce(
+                        (sum, entry) => sum + entry.sets.length,
+                        0,
+                      );
+                      const isExpanded = expandedWorkoutIds.includes(workout.id);
+                      const visibleEntries = isExpanded
+                        ? workout.entries
+                        : workout.entries.slice(0, 2);
+                      const hiddenEntryCount = workout.entries.length - visibleEntries.length;
+                      const sessionPreview = workout.entries
+                        .slice(0, 3)
+                        .map((entry) => getExerciseName(entry.exerciseId))
+                        .join(' • ');
+                      const topEntry = workout.entries.reduce((bestEntry, entry) => {
+                        if (!bestEntry) {
+                          return entry;
                         }
-                      >
-                        More
-                      </button>
-                      {openWorkoutActionId === workout.id ? (
-                        <div className="history-more-actions">
-                          <button
-                            type="button"
-                            className="ghost-button action-button"
-                            aria-label={`Save workout from ${formatDisplayDate(workout.date)} as a template`}
-                            onClick={() => {
-                              setOpenWorkoutActionId('');
-                              saveWorkoutAsTemplate(workout.id);
-                            }}
-                          >
-                            Save template
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button action-button"
-                            aria-label={`Use workout from ${formatDisplayDate(workout.date)} as a split template`}
-                            onClick={() => {
-                              setOpenWorkoutActionId('');
-                              createSplitFromWorkout(workout.id);
-                            }}
-                          >
-                            Use as split
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button action-button danger-button"
-                            aria-label={`Delete workout from ${formatDisplayDate(workout.date)}`}
-                            onClick={() => {
-                              setOpenWorkoutActionId('');
-                              deleteWorkout(workout.id);
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="history-meta-row">
-                    <span className="history-meta-pill history-meta-pill-primary">
-                      Volume {formatNumber(sessionVolume)}
-                    </span>
-                    <span className="history-meta-pill">Sets {sessionSets}</span>
-                    <span className="history-meta-pill">Moves {workout.entries.length}</span>
-                    {workout.mood ? <span className="history-meta-pill">Mood {workout.mood}</span> : null}
-                    {workout.effort ? <span className="history-meta-pill">Effort {workout.effort}</span> : null}
-                  </div>
-                  <div className="history-session-story">
-                    <div className="history-session-story-copy">
-                      <span className="metric-label">What mattered</span>
-                      <strong>{sessionStory.title}</strong>
-                      <p>{sessionStory.body}</p>
-                    </div>
-                      <div className="history-review-compact-list">
-                        <span className="history-meta-pill history-meta-pill-primary">Top move {topEntryName}</span>
-                        {topEntryShare >= 0.55 ? (
-                          <span className="history-meta-pill">Focus {Math.round(topEntryShare * 100)}%</span>
-                        ) : null}
-                        {workout.notes ? <span className="history-meta-pill">Note saved</span> : null}
-                      </div>
-                  </div>
-                  <div className="history-session-overview">
-                    <div className="history-session-overview-copy">
-                      <span className="metric-label">{isExpanded ? 'Expanded review' : 'Review path'}</span>
-                      <p>
-                        {workout.entries.length === 1
-                          ? `Start with ${getExerciseName(workout.entries[0].exerciseId)}`
-                          : `${sessionPreview}${workout.entries.length > 3 ? ' • More in details' : ''}`}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="ghost-button action-button"
-                      aria-label={`${isExpanded ? 'Hide' : 'Show'} details for workout from ${formatDisplayDate(workout.date)}`}
-                      onClick={() => toggleWorkoutDetails(workout.id)}
-                    >
-                      {isExpanded ? 'Hide details' : 'Details'}
-                    </button>
-                  </div>
-                  {isExpanded && workout.notes ? (
-                    <div className="history-session-note">
-                      <span className="section-label">Session note</span>
-                      <p>{workout.notes}</p>
-                    </div>
-                  ) : null}
-                  <div className="workout-entry-list">
-                    {visibleEntries.map((entry) => {
-                      const metrics = getEntryMetrics(entry);
+
+                        return getEntryMetrics(entry).totalVolume >
+                          getEntryMetrics(bestEntry).totalVolume
+                          ? entry
+                          : bestEntry;
+                      }, null);
+                      const topEntryName = topEntry
+                        ? getExerciseName(topEntry.exerciseId)
+                        : 'the first movement';
+                      const topEntryVolume = topEntry ? getEntryMetrics(topEntry).totalVolume : 0;
+                      const topEntryShare = sessionVolume > 0 ? topEntryVolume / sessionVolume : 0;
+                      const isLatestWorkout = latestWorkout?.id === workout.id;
+                      const sessionSignal = getSessionSignal(
+                        workout,
+                        sessionVolume,
+                        averageSessionVolume,
+                        isLatestWorkout,
+                      );
+                      const sessionStory = getSessionStory({
+                        workout,
+                        sessionVolume,
+                        sessionSets,
+                        topEntryName,
+                        topEntryVolume,
+                        topEntryShare,
+                        averageSessionVolume,
+                        isLatest: isLatestWorkout,
+                        formatNumber,
+                        getSplitName,
+                      });
+                      const sessionCardClassName = [
+                        'workout-card',
+                        'history-workout-card',
+                        sessionSignal.tone === 'accent' ? 'history-workout-card-featured' : '',
+                        sessionSignal.tone === 'support' ? 'history-workout-card-support' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ');
 
                       return (
-                        <div key={`${workout.id}-${entry.exerciseId}`} className="history-entry">
-                          <div className="history-entry-header">
-                            <div>
-                              <h3>{getExerciseName(entry.exerciseId)}</h3>
-                              <p>
-                                {entry.sets.length} sets logged
-                                {isExpanded ? ` • ${formatNumber(metrics.totalVolume)} volume from this movement` : ''}
-                              </p>
+                        <article key={workout.id} className={sessionCardClassName}>
+                          <div className="workout-card-header">
+                            <div className="workout-card-title history-card-title">
+                              <strong>{formatDisplayDate(workout.date)}</strong>
+                              {workout.splitId ? (
+                                <span>{getSplitName(workout.splitId)}</span>
+                              ) : null}
+                              <span>{workout.entries.length} exercises</span>
                             </div>
-                            <div className="activity-metrics history-entry-metrics">
-                              <span>Wt {formatNumber(metrics.bestWeight)}</span>
-                              <span>Rp {formatNumber(metrics.bestReps)}</span>
-                              <span>Vol {formatNumber(metrics.totalVolume)}</span>
+                            <div className="history-actions">
+                              <span
+                                className={`history-session-signal history-session-signal-${sessionSignal.tone}`}
+                              >
+                                {sessionSignal.label}
+                              </span>
+                              <button
+                                type="button"
+                                className="ghost-button action-button"
+                                aria-label={`Edit workout from ${formatDisplayDate(workout.date)}`}
+                                onClick={() => startEditingWorkout(workout.id)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="ghost-button action-button"
+                                aria-label={`Duplicate workout from ${formatDisplayDate(workout.date)}`}
+                                onClick={() => duplicateWorkout(workout.id)}
+                              >
+                                Duplicate
+                              </button>
+                              <button
+                                type="button"
+                                className="ghost-button action-button"
+                                aria-label={`More actions for workout from ${formatDisplayDate(workout.date)}`}
+                                aria-expanded={openWorkoutActionId === workout.id}
+                                onClick={() =>
+                                  setOpenWorkoutActionId((current) =>
+                                    current === workout.id ? '' : workout.id,
+                                  )
+                                }
+                              >
+                                More
+                              </button>
+                              {openWorkoutActionId === workout.id ? (
+                                <div className="history-more-actions">
+                                  <button
+                                    type="button"
+                                    className="ghost-button action-button"
+                                    aria-label={`Save workout from ${formatDisplayDate(workout.date)} as a template`}
+                                    onClick={() => {
+                                      setOpenWorkoutActionId('');
+                                      saveWorkoutAsTemplate(workout.id);
+                                    }}
+                                  >
+                                    Save template
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="ghost-button action-button"
+                                    aria-label={`Use workout from ${formatDisplayDate(workout.date)} as a split template`}
+                                    onClick={() => {
+                                      setOpenWorkoutActionId('');
+                                      createSplitFromWorkout(workout.id);
+                                    }}
+                                  >
+                                    Use as split
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="ghost-button action-button danger-button"
+                                    aria-label={`Delete workout from ${formatDisplayDate(workout.date)}`}
+                                    onClick={() => {
+                                      setOpenWorkoutActionId('');
+                                      deleteWorkout(workout.id);
+                                    }}
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              ) : null}
                             </div>
                           </div>
-                          {isExpanded ? (
-                            <>
-                              <div className="history-entry-story">
-                                <span className="metric-label">Exercise review</span>
+                          <div className="history-meta-row">
+                            <span className="history-meta-pill history-meta-pill-primary">
+                              Volume {formatNumber(sessionVolume)}
+                            </span>
+                            <span className="history-meta-pill">Sets {sessionSets}</span>
+                            <span className="history-meta-pill">
+                              Moves {workout.entries.length}
+                            </span>
+                            {workout.mood ? (
+                              <span className="history-meta-pill">Mood {workout.mood}</span>
+                            ) : null}
+                            {workout.effort ? (
+                              <span className="history-meta-pill">Effort {workout.effort}</span>
+                            ) : null}
+                          </div>
+                          <div className="history-session-story">
+                            <div className="history-session-story-copy">
+                              <span className="metric-label">What mattered</span>
+                              <strong>{sessionStory.title}</strong>
+                              <p>{sessionStory.body}</p>
+                            </div>
+                            <div className="history-review-compact-list">
+                              <span className="history-meta-pill history-meta-pill-primary">
+                                Top move {topEntryName}
+                              </span>
+                              {topEntryShare >= 0.55 ? (
+                                <span className="history-meta-pill">
+                                  Focus {Math.round(topEntryShare * 100)}%
+                                </span>
+                              ) : null}
+                              {workout.notes ? (
+                                <span className="history-meta-pill">Note saved</span>
+                              ) : null}
+                            </div>
+                          </div>
+                          <div className="history-session-overview">
+                            <div className="history-session-overview-copy">
+                              <span className="metric-label">
+                                {isExpanded ? 'Expanded review' : 'Review path'}
+                              </span>
+                              <p>
+                                {workout.entries.length === 1
+                                  ? `Start with ${getExerciseName(workout.entries[0].exerciseId)}`
+                                  : `${sessionPreview}${workout.entries.length > 3 ? ' • More in details' : ''}`}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              className="ghost-button action-button"
+                              aria-label={`${isExpanded ? 'Hide' : 'Show'} details for workout from ${formatDisplayDate(workout.date)}`}
+                              onClick={() => toggleWorkoutDetails(workout.id)}
+                            >
+                              {isExpanded ? 'Hide details' : 'Details'}
+                            </button>
+                          </div>
+                          {isExpanded && workout.notes ? (
+                            <div className="history-session-note">
+                              <span className="section-label">Session note</span>
+                              <p>{workout.notes}</p>
+                            </div>
+                          ) : null}
+                          <div className="workout-entry-list">
+                            {visibleEntries.map((entry) => {
+                              const metrics = getEntryMetrics(entry);
+
+                              return (
+                                <div
+                                  key={`${workout.id}-${entry.exerciseId}`}
+                                  className="history-entry"
+                                >
+                                  <div className="history-entry-header">
+                                    <div>
+                                      <h3>{getExerciseName(entry.exerciseId)}</h3>
+                                      <p>
+                                        {entry.sets.length} sets logged
+                                        {isExpanded
+                                          ? ` • ${formatNumber(metrics.totalVolume)} volume from this movement`
+                                          : ''}
+                                      </p>
+                                    </div>
+                                    <div className="activity-metrics history-entry-metrics">
+                                      <span>Wt {formatNumber(metrics.bestWeight)}</span>
+                                      <span>Rp {formatNumber(metrics.bestReps)}</span>
+                                      <span>Vol {formatNumber(metrics.totalVolume)}</span>
+                                    </div>
+                                  </div>
+                                  {isExpanded ? (
+                                    <>
+                                      <div className="history-entry-story">
+                                        <span className="metric-label">Exercise review</span>
+                                        <p>
+                                          Best weight {formatNumber(metrics.bestWeight)} • Best reps{' '}
+                                          {formatNumber(metrics.bestReps)} • Total volume{' '}
+                                          {formatNumber(metrics.totalVolume)}.
+                                        </p>
+                                      </div>
+                                      <ul className="set-list compact-set-list history-set-inline-list">
+                                        {entry.sets.map((set, index) => (
+                                          <li key={`${workout.id}-${entry.exerciseId}-${index}`}>
+                                            Set {index + 1}: {formatNumber(set.weight)} ×{' '}
+                                            {formatNumber(set.reps)}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </>
+                                  ) : null}
+                                </div>
+                              );
+                            })}
+                            {!isExpanded && hiddenEntryCount > 0 ? (
+                              <div className="history-entry history-entry-more">
                                 <p>
-                                  Best weight {formatNumber(metrics.bestWeight)} • Best reps {formatNumber(metrics.bestReps)} • Total volume {formatNumber(metrics.totalVolume)}.
+                                  +{hiddenEntryCount} more{' '}
+                                  {hiddenEntryCount === 1 ? 'movement' : 'movements'} hidden until
+                                  you open details.
                                 </p>
                               </div>
-                              <ul className="set-list compact-set-list history-set-inline-list">
-                                {entry.sets.map((set, index) => (
-                                  <li key={`${workout.id}-${entry.exerciseId}-${index}`}>
-                                    Set {index + 1}: {formatNumber(set.weight)} × {formatNumber(set.reps)}
-                                  </li>
-                                ))}
-                              </ul>
-                            </>
-                          ) : null}
-                        </div>
+                            ) : null}
+                          </div>
+                        </article>
                       );
-                    })}
-                    {!isExpanded && hiddenEntryCount > 0 ? (
-                      <div className="history-entry history-entry-more">
-                        <p>
-                          +{hiddenEntryCount} more {hiddenEntryCount === 1 ? 'movement' : 'movements'} hidden until you open details.
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </article>
-              );
                     })}
                   </div>
                 </section>

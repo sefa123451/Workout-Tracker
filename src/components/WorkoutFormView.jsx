@@ -16,8 +16,7 @@ function formatExerciseGoal(exercise, formatNumber) {
     return null;
   }
 
-  const hasExplicitGoal =
-    exercise.targetRepMin || exercise.targetRepMax || exercise.targetWeight;
+  const hasExplicitGoal = exercise.targetRepMin || exercise.targetRepMax || exercise.targetWeight;
 
   if (!hasExplicitGoal) {
     return null;
@@ -101,7 +100,8 @@ function getWorkoutModeMeta({
       'Choose a split or template if you want a head start, or add exercises manually and move straight into logging.',
     setupBadge: 'Custom session',
     finishTitle: 'Save this custom workout',
-    finishBody: 'Review the draft summary, then save the workout once your sets and notes look right.',
+    finishBody:
+      'Review the draft summary, then save the workout once your sets and notes look right.',
   };
 }
 
@@ -121,7 +121,9 @@ function LoggingActiveRail({
   return (
     <div className="logging-active-rail" aria-label="Ready to log summary">
       <div className="logging-active-summary">
-        <span className="metric-label">{editingTemplateId ? 'Template draft' : 'Active session'}</span>
+        <span className="metric-label">
+          {editingTemplateId ? 'Template draft' : 'Active session'}
+        </span>
         <strong>{draftTitle}</strong>
         <p>{draftMeta}</p>
         <div className="logging-active-pills">
@@ -143,15 +145,16 @@ function LoggingActiveRail({
           </div>
         )}
       </div>
-      {!editingTemplateId && (
-        <RestTimerCard restTimer={restTimer} setRestTimer={setRestTimer} />
-      )}
+      {!editingTemplateId && <RestTimerCard restTimer={restTimer} setRestTimer={setRestTimer} />}
     </div>
   );
 }
 
 function getEntryDisplayName(entry, entryIndex, exercises) {
-  return exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ?? `exercise ${entryIndex + 1}`;
+  return (
+    exercises.find((exercise) => exercise.id === entry.exerciseId)?.name ??
+    `exercise ${entryIndex + 1}`
+  );
 }
 
 function getNextLoggingMove(workoutForm, exercises) {
@@ -185,7 +188,9 @@ function getNextLoggingMove(workoutForm, exercises) {
       const missingReps = String(nextSet.reps ?? '').trim() === '';
 
       if (missingWeight || missingReps) {
-        const missingParts = [missingWeight ? 'weight' : null, missingReps ? 'reps' : null].filter(Boolean);
+        const missingParts = [missingWeight ? 'weight' : null, missingReps ? 'reps' : null].filter(
+          Boolean,
+        );
         return {
           title: `Log set ${nextSetIndex + 1} for ${exerciseName}`,
           body: `Add ${missingParts.join(' and ')} so this set is ready to complete.`,
@@ -273,9 +278,7 @@ function WorkoutEntryInsights({
               onClick={() =>
                 updateWorkoutEntry(entryId, (currentEntry) => ({
                   ...currentEntry,
-                  sets: suggestion.sets.map((set) =>
-                    createSetFromValues(set.weight, set.reps),
-                  ),
+                  sets: suggestion.sets.map((set) => createSetFromValues(set.weight, set.reps)),
                 }))
               }
             >
@@ -326,8 +329,7 @@ function WorkoutEntryInsights({
                 <span>Wt {formatNumber(latestSession.metrics.bestWeight)}</span>
                 <span>Reps {formatNumber(latestSession.metrics.bestReps)}</span>
                 <span>
-                  {latestSession.sets.length}{' '}
-                  {latestSession.sets.length === 1 ? 'set' : 'sets'}
+                  {latestSession.sets.length} {latestSession.sets.length === 1 ? 'set' : 'sets'}
                 </span>
               </div>
               <ul className="set-list compact-set-list">
@@ -388,9 +390,7 @@ function WorkoutSetRow({
               <input
                 type="checkbox"
                 checked={Boolean(set.completed)}
-                onChange={(event) =>
-                  toggleSetCompleted(entryId, set.id, event.target.checked)
-                }
+                onChange={(event) => toggleSetCompleted(entryId, set.id, event.target.checked)}
               />
               <span className="set-row-label">Set {setIndex + 1}</span>
             </label>
@@ -498,10 +498,7 @@ function WorkoutSetRow({
             onClick={() =>
               updateWorkoutEntry(entryId, (currentEntry) => ({
                 ...currentEntry,
-                sets: [
-                  ...currentEntry.sets,
-                  createSetFromValues(set.weight, set.reps),
-                ],
+                sets: [...currentEntry.sets, createSetFromValues(set.weight, set.reps)],
               }))
             }
           >
@@ -521,9 +518,7 @@ function WorkoutSetRow({
                 sets:
                   currentEntry.sets.length === 1
                     ? [createSet()]
-                    : currentEntry.sets.filter(
-                        (currentSet) => currentSet.id !== set.id,
-                      ),
+                    : currentEntry.sets.filter((currentSet) => currentSet.id !== set.id),
               }))
             }
           >
@@ -657,7 +652,9 @@ function WorkoutFinishPanel({
         <div className="logging-finish-metric">
           <span className="metric-label">Skipped today</span>
           <strong>{workoutForm.skippedEntries?.length ?? 0}</strong>
-          <p>{workoutForm.splitId ? 'Excluded from this saved session' : 'No split items skipped'}</p>
+          <p>
+            {workoutForm.splitId ? 'Excluded from this saved session' : 'No split items skipped'}
+          </p>
         </div>
       </div>
 
@@ -680,11 +677,7 @@ function WorkoutFinishPanel({
           </p>
         </div>
         <button type="submit" className="primary-button logging-finish-submit">
-          {editingTemplateId
-            ? 'Save template'
-            : editingWorkoutId
-              ? 'Save changes'
-              : 'Save workout'}
+          {editingTemplateId ? 'Save template' : editingWorkoutId ? 'Save changes' : 'Save workout'}
         </button>
       </div>
 
@@ -862,15 +855,16 @@ export default function WorkoutFormView({
           <div>
             <p className="section-label">Workout logging</p>
             <h2>
-              {editingTemplateId ? 'Edit template' : editingWorkoutId ? 'Edit workout' : 'Log workout'}
+              {editingTemplateId
+                ? 'Edit template'
+                : editingWorkoutId
+                  ? 'Edit workout'
+                  : 'Log workout'}
             </h2>
           </div>
         </div>
         {!exercises.length ? (
-          <EmptyState
-            title="Create exercises first"
-            body="Add one movement to start logging."
-          />
+          <EmptyState title="Create exercises first" body="Add one movement to start logging." />
         ) : (
           <form
             className="stack workout-form logging-form"
@@ -943,7 +937,9 @@ export default function WorkoutFormView({
                     <option value="">Custom workout</option>
                     {workoutForm.splitId &&
                       !splits.some((split) => split.id === workoutForm.splitId) && (
-                        <option value={workoutForm.splitId}>{getSplitName(workoutForm.splitId)}</option>
+                        <option value={workoutForm.splitId}>
+                          {getSplitName(workoutForm.splitId)}
+                        </option>
                       )}
                     {splits.map((split) => (
                       <option key={split.id} value={split.id}>
@@ -953,7 +949,6 @@ export default function WorkoutFormView({
                   </select>
                 </label>
               </div>
-
             </section>
 
             <section className="logging-stage-card logging-stage-card-primary">
@@ -993,8 +988,8 @@ export default function WorkoutFormView({
                         <div>
                           <h3>{selectedExerciseName || `Exercise ${entryIndex + 1}`}</h3>
                           <p className="entry-card-meta">
-                            Exercise {entryIndex + 1} of {workoutForm.entries.length} • {entry.sets.length}{' '}
-                            planned {entry.sets.length === 1 ? 'set' : 'sets'}
+                            Exercise {entryIndex + 1} of {workoutForm.entries.length} •{' '}
+                            {entry.sets.length} planned {entry.sets.length === 1 ? 'set' : 'sets'}
                           </p>
                         </div>
                         {workoutForm.entries.length > 1 && (
@@ -1012,7 +1007,7 @@ export default function WorkoutFormView({
                                 entries: current.entries.filter((item) => item.id !== entry.id),
                                 skippedEntries: workoutForm.splitId
                                   ? [...(current.skippedEntries ?? []), entry]
-                                  : current.skippedEntries ?? [],
+                                  : (current.skippedEntries ?? []),
                               }))
                             }
                           >
@@ -1042,7 +1037,7 @@ export default function WorkoutFormView({
                               <option key={exercise.id} value={exercise.id}>
                                 {exercise.name}
                               </option>
-                              ))}
+                            ))}
                           </select>
                         </label>
                       </div>
@@ -1183,7 +1178,10 @@ export default function WorkoutFormView({
                           <select
                             value={workoutForm.mood ?? ''}
                             onChange={(event) =>
-                              setWorkoutForm((current) => ({ ...current, mood: event.target.value }))
+                              setWorkoutForm((current) => ({
+                                ...current,
+                                mood: event.target.value,
+                              }))
                             }
                           >
                             <option value="">Optional mood</option>
@@ -1235,7 +1233,8 @@ export default function WorkoutFormView({
                       {selectedSplit && selectedSplit.exercises.length === 0 && (
                         <div className="empty-inline">
                           <p>
-                            This split is empty. Add exercises in the planner or build today manually.
+                            This split is empty. Add exercises in the planner or build today
+                            manually.
                           </p>
                         </div>
                       )}

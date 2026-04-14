@@ -107,7 +107,9 @@ describe('WorkoutFormView', () => {
     expect(screen.getByText('Last workout')).toBeTruthy();
     expect(screen.getByText('Set 1: 100 × 5')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Use last workout values for Back squat' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Use last workout values for Back squat' }),
+    );
 
     expect(props.applyLatestWorkoutToEntry).toHaveBeenCalledTimes(1);
     expect(props.applyLatestWorkoutToEntry).toHaveBeenCalledWith(
@@ -212,14 +214,18 @@ describe('WorkoutFormView', () => {
     expect(screen.getByLabelText('Effort')).toBeTruthy();
     expect(screen.getAllByText('Rest timer').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add 2.5 kilograms to set 1 for Bench press' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Add 2.5 kilograms to set 1 for Bench press' }),
+    );
     expect(props.updateWorkoutEntry).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('checkbox'));
     expect(props.updateWorkoutEntry).toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Timer' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start 60 second rest timer for set 1 of Bench press' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Start 60 second rest timer for set 1 of Bench press' }),
+    );
     expect(screen.getByText('01:00')).toBeTruthy();
 
     act(() => {
@@ -312,7 +318,9 @@ describe('WorkoutFormView', () => {
     expect(screen.getByText('→ Set 1: 81.25 × 6')).toBeTruthy();
     expect(screen.getByText('→ Set 2: 81.25 × 6')).toBeTruthy();
 
-    await user.click(screen.getByRole('button', { name: 'Apply progressive overload suggestion for Bench press' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Apply progressive overload suggestion for Bench press' }),
+    );
 
     expect(props.updateWorkoutEntry).toHaveBeenCalled();
   });

@@ -1,43 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
+import AppDialog from './components/AppDialog.jsx';
 import DashboardView from './components/DashboardView.jsx';
 import ExerciseView from './components/ExerciseView.jsx';
 import HistoryView from './components/HistoryView.jsx';
 import ProgressView from './components/ProgressView.jsx';
 import SettingsView from './components/SettingsView.jsx';
 import WorkoutFormView from './components/WorkoutFormView.jsx';
-import {
-  DEFAULT_WEEKLY_WORKOUT_GOAL,
-  STORAGE_VERSION,
-  buildWorkoutHistoryCsv,
-  buildWorkoutEntriesFromSplit,
-  createId,
-  createSet,
-  createSetFromValues,
-  createSplitExercise,
-  createSplitForm,
-  createSplitFormFromSplit,
-  createWorkoutEntry,
-  createWorkoutForm,
-  createWorkoutFormFromTemplate,
-  createWorkoutFormFromWorkout,
-  formatCalendarDate,
-  formatDelta,
-  formatDisplayDate,
-  formatNumber,
-  getTodayInputValue,
-  getEntryMetrics,
-  mergeImportedData,
-  hasImprovement,
-  hasPersonalRecord,
-  isValidDateInput,
-  parseSet,
-  readStoredData,
-  sortWorkouts,
-  validateImportedData,
-} from './lib/workoutData.js';
-import { THEME_OPTIONS, useThemeMode } from './hooks/useThemeMode.js';
-import { useTrackerDerivedData } from './hooks/useTrackerDerivedData.js';
-import { useTrackerPersistence } from './hooks/useTrackerPersistence.js';
+import { formatCalendarDate } from './lib/workoutData.js';
+import { THEME_OPTIONS } from './hooks/useThemeMode.js';
 import { useAppController } from './hooks/useAppController.jsx';
 
 const NAV_ITEMS = [
@@ -49,15 +19,6 @@ const NAV_ITEMS = [
   { id: 'settings', label: 'Settings', a11yLabel: 'settings', icon: 'settings' },
 ];
 const PROGRESS_WINDOWS = [7, 30, 90];
-const LAST_TEMPLATE_STORAGE_KEY = 'workout-tracker-last-template-id';
-const VIEW_META = {
-  dashboard: { title: 'Good morning 👋' },
-  exercises: { title: 'Exercises & Splits' },
-  log: { title: 'Log workout' },
-  history: { title: 'History' },
-  progress: { title: 'Progress' },
-  settings: { title: 'Settings' },
-};
 
 function SidebarIcon({ icon }) {
   const commonProps = {
@@ -137,70 +98,132 @@ function SidebarIcon({ icon }) {
   }
 }
 
-function getInitialLastTemplateId() {
-  if (typeof window === 'undefined') {
-    return '';
-  }
-
-  return window.localStorage.getItem(LAST_TEMPLATE_STORAGE_KEY) ?? '';
-}
-
-function moveItem(list, fromIndex, toIndex) {
-  if (
-    !Array.isArray(list) ||
-    fromIndex < 0 ||
-    toIndex < 0 ||
-    fromIndex >= list.length ||
-    toIndex >= list.length ||
-    fromIndex === toIndex
-  ) {
-    return list;
-  }
-
-  const nextList = [...list];
-  const [movedItem] = nextList.splice(fromIndex, 1);
-  nextList.splice(toIndex, 0, movedItem);
-
-  return nextList;
-}
-
 function App() {
   const controller = useAppController();
   const {
-    activeView, setActiveView, activeViewMeta, sidebarSummary, themeMode, setThemeMode,
-    workouts, latestWorkout, dashboardSummary, getSplitName, getExerciseName,
-    formatDisplayDate, formatNumber, getEntryMetrics, dataMessage,
-    exportAppData, fileInputRef, handleImportFile, startWorkoutFromSplit,
-    repeatLatestWorkout, loadWorkoutTemplate, lastUsedTemplate,
-    startWorkoutFromLastUsedTemplate, bodyweightSummary, exercises, splits, templates,
-    weeklyWorkoutGoal, totalSetsLogged, editingExerciseId, exerciseName, setExerciseName,
-    exerciseTargetWeight, setExerciseTargetWeight, exerciseTargetRepMin,
-    setExerciseTargetRepMin, exerciseTargetRepMax, setExerciseTargetRepMax,
-    exerciseWeightStep, setExerciseWeightStep, handleExerciseSubmit,
-    resetExerciseForm, exerciseMessage, startEditingExercise, deleteExercise,
-    moveExercise, splitForm, setSplitForm, editingSplitId, splitMessage,
-    handleSplitSubmit, resetSplitForm, startEditingSplit, deleteSplit,
-    moveSavedSplit, createSplitExercise, deleteWorkoutTemplate,
-    moveWorkoutTemplate, renameWorkoutTemplate, duplicateWorkoutTemplate,
-    createSplitFromTemplate, startEditingWorkoutTemplate, workoutForm,
-    selectedWorkoutTemplateId, editingTemplateId, templateDraftName,
-    editingWorkoutId, workoutMessage, setWorkoutForm, setSelectedWorkoutTemplateId,
-    setTemplateDraftName, updateWorkoutEntry, applyLatestWorkoutToEntry,
-    handleWorkoutSplitChange, saveCurrentWorkoutAsTemplate,
-    updateSelectedWorkoutTemplate, handleTemplateEditorSubmit,
-    handleWorkoutSubmit, resetWorkoutForm, createSet, createSetFromValues,
-    createWorkoutEntry, sortedWorkouts, historyHeatmap, historyPrTimeline,
-    startEditingWorkout, duplicateWorkout, saveWorkoutAsTemplate,
-    createSplitFromWorkout, deleteWorkout, selectedProgressView,
-    setSelectedProgressView, selectedExerciseId, setSelectedExerciseId,
-    selectedSplitProgressId, setSelectedSplitProgressId, selectedProgressWindow,
-    setSelectedProgressWindow, selectedProgressMetric, setSelectedProgressMetric,
-    selectedExerciseHistory, selectedExerciseWindowHistory,
-    selectedExerciseWindowSummary, selectedSplitHistory, selectedSplitWindowHistory,
-    selectedSplitWindowSummary, formatDelta, hasPersonalRecord, hasImprovement,
-    bodyweightEntries, saveBodyweightEntry, setWeeklyWorkoutGoal, storageWarning,
-    pendingImport, exportWorkoutHistoryCsv, applyPendingImport, clearPendingImport,
-    undoNotice, handleUndoDelete, clearUndoNotice
+    activeView,
+    setActiveView,
+    activeViewMeta,
+    sidebarSummary,
+    themeMode,
+    setThemeMode,
+    workouts,
+    latestWorkout,
+    dashboardSummary,
+    getSplitName,
+    getExerciseName,
+    formatDisplayDate,
+    formatNumber,
+    getEntryMetrics,
+    dataMessage,
+    exportAppData,
+    fileInputRef,
+    handleImportFile,
+    startWorkoutFromSplit,
+    repeatLatestWorkout,
+    loadWorkoutTemplate,
+    lastUsedTemplate,
+    startWorkoutFromLastUsedTemplate,
+    bodyweightSummary,
+    exercises,
+    splits,
+    templates,
+    weeklyWorkoutGoal,
+    totalSetsLogged,
+    editingExerciseId,
+    exerciseName,
+    setExerciseName,
+    exerciseTargetWeight,
+    setExerciseTargetWeight,
+    exerciseTargetRepMin,
+    setExerciseTargetRepMin,
+    exerciseTargetRepMax,
+    setExerciseTargetRepMax,
+    exerciseWeightStep,
+    setExerciseWeightStep,
+    handleExerciseSubmit,
+    resetExerciseForm,
+    exerciseMessage,
+    startEditingExercise,
+    deleteExercise,
+    moveExercise,
+    splitForm,
+    setSplitForm,
+    editingSplitId,
+    splitMessage,
+    handleSplitSubmit,
+    resetSplitForm,
+    startEditingSplit,
+    deleteSplit,
+    moveSavedSplit,
+    createSplitExercise,
+    deleteWorkoutTemplate,
+    moveWorkoutTemplate,
+    renameWorkoutTemplate,
+    duplicateWorkoutTemplate,
+    createSplitFromTemplate,
+    startEditingWorkoutTemplate,
+    workoutForm,
+    selectedWorkoutTemplateId,
+    editingTemplateId,
+    templateDraftName,
+    editingWorkoutId,
+    workoutMessage,
+    setWorkoutForm,
+    setSelectedWorkoutTemplateId,
+    setTemplateDraftName,
+    updateWorkoutEntry,
+    applyLatestWorkoutToEntry,
+    handleWorkoutSplitChange,
+    saveCurrentWorkoutAsTemplate,
+    updateSelectedWorkoutTemplate,
+    handleTemplateEditorSubmit,
+    handleWorkoutSubmit,
+    resetWorkoutForm,
+    createSet,
+    createSetFromValues,
+    createWorkoutEntry,
+    sortedWorkouts,
+    historyHeatmap,
+    historyPrTimeline,
+    startEditingWorkout,
+    duplicateWorkout,
+    saveWorkoutAsTemplate,
+    createSplitFromWorkout,
+    deleteWorkout,
+    selectedProgressView,
+    setSelectedProgressView,
+    selectedExerciseId,
+    setSelectedExerciseId,
+    selectedSplitProgressId,
+    setSelectedSplitProgressId,
+    selectedProgressWindow,
+    setSelectedProgressWindow,
+    selectedProgressMetric,
+    setSelectedProgressMetric,
+    selectedExerciseHistory,
+    selectedExerciseWindowHistory,
+    selectedExerciseWindowSummary,
+    selectedSplitHistory,
+    selectedSplitWindowHistory,
+    selectedSplitWindowSummary,
+    formatDelta,
+    hasPersonalRecord,
+    hasImprovement,
+    bodyweightEntries,
+    saveBodyweightEntry,
+    setWeeklyWorkoutGoal,
+    storageWarning,
+    pendingImport,
+    exportWorkoutHistoryCsv,
+    applyPendingImport,
+    clearPendingImport,
+    undoNotice,
+    handleUndoDelete,
+    clearUndoNotice,
+    activeDialog,
+    handleDialogConfirm,
+    handleDialogCancel,
   } = controller;
 
   return (
@@ -243,8 +266,20 @@ function App() {
               <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="20" cy="40" r="15" fill="var(--accent)" opacity="0.1" />
                 <circle cx="100" cy="40" r="15" fill="var(--accent)" opacity="0.1" />
-                <path d="M35 40 H85" stroke="var(--accent)" strokeWidth="6" strokeLinecap="round" opacity="0.8" />
-                <path d="M45 25 V55 M75 25 V55" stroke="var(--accent)" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+                <path
+                  d="M35 40 H85"
+                  stroke="var(--accent)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  opacity="0.8"
+                />
+                <path
+                  d="M45 25 V55 M75 25 V55"
+                  stroke="var(--accent)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  opacity="0.6"
+                />
                 <circle cx="60" cy="40" r="6" fill="var(--accent)" />
               </svg>
             </div>
@@ -272,7 +307,11 @@ function App() {
                   <button
                     key={option}
                     type="button"
-                    className={option === themeMode ? 'view-button active theme-button' : 'view-button theme-button'}
+                    className={
+                      option === themeMode
+                        ? 'view-button active theme-button'
+                        : 'view-button theme-button'
+                    }
                     onClick={() => setThemeMode(option)}
                     aria-pressed={option === themeMode}
                   >
@@ -471,7 +510,6 @@ function App() {
               pendingImport={pendingImport}
               exportAppData={exportAppData}
               exportWorkoutHistoryCsv={exportWorkoutHistoryCsv}
-              templates={templates}
               fileInputRef={fileInputRef}
               handleImportFile={handleImportFile}
               applyPendingImport={applyPendingImport}
@@ -480,6 +518,11 @@ function App() {
           )}
         </div>
       </div>
+      <AppDialog
+        dialog={activeDialog}
+        onConfirm={handleDialogConfirm}
+        onCancel={handleDialogCancel}
+      />
     </div>
   );
 }

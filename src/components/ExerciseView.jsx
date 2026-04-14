@@ -47,11 +47,18 @@ export default function ExerciseView({
     const hasWeightGoal = Boolean(exercise.targetWeight);
     const hasAnyGuidance = hasRepGoal || hasWeightGoal;
     const name = exercise.name?.toLowerCase() ?? '';
-    const bodyweightLikely = ['pull-up', 'pull up', 'chin-up', 'chin up', 'dip', 'push-up', 'push up', 'plank'].some((term) =>
-      name.includes(term),
-    );
-    const cardioLikely = ['run', 'walk', 'row', 'bike', 'cycle', 'elliptical', 'sprint'].some((term) =>
-      name.includes(term),
+    const bodyweightLikely = [
+      'pull-up',
+      'pull up',
+      'chin-up',
+      'chin up',
+      'dip',
+      'push-up',
+      'push up',
+      'plank',
+    ].some((term) => name.includes(term));
+    const cardioLikely = ['run', 'walk', 'row', 'bike', 'cycle', 'elliptical', 'sprint'].some(
+      (term) => name.includes(term),
     );
 
     if (!hasAnyGuidance) {
@@ -113,8 +120,7 @@ export default function ExerciseView({
   }));
 
   const exercisesWithTargets = exercises.filter(
-    (exercise) =>
-      exercise.targetRepMin || exercise.targetRepMax || exercise.targetWeight,
+    (exercise) => exercise.targetRepMin || exercise.targetRepMax || exercise.targetWeight,
   ).length;
   const exercisesFullyGuided = exerciseReadiness.filter(
     ({ readiness }) => readiness.tone === 'complete',
@@ -285,8 +291,10 @@ export default function ExerciseView({
   }
 
   function isInteractiveTarget(target) {
-    return target instanceof Element
-      && Boolean(target.closest('button, a, input, select, textarea, label'));
+    return (
+      target instanceof Element &&
+      Boolean(target.closest('button, a, input, select, textarea, label'))
+    );
   }
 
   function handleExerciseCardClick(exerciseId, event) {
@@ -304,14 +312,18 @@ export default function ExerciseView({
           <div className="library-setup-copy">
             <p className="section-label">Setup surface</p>
             <h2>Build a cleaner setup path</h2>
-            <p>See what is ready, what still needs setup, and where to go next without scanning the whole screen.</p>
+            <p>
+              See what is ready, what still needs setup, and where to go next without scanning the
+              whole screen.
+            </p>
           </div>
           <div className="library-summary-grid" aria-label="Library status">
             <div className="library-summary-card library-summary-card-primary">
               <span className="section-label">Current state</span>
               <strong>{exercises.length} exercises across one setup system</strong>
               <p>
-                {exercisesFullyGuided} fully guided • {exercisesPartlyGuided} partly guided • {splits.length} splits • {templates.length} templates
+                {exercisesFullyGuided} fully guided • {exercisesPartlyGuided} partly guided •{' '}
+                {splits.length} splits • {templates.length} templates
               </p>
             </div>
             <div className="library-summary-card">
@@ -476,10 +488,16 @@ export default function ExerciseView({
               ))}
             </div>
             <div className="library-state-actions">
-              <a className="primary-button action-button setup-link-button" href={exerciseEmptyState.primaryHref}>
+              <a
+                className="primary-button action-button setup-link-button"
+                href={exerciseEmptyState.primaryHref}
+              >
                 {exerciseEmptyState.primaryLabel}
               </a>
-              <a className="ghost-button action-button setup-link-button" href={exerciseEmptyState.secondaryHref}>
+              <a
+                className="ghost-button action-button setup-link-button"
+                href={exerciseEmptyState.secondaryHref}
+              >
                 {exerciseEmptyState.secondaryLabel}
               </a>
             </div>
@@ -500,7 +518,10 @@ export default function ExerciseView({
         {templates.length ? (
           <div className="exercise-grid library-grid">
             {templates.map((template) => (
-              <article key={template.id} className="exercise-card library-card library-card-asset library-card-ready">
+              <article
+                key={template.id}
+                className="exercise-card library-card library-card-asset library-card-ready"
+              >
                 <div className="exercise-card-header">
                   <div>
                     <span className="library-card-status library-card-status-ready">
@@ -508,7 +529,8 @@ export default function ExerciseView({
                     </span>
                     <h3>{template.name}</h3>
                     <p>
-                      {template.entries.length} {template.entries.length === 1 ? 'exercise' : 'exercises'}
+                      {template.entries.length}{' '}
+                      {template.entries.length === 1 ? 'exercise' : 'exercises'}
                     </p>
                   </div>
                   <div className="history-actions">
@@ -616,10 +638,16 @@ export default function ExerciseView({
               ))}
             </div>
             <div className="library-state-actions">
-              <a className="primary-button action-button setup-link-button" href={templateEmptyState.primaryHref}>
+              <a
+                className="primary-button action-button setup-link-button"
+                href={templateEmptyState.primaryHref}
+              >
                 {templateEmptyState.primaryLabel}
               </a>
-              <a className="ghost-button action-button setup-link-button" href={templateEmptyState.secondaryHref}>
+              <a
+                className="ghost-button action-button setup-link-button"
+                href={templateEmptyState.secondaryHref}
+              >
                 {templateEmptyState.secondaryLabel}
               </a>
             </div>
@@ -639,8 +667,13 @@ export default function ExerciseView({
         </div>
         <div className="library-builder-intro">
           <div className="library-builder-intro-copy">
-            <strong>{editingExerciseId ? 'Refine one exercise' : 'Add the next useful movement'}</strong>
-            <p>Start with the name, then add the guidance that makes the movement feel complete inside logging and progress.</p>
+            <strong>
+              {editingExerciseId ? 'Refine one exercise' : 'Add the next useful movement'}
+            </strong>
+            <p>
+              Start with the name, then add the guidance that makes the movement feel complete
+              inside logging and progress.
+            </p>
           </div>
           <div className="library-builder-intro-rail">
             <span className="library-builder-chip">Name</span>

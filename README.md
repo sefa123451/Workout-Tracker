@@ -1,148 +1,111 @@
 # Workout Tracker
 
-A polished local-first workout tracker built with React and Vite.
+Local-first workout tracking app built with React + Vite.
+This project is designed to demonstrate product thinking, data modeling, testing discipline, and practical frontend engineering in a portfolio context.
 
-It combines split-based planning, reusable templates, fast daily logging, exercise and split progress, local data portability, and a premium dashboard UI in one app.
+## Demo
 
-## Highlights
+- Live app: not deployed (intentional local-first scope)
+- Quick walkthrough: [`docs/media/workout-flow.gif`](docs/media/workout-flow.gif)
+- Run locally:
+  - `npm install`
+  - `npm run dev`
 
-- Premium dashboard UI with left sidebar navigation and dark / light / system themes
-- Exercise library with reorder, rename, delete, and preserved history references
-- Split planner for routines like `Push`, `Pull`, and `Legs`
-- Workout templates that can be created, edited, duplicated, reordered, and reused
-- Fast workout logging with split loading, prebuilt sets, quick progression buttons, and rest timer
-- Session notes plus lightweight `mood` / `effort` context
-- Workout history with calendar view, PR timeline, duplicate, template-save, and split-seeding flows
-- Progress tracking for both exercises and splits with charts, highlights, and 7 / 30 / 90 day filters
-- JSON export/import, merge import, and CSV export for workout history
-- Undo for destructive delete actions
+## What To Evaluate In 2 Minutes
 
-## Core Flows
+1. Open `Dashboard` for training summary, heatmap, and recommendations.
+2. Open `Log workout` and load a template/split.
+3. Open `History` for day review and PR timeline.
+4. Open `Progress` and switch between exercise/split trends.
+5. Open `Settings` for bodyweight logging and import/export flow.
 
-### 1. Build your exercise library
+## Product Screens
 
-- Add exercises
-- Reorder, rename, or delete exercises later
-- Keep workout history even if an exercise is deleted
+![Dashboard view](docs/media/dashboard-desktop.png)
+![Workout logging view](docs/media/log-workout-desktop.png)
+![Progress analytics view](docs/media/history-progress-desktop.png)
+![Settings and data controls](docs/media/settings-desktop.png)
 
-### 2. Create reusable workout splits
+## Feature Highlights
 
-- Create splits such as `Push`, `Pull`, or `Legs`
-- Assign existing exercises to each split
-- Define a default number of sets per exercise
-- Reorder split exercises
-- Keep the split flexible enough for day-to-day changes
+- Exercise library with editing, ordering, target values, and safe deletion
+- Split planner with weekly targets and default sets per exercise
+- Workout templates (create, load, duplicate, edit, rename, delete)
+- Workout logging with notes, mood, effort, and per-set tracking
+- History with calendar heatmap, day review, and PR timeline
+- Progress analytics for exercise and split modes across 7/30/90-day windows
+- Bodyweight check-ins with trend context
+- Data portability:
+  - JSON export/import
+  - import preview with replace/merge choices
+  - CSV export for workout history
+- Undo support for destructive delete actions
 
-### 3. Save reusable templates
+## Architecture Overview
 
-- Save a finished workout as a template
-- Edit, rename, duplicate, delete, or reorder templates
-- Load templates directly from the library, dashboard, or logging flow
-- Convert a template into a split when needed
+### Frontend
 
-### 4. Log workouts quickly
+- `src/App.jsx`: app shell and view composition
+- `src/hooks/useAppController.jsx`: centralized state/actions orchestration
+- `src/components/*`: screen and section components
+- `src/styles.css`: design tokens, layout, and responsive styles
 
-- Pick a date
-- Choose a split, template, or custom workout
-- Auto-load exercises and default set rows from the selected split
-- Use quick set actions such as `+2.5 kg`, `+5 kg`, `+1 rep`
-- Use a rest timer directly inside the logging flow
-- Skip individual exercises for that session without changing the split itself
-- Add optional notes, mood, and effort context
+### Domain and Storage
 
-### 5. Review and improve
+- `src/lib/workoutShared.js`: core helpers, validation, date/format utilities
+- `src/lib/workoutStorage.js`: persistence, import/export normalization
+- `src/lib/workoutAnalytics.js`: dashboard/history/progress aggregations
+- `src/lib/progressAnalytics.js`: signal copy and decision guidance helpers
 
-- Browse full workout history
-- Inspect calendar activity and PR timeline
-- Track progress per exercise and per split over time
-- See PRs for weight, reps, and total volume
-- Compare recent ranges with simple charts
+### Design Decisions
 
-## Data Model
+- Local-first by default: no account required, instant startup, full data ownership.
+- Backward compatibility: existing `localStorage` shape and import/export compatibility are preserved.
+- Defensive input handling: invalid dates/entries are sanitized or rejected early to prevent runtime crashes.
 
-All app data is stored locally in the browser via `localStorage`.
+## Testing And Quality
 
-The app currently stores:
+### Commands
 
-- `exercises`
-- `splits`
-- `templates`
-- `workouts`
+- `npm run lint`
+- `npm run format:check`
+- `npm test -- --run`
+- `npm run test:e2e`
+- `npm run build`
 
-Workouts may include:
+### Scope
 
-- `splitId`
-- `notes`
-- `mood`
-- `effort`
+- Integration coverage for key user flows in `src/App.test.jsx`
+- Utility/data model coverage in `src/lib/workoutData.test.js`
+- Component-focused tests for major UI surfaces
+- Lightweight browser smoke checks via `scripts/e2e-smoke.mjs`
+- CI (`.github/workflows/ci.yml`) runs lint + format check + unit/integration tests + build + e2e smoke checks on push/PR
 
-Splits reference exercises by `exerciseId`, and templates store reusable workout entries plus an optional linked split.
+## Scripts
 
-If an exercise or split is deleted later, linked workout history is preserved rather than removed.
+- `npm run dev` - start Vite dev server
+- `npm run build` - production build
+- `npm run preview` - preview production build
+- `npm test -- --run` - run tests once
+- `npm run test:e2e` - run lightweight browser smoke checks
+- `npm run lint` - run ESLint
+- `npm run lint:fix` - run ESLint with autofix
+- `npm run format` - format code with Prettier
+- `npm run format:check` - verify Prettier formatting
+- `npm run capture:media` - regenerate portfolio screenshots and walkthrough GIF
 
-## Tech Stack
+## Limitations
 
-- React 18
-- Vite
-- Vitest
-- Testing Library
-- Local browser storage (`localStorage`)
+- No backend/auth/cloud sync (intentional for local-first scope)
+- No multi-device conflict resolution
+- No server-side data sharing
 
-## Getting Started
+## Roadmap
 
-Install dependencies:
+- Optional cloud sync mode while preserving local-first defaults
+- Additional history/progress filtering controls
+- Further modularization of controller-level state logic
 
-```bash
-npm install
-```
+## License
 
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Open the local URL shown in the terminal, usually:
-
-```bash
-http://localhost:5173
-```
-
-Build for production:
-
-```bash
-npm run build
-```
-
-Run tests:
-
-```bash
-npm test -- --run
-```
-
-## Manual Test Checklist
-
-- Create a few exercises and confirm duplicate names are rejected
-- Create a split and assign exercises with different default set counts
-- Save a workout as a template, then reuse and edit it
-- Log a workout from a split and verify set rows are created automatically
-- Use quick set actions and the rest timer in the logging form
-- Skip one split exercise, restore it, and save the workout
-- Edit, duplicate, and delete a workout from history
-- Check exercise and split progress, PR tags, and 7 / 30 / 90 day filters
-- Open the history calendar and inspect a day with workouts
-- Export all data as JSON, test import preview, then try merge import
-- Export workout history as CSV
-- Switch between `System`, `Light`, and `Dark` themes
-
-## Current Scope
-
-This project is intentionally simple and local-first.
-
-There is currently:
-
-- no backend
-- no user accounts
-- no cloud sync
-
-That makes it easy to run locally, iterate quickly, and extend later.
+MIT - see [`LICENSE`](LICENSE)

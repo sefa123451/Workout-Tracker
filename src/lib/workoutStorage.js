@@ -45,15 +45,7 @@ function addDays(date, days) {
 }
 
 function toIsoAt(date, hour) {
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    hour,
-    0,
-    0,
-    0,
-  ).toISOString();
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, 0, 0, 0).toISOString();
 }
 
 function getMonday(date) {
@@ -335,9 +327,31 @@ function buildDemoData() {
       notes: 'Keep 1 to 2 reps in reserve on the pressing sets.',
       createdAt: toIsoAt(addDays(firstWeekMonday, 2), 7),
       entries: [
-        { exerciseId: 'exercise-bench-press', sets: [{ weight: 80, reps: 8 }, { weight: 80, reps: 8 }, { weight: 82.5, reps: 6 }, { weight: 82.5, reps: 6 }] },
-        { exerciseId: 'exercise-incline-db-press', sets: [{ weight: 27, reps: 10 }, { weight: 27, reps: 10 }, { weight: 29, reps: 8 }] },
-        { exerciseId: 'exercise-overhead-press', sets: [{ weight: 47.5, reps: 8 }, { weight: 47.5, reps: 8 }, { weight: 50, reps: 6 }] },
+        {
+          exerciseId: 'exercise-bench-press',
+          sets: [
+            { weight: 80, reps: 8 },
+            { weight: 80, reps: 8 },
+            { weight: 82.5, reps: 6 },
+            { weight: 82.5, reps: 6 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-incline-db-press',
+          sets: [
+            { weight: 27, reps: 10 },
+            { weight: 27, reps: 10 },
+            { weight: 29, reps: 8 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-overhead-press',
+          sets: [
+            { weight: 47.5, reps: 8 },
+            { weight: 47.5, reps: 8 },
+            { weight: 50, reps: 6 },
+          ],
+        },
       ],
     },
     {
@@ -347,9 +361,30 @@ function buildDemoData() {
       notes: 'Pause the first rep on rows and keep the last set honest.',
       createdAt: toIsoAt(addDays(firstWeekMonday, 3), 7),
       entries: [
-        { exerciseId: 'exercise-lat-pulldown', sets: [{ weight: 67.5, reps: 10 }, { weight: 67.5, reps: 10 }, { weight: 70, reps: 8 }] },
-        { exerciseId: 'exercise-barbell-row', sets: [{ weight: 72.5, reps: 8 }, { weight: 72.5, reps: 8 }, { weight: 75, reps: 6 }] },
-        { exerciseId: 'exercise-db-curl', sets: [{ weight: 15, reps: 12 }, { weight: 15, reps: 12 }, { weight: 16, reps: 10 }] },
+        {
+          exerciseId: 'exercise-lat-pulldown',
+          sets: [
+            { weight: 67.5, reps: 10 },
+            { weight: 67.5, reps: 10 },
+            { weight: 70, reps: 8 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-barbell-row',
+          sets: [
+            { weight: 72.5, reps: 8 },
+            { weight: 72.5, reps: 8 },
+            { weight: 75, reps: 6 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-db-curl',
+          sets: [
+            { weight: 15, reps: 12 },
+            { weight: 15, reps: 12 },
+            { weight: 16, reps: 10 },
+          ],
+        },
       ],
     },
     {
@@ -359,19 +394,36 @@ function buildDemoData() {
       notes: 'Stay smooth on the eccentrics and keep one clean rep in reserve.',
       createdAt: toIsoAt(addDays(firstWeekMonday, 4), 7),
       entries: [
-        { exerciseId: 'exercise-back-squat', sets: [{ weight: 112.5, reps: 6 }, { weight: 112.5, reps: 6 }, { weight: 115, reps: 5 }, { weight: 115, reps: 5 }] },
-        { exerciseId: 'exercise-rdl', sets: [{ weight: 102.5, reps: 8 }, { weight: 102.5, reps: 8 }, { weight: 105, reps: 6 }] },
-        { exerciseId: 'exercise-leg-press', sets: [{ weight: 205, reps: 12 }, { weight: 205, reps: 12 }, { weight: 215, reps: 10 }] },
+        {
+          exerciseId: 'exercise-back-squat',
+          sets: [
+            { weight: 112.5, reps: 6 },
+            { weight: 112.5, reps: 6 },
+            { weight: 115, reps: 5 },
+            { weight: 115, reps: 5 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-rdl',
+          sets: [
+            { weight: 102.5, reps: 8 },
+            { weight: 102.5, reps: 8 },
+            { weight: 105, reps: 6 },
+          ],
+        },
+        {
+          exerciseId: 'exercise-leg-press',
+          sets: [
+            { weight: 205, reps: 12 },
+            { weight: 205, reps: 12 },
+            { weight: 215, reps: 10 },
+          ],
+        },
       ],
     },
   ];
   const workouts = [];
-  const workoutFactories = [
-    buildPushWorkout,
-    buildPullWorkout,
-    buildLegWorkout,
-    buildUpperWorkout,
-  ];
+  const workoutFactories = [buildPushWorkout, buildPullWorkout, buildLegWorkout, buildUpperWorkout];
   const workoutDayOffsets = [0, 1, 3, 5];
   let workoutIndex = 1;
 
@@ -512,7 +564,7 @@ export function mergeImportedData(currentData, importedData) {
     mergedTemplates.push({
       ...template,
       id: nextTemplateId,
-      splitId: template.splitId ? splitIdMap.get(template.splitId) ?? '' : '',
+      splitId: template.splitId ? (splitIdMap.get(template.splitId) ?? '') : '',
       entries: template.entries.map((entry) => ({
         ...entry,
         exerciseId: exerciseIdMap.get(entry.exerciseId) ?? entry.exerciseId,
@@ -531,10 +583,13 @@ export function mergeImportedData(currentData, importedData) {
 
     mergedWorkouts.push({
       ...workout,
-      splitId: workout.splitId ? splitIdMap.get(workout.splitId) ?? '' : '',
+      splitId: workout.splitId ? (splitIdMap.get(workout.splitId) ?? '') : '',
       entries: workout.entries.map((entry) => ({
         ...entry,
-        exerciseId: exerciseIdMap.get(entry.exerciseId) ?? exerciseIdMap.get(entry.exerciseId) ?? entry.exerciseId,
+        exerciseId:
+          exerciseIdMap.get(entry.exerciseId) ??
+          exerciseIdMap.get(entry.exerciseId) ??
+          entry.exerciseId,
       })),
     });
     existingWorkoutIds.add(workout.id);
@@ -570,7 +625,7 @@ export function buildWorkoutHistoryCsv(workouts, exercises, splits) {
 
   workouts.forEach((workout) => {
     const splitName = workout.splitId
-      ? splitNameMap.get(workout.splitId) ?? 'Unknown split (deleted)'
+      ? (splitNameMap.get(workout.splitId) ?? 'Unknown split (deleted)')
       : 'Custom workout';
     const notes = typeof workout.notes === 'string' ? workout.notes.trim() : '';
     const mood = typeof workout.mood === 'string' ? workout.mood.trim() : '';
@@ -626,12 +681,16 @@ export function readStoredData() {
     const normalizedData = {
       weeklyWorkoutGoal: normalizeWeeklyWorkoutGoal(payload.weeklyWorkoutGoal),
       bodyweightEntries: Array.isArray(payload.bodyweightEntries)
-        ? sortBodyweightEntries(payload.bodyweightEntries.map(normalizeBodyweightEntry).filter(Boolean))
+        ? sortBodyweightEntries(
+            payload.bodyweightEntries.map(normalizeBodyweightEntry).filter(Boolean),
+          )
         : [],
       exercises: Array.isArray(payload.exercises)
         ? payload.exercises.map(normalizeExercise).filter(Boolean)
         : [],
-      splits: Array.isArray(payload.splits) ? payload.splits.map(normalizeSplit).filter(Boolean) : [],
+      splits: Array.isArray(payload.splits)
+        ? payload.splits.map(normalizeSplit).filter(Boolean)
+        : [],
       templates: Array.isArray(payload.templates)
         ? payload.templates.map(normalizeWorkoutTemplate).filter(Boolean)
         : [],
@@ -693,7 +752,9 @@ export function validateImportedData(payload) {
   }
 
   if (normalizedSplits.some((split) => split === null)) {
-    return { error: 'Imported splits contain empty names, missing exercises, or invalid default sets.' };
+    return {
+      error: 'Imported splits contain empty names, missing exercises, or invalid default sets.',
+    };
   }
 
   if (normalizedWorkouts.some((workout) => workout === null)) {
@@ -701,7 +762,9 @@ export function validateImportedData(payload) {
   }
 
   if (normalizedTemplates.some((template) => template === null)) {
-    return { error: 'Imported templates contain empty names, invalid entries, or invalid set values.' };
+    return {
+      error: 'Imported templates contain empty names, invalid entries, or invalid set values.',
+    };
   }
 
   if (hasDuplicateIds(normalizedExercises)) {

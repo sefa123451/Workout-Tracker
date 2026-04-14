@@ -104,13 +104,17 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
   const paddingLeft = Math.min(64, Math.max(46, 24 + axisLabelLength * 5));
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
-  const step = chronologicalSessions.length > 1 ? chartWidth / (chronologicalSessions.length - 1) : 0;
+  const step =
+    chronologicalSessions.length > 1 ? chartWidth / (chronologicalSessions.length - 1) : 0;
 
   const points = chronologicalSessions.map((session, index) => {
     const normalizedValue = (metricConfig.getValue(session) - minValue) / valueRange;
 
     return {
-      x: chronologicalSessions.length === 1 ? paddingLeft + chartWidth / 2 : paddingLeft + index * step,
+      x:
+        chronologicalSessions.length === 1
+          ? paddingLeft + chartWidth / 2
+          : paddingLeft + index * step,
       y: paddingTop + chartHeight - normalizedValue * chartHeight,
       value: metricConfig.getValue(session),
     };
@@ -151,7 +155,8 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
   const soWhatGuidance = buildNextMoveGuidance({
     signalProfile: comparisonSignalProfile,
     confidenceLabel,
-    noComparisonCopy: 'Keep logging this range. One more session will unlock a confident next-step call.',
+    noComparisonCopy:
+      'Keep logging this range. One more session will unlock a confident next-step call.',
   });
   const baselineX = points[0]?.x ?? paddingLeft;
   const latestX = points[points.length - 1]?.x ?? paddingLeft;
@@ -160,25 +165,56 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
   const contextMarkers = buildContextMarkerLabels(
     bestIsLatest
       ? [
-          { key: 'baseline', label: 'Baseline', x: baselineX, className: 'progress-chart-marker-label-baseline' },
-          { key: 'best-latest', label: 'Best = Latest', x: latestX, className: 'progress-chart-marker-label-best-latest' },
+          {
+            key: 'baseline',
+            label: 'Baseline',
+            x: baselineX,
+            className: 'progress-chart-marker-label-baseline',
+          },
+          {
+            key: 'best-latest',
+            label: 'Best = Latest',
+            x: latestX,
+            className: 'progress-chart-marker-label-best-latest',
+          },
         ]
       : [
-          { key: 'baseline', label: 'Baseline', x: baselineX, className: 'progress-chart-marker-label-baseline' },
+          {
+            key: 'baseline',
+            label: 'Baseline',
+            x: baselineX,
+            className: 'progress-chart-marker-label-baseline',
+          },
           { key: 'best', label: 'Best', x: bestX, className: 'progress-chart-marker-label-best' },
-          { key: 'latest', label: 'Latest', x: latestX, className: 'progress-chart-marker-label-latest' },
+          {
+            key: 'latest',
+            label: 'Latest',
+            x: latestX,
+            className: 'progress-chart-marker-label-latest',
+          },
         ],
   );
 
   return (
     <div className="chart-shell">
-      <div className="chart-stats chart-insight-row" role="group" aria-label="Chart decision support">
-        <span className="chart-stat-item">Baseline {formatAxisValue(firstValue)} • {formatDisplayDate(firstSession.date)}</span>
-        <span className="chart-stat-item">Latest signal {formatAxisValue(latestValue)} • {formatDisplayDate(latestSession.date)}</span>
+      <div
+        className="chart-stats chart-insight-row"
+        role="group"
+        aria-label="Chart decision support"
+      >
         <span className="chart-stat-item">
-          {bestIsLatest ? 'Best = Latest' : 'Best'} {formatAxisValue(bestValue)} • {formatDisplayDate(bestSession.date)}
+          Baseline {formatAxisValue(firstValue)} • {formatDisplayDate(firstSession.date)}
         </span>
-        <span className={`chart-stat-item chart-signal-badge chart-signal-badge-${signalProfile.tone}`}>
+        <span className="chart-stat-item">
+          Latest signal {formatAxisValue(latestValue)} • {formatDisplayDate(latestSession.date)}
+        </span>
+        <span className="chart-stat-item">
+          {bestIsLatest ? 'Best = Latest' : 'Best'} {formatAxisValue(bestValue)} •{' '}
+          {formatDisplayDate(bestSession.date)}
+        </span>
+        <span
+          className={`chart-stat-item chart-signal-badge chart-signal-badge-${signalProfile.tone}`}
+        >
           {hasComparison
             ? `Change signal ${changeSummary}${changePercentSummary ? ` (${changePercentSummary})` : ''}`
             : 'Change signal Baseline building'}
@@ -271,20 +307,11 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
 
         {/* Area fill */}
         {areaPath && (
-          <path
-            className="progress-chart-area"
-            d={areaPath}
-            fill={`url(#${gradientId})`}
-          />
+          <path className="progress-chart-area" d={areaPath} fill={`url(#${gradientId})`} />
         )}
 
         {/* Line */}
-        {smoothLine && (
-          <path
-            className="progress-chart-line"
-            d={smoothLine}
-          />
-        )}
+        {smoothLine && <path className="progress-chart-line" d={smoothLine} />}
 
         {/* Data points */}
         {points.map((point, index) => {
@@ -293,12 +320,7 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
           return (
             <g key={`${chronologicalSessions[index].workoutId}-point`}>
               {isLatest && (
-                <circle
-                  className="progress-chart-point-glow"
-                  cx={point.x}
-                  cy={point.y}
-                  r="10"
-                />
+                <circle className="progress-chart-point-glow" cx={point.x} cy={point.y} r="10" />
               )}
               <circle
                 className={
@@ -330,12 +352,7 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
               )}
 
               {isBest && !isLatest && (
-                <circle
-                  className="progress-chart-point-best"
-                  cx={point.x}
-                  cy={point.y}
-                  r="4.5"
-                />
+                <circle className="progress-chart-point-best" cx={point.x} cy={point.y} r="4.5" />
               )}
             </g>
           );
@@ -344,7 +361,9 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
       <div className="chart-context-legend" aria-hidden="true">
         <span className="chart-context-legend-item chart-context-legend-baseline">Baseline</span>
         {bestIsLatest ? (
-          <span className="chart-context-legend-item chart-context-legend-best-latest">Best = Latest</span>
+          <span className="chart-context-legend-item chart-context-legend-best-latest">
+            Best = Latest
+          </span>
         ) : (
           <>
             <span className="chart-context-legend-item chart-context-legend-best">Best</span>
@@ -362,7 +381,9 @@ export default function ProgressChart({ sessions, metric = 'volume', rangeLabel 
       </div>
       <div className="chart-caption">
         <span>{formatDisplayDate(chronologicalSessions[0].date)}</span>
-        <span>{formatDisplayDate(chronologicalSessions[chronologicalSessions.length - 1].date)}</span>
+        <span>
+          {formatDisplayDate(chronologicalSessions[chronologicalSessions.length - 1].date)}
+        </span>
       </div>
     </div>
   );

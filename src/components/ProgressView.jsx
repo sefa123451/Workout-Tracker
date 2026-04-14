@@ -167,7 +167,11 @@ function ProgressStoryCard({
         {metrics.map((metric, index) => (
           <div
             key={metric.label}
-            className={index === 0 ? 'progress-story-metric progress-story-metric-primary' : 'progress-story-metric'}
+            className={
+              index === 0
+                ? 'progress-story-metric progress-story-metric-primary'
+                : 'progress-story-metric'
+            }
           >
             <span className="metric-label">{metric.label}</span>
             <strong>{metric.value}</strong>
@@ -183,10 +187,7 @@ function ProgressStoryCard({
         <div className="tag-row">
           {signalLabels.length ? (
             signalLabels.map((label) => (
-              <span
-                key={label}
-                className={label.includes('PR') ? 'tag pr-tag' : 'tag'}
-              >
+              <span key={label} className={label.includes('PR') ? 'tag pr-tag' : 'tag'}>
                 {label}
               </span>
             ))
@@ -199,22 +200,28 @@ function ProgressStoryCard({
   );
 }
 
-function ProgressDecisionBand({
-  title,
-  subtitle,
-  items,
-}) {
+function ProgressDecisionBand({ title, subtitle, items }) {
   return (
     <section className="progress-decision-band" aria-label={ANALYTICS_TERMS.decisionSummary}>
       <div className="progress-decision-header">
         <span className="metric-label">{title}</span>
         <p>{subtitle}</p>
       </div>
-      <div className={items.length > 3 ? 'progress-decision-grid progress-decision-grid-wide' : 'progress-decision-grid'}>
+      <div
+        className={
+          items.length > 3
+            ? 'progress-decision-grid progress-decision-grid-wide'
+            : 'progress-decision-grid'
+        }
+      >
         {items.map((item, index) => (
           <article
             key={item.label}
-            className={index === 0 ? 'progress-decision-item progress-decision-item-primary' : 'progress-decision-item'}
+            className={
+              index === 0
+                ? 'progress-decision-item progress-decision-item-primary'
+                : 'progress-decision-item'
+            }
           >
             <span className="metric-label">{item.label}</span>
             <p>{item.copy}</p>
@@ -225,13 +232,7 @@ function ProgressDecisionBand({
   );
 }
 
-function ProgressTopSurface({
-  title,
-  windowLabel,
-  story,
-  decision,
-  summaryCards,
-}) {
+function ProgressTopSurface({ title, windowLabel, story, decision, summaryCards }) {
   return (
     <>
       <div className="workout-card-header">
@@ -255,12 +256,7 @@ function ProgressTopSurface({
       />
       <div className="stats-grid progress-summary-grid progress-summary-grid-compact">
         {summaryCards.map((card) => (
-          <StatCard
-            key={card.label}
-            label={card.label}
-            value={card.value}
-            helper={card.helper}
-          />
+          <StatCard key={card.label} label={card.label} value={card.value} helper={card.helper} />
         ))}
       </div>
     </>
@@ -290,8 +286,8 @@ function ProgressToolbar({
         <span className="metric-label">Viewing</span>
         <strong>{selectedEntityLabel}</strong>
         <p>
-          {selectedProgressView === 'split' ? 'Split progress' : 'Exercise progress'}
-          {' '}• {selectedMetricLabel} • {formatWindowLabel(selectedProgressWindow)}
+          {selectedProgressView === 'split' ? 'Split progress' : 'Exercise progress'} •{' '}
+          {selectedMetricLabel} • {formatWindowLabel(selectedProgressWindow)}
         </p>
       </div>
       <div className="progress-toolbar-controls">
@@ -441,7 +437,9 @@ export default function ProgressView({
   const [selectedExercisePrFilter, setSelectedExercisePrFilter] = useState('all');
   const selectedExercise = exercises.find((exercise) => exercise.id === selectedExerciseId) ?? null;
   const selectedExerciseHasGoal =
-    selectedExercise?.targetRepMin || selectedExercise?.targetRepMax || selectedExercise?.targetWeight;
+    selectedExercise?.targetRepMin ||
+    selectedExercise?.targetRepMax ||
+    selectedExercise?.targetWeight;
   const metricConfig =
     PROGRESS_METRIC_OPTIONS.find((option) => option.id === selectedProgressMetric) ??
     PROGRESS_METRIC_OPTIONS[0];
@@ -493,10 +491,9 @@ export default function ProgressView({
   const selectedSplit = splits.find((split) => split.id === selectedSplitProgressId) ?? null;
   const selectedEntityLabel =
     selectedProgressView === 'split'
-      ? selectedSplit?.name ?? getSplitName(selectedSplitProgressId)
-      : selectedExercise?.name ?? 'Exercise';
-  const selectedMetricLabel =
-    selectedProgressView === 'split' ? 'Volume' : metricConfig.label;
+      ? (selectedSplit?.name ?? getSplitName(selectedSplitProgressId))
+      : (selectedExercise?.name ?? 'Exercise');
+  const selectedMetricLabel = selectedProgressView === 'split' ? 'Volume' : metricConfig.label;
   const exerciseTrendState = getTrendState(metricValue.delta);
   const splitTrendState = getTrendState(selectedSplitWindowSummary?.comparison?.volumeDelta);
   const exerciseSignalProfile = getSignalProfile(
@@ -552,12 +549,18 @@ export default function ProgressView({
   const splitStoryMetrics = [
     {
       label: 'Latest volume',
-      value: selectedSplitWindowSummary ? formatNumber(selectedSplitWindowSummary.latestVolume) : '--',
-      helper: latestSplitSession ? formatDisplayDate(latestSplitSession.date) : 'No entries in range',
+      value: selectedSplitWindowSummary
+        ? formatNumber(selectedSplitWindowSummary.latestVolume)
+        : '--',
+      helper: latestSplitSession
+        ? formatDisplayDate(latestSplitSession.date)
+        : 'No entries in range',
     },
     {
       label: 'Best in range',
-      value: selectedSplitWindowSummary ? formatNumber(selectedSplitWindowSummary.bestVolume) : '--',
+      value: selectedSplitWindowSummary
+        ? formatNumber(selectedSplitWindowSummary.bestVolume)
+        : '--',
       helper: selectedSplitWindowSummary?.bestVolumeDate
         ? formatDisplayDate(selectedSplitWindowSummary.bestVolumeDate)
         : 'No entries yet',
@@ -601,7 +604,9 @@ export default function ProgressView({
     },
     {
       label: 'Avg sets',
-      value: selectedSplitWindowSummary ? formatNumber(selectedSplitWindowSummary.averageSets) : '--',
+      value: selectedSplitWindowSummary
+        ? formatNumber(selectedSplitWindowSummary.averageSets)
+        : '--',
       helper: selectedSplitWindowSummary ? 'Per split session' : 'No entries',
     },
   ];
@@ -636,7 +641,7 @@ export default function ProgressView({
     ? selectedExerciseWindowSummary
       ? `Best weight ${formatNumber(selectedExerciseWindowSummary.bestWeight)} kg • ${formatNumber(selectedExerciseGoalProgress * 100)}% of ${formatNumber(selectedExercise.targetWeight)} kg target`
       : `Weight target ${formatNumber(selectedExercise.targetWeight)} kg`
-    : (selectedExercise?.targetRepMin || selectedExercise?.targetRepMax)
+    : selectedExercise?.targetRepMin || selectedExercise?.targetRepMax
       ? selectedExerciseWindowSummary
         ? `Latest top reps ${formatNumber(selectedExerciseWindowSummary.latestReps)} • target range ${selectedExercise.targetRepMin ?? '--'}-${selectedExercise.targetRepMax ?? '--'}`
         : `Target reps ${selectedExercise.targetRepMin ?? '--'}-${selectedExercise.targetRepMax ?? '--'}`
@@ -650,7 +655,7 @@ export default function ProgressView({
     ? exerciseSignalProfile.direction === 'down'
       ? 'Use your baseline top set to stabilize execution, then add load gradually.'
       : 'Use your latest top set as the anchor for the next overload step.'
-    : (selectedExercise?.targetRepMin || selectedExercise?.targetRepMax)
+    : selectedExercise?.targetRepMin || selectedExercise?.targetRepMax
       ? exerciseSignalProfile.direction === 'up'
         ? 'Stay within target reps and progress load in small, repeatable steps.'
         : 'Use the target rep range to decide whether to add load or reps next session.'
@@ -671,7 +676,9 @@ export default function ProgressView({
     },
     {
       label: 'Goal progress',
-      copy: selectedExerciseHasGoal ? goalSummaryLine : 'No active goal yet. Add a target to anchor progression decisions.',
+      copy: selectedExerciseHasGoal
+        ? goalSummaryLine
+        : 'No active goal yet. Add a target to anchor progression decisions.',
     },
     {
       label: ANALYTICS_TERMS.nextMove,
@@ -759,7 +766,9 @@ export default function ProgressView({
                           <div>
                             <span className="metric-label">PR center</span>
                             <div className="progress-pr-center-meta">
-                              <span className="metric-label">{ANALYTICS_TERMS.latestSignal} focus</span>
+                              <span className="metric-label">
+                                {ANALYTICS_TERMS.latestSignal} focus
+                              </span>
                               <p>
                                 {recentSplitPrSessions.length
                                   ? `${recentSplitPrSessions.length} ${recentSplitPrSessions.length === 1 ? 'session' : 'sessions'} in ${selectedWindowLabelLower}`
@@ -769,26 +778,29 @@ export default function ProgressView({
                           </div>
                         </div>
                         <div className="progress-pr-feed">
-                        {recentSplitPrSessions.length ? (
-                          recentSplitPrSessions.slice(0, 4).map((session) => (
-                            <article key={`split-pr-${session.workoutId}`} className="progress-pr-card">
-                              <div>
-                                <span className="metric-label">PR session</span>
-                                <strong>{formatDisplayDate(session.date)}</strong>
-                                <p>Volume {formatNumber(session.metrics.totalVolume)}</p>
-                              </div>
-                              <div className="tag-row">
-                                <span className="tag pr-tag">Volume PR</span>
-                              </div>
-                            </article>
-                          ))
-                        ) : (
-                          <div className="progress-pr-card progress-pr-card-empty">
-                            <span className="metric-label">PR signal</span>
-                            <strong>No PR yet</strong>
-                            <p>Push this split a bit further to surface the next high.</p>
-                          </div>
-                        )}
+                          {recentSplitPrSessions.length ? (
+                            recentSplitPrSessions.slice(0, 4).map((session) => (
+                              <article
+                                key={`split-pr-${session.workoutId}`}
+                                className="progress-pr-card"
+                              >
+                                <div>
+                                  <span className="metric-label">PR session</span>
+                                  <strong>{formatDisplayDate(session.date)}</strong>
+                                  <p>Volume {formatNumber(session.metrics.totalVolume)}</p>
+                                </div>
+                                <div className="tag-row">
+                                  <span className="tag pr-tag">Volume PR</span>
+                                </div>
+                              </article>
+                            ))
+                          ) : (
+                            <div className="progress-pr-card progress-pr-card-empty">
+                              <span className="metric-label">PR signal</span>
+                              <strong>No PR yet</strong>
+                              <p>Push this split a bit further to surface the next high.</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="progress-module progress-module-chart">
@@ -822,11 +834,17 @@ export default function ProgressView({
                             </div>
                           </div>
                           <div className="tag-row">
-                            {session.personalRecords.volume && <span className="tag pr-tag">Volume PR</span>}
+                            {session.personalRecords.volume && (
+                              <span className="tag pr-tag">Volume PR</span>
+                            )}
                             {session.improvements.volume && <span className="tag">Volume up</span>}
                             {session.improvements.sets && <span className="tag">Sets up</span>}
-                            {session.improvements.exercises && <span className="tag">More moves</span>}
-                            {!session.previousMetrics && <span className="tag muted">First split log</span>}
+                            {session.improvements.exercises && (
+                              <span className="tag">More moves</span>
+                            )}
+                            {!session.previousMetrics && (
+                              <span className="tag muted">First split log</span>
+                            )}
                             {!session.personalRecords.volume &&
                               !session.improvements.volume &&
                               !session.improvements.sets &&
@@ -838,7 +856,8 @@ export default function ProgressView({
                           <div className="previous-row progress-previous-row">
                             {session.previousMetrics ? (
                               <p>
-                                {ANALYTICS_TERMS.baseline} vs previous split • volume {formatNumber(session.previousMetrics.totalVolume)} • sets{' '}
+                                {ANALYTICS_TERMS.baseline} vs previous split • volume{' '}
+                                {formatNumber(session.previousMetrics.totalVolume)} • sets{' '}
                                 {formatNumber(session.previousMetrics.totalSets)} • moves{' '}
                                 {formatNumber(session.previousMetrics.totalExercises)}
                               </p>
@@ -867,7 +886,12 @@ export default function ProgressView({
                     body="Log a workout from one of your splits to unlock split trends."
                   />
                 )
-              ) : null
+              ) : (
+                <EmptyState
+                  title="No splits available"
+                  body="Create a split in the exercise library, or switch back to exercise progress."
+                />
+              )
             ) : selectedExerciseHistory.length ? (
               <div className="history-list">
                 <article className="workout-card progress-overview">
@@ -906,7 +930,11 @@ export default function ProgressView({
                           </p>
                         </div>
                       </div>
-                      <div className="progress-window-switcher" role="group" aria-label="Exercise PR filter">
+                      <div
+                        className="progress-window-switcher"
+                        role="group"
+                        aria-label="Exercise PR filter"
+                      >
                         {EXERCISE_PR_FILTERS.map((filter) => (
                           <button
                             key={filter.id}
@@ -924,32 +952,41 @@ export default function ProgressView({
                       </div>
                     </div>
                     <div className="progress-pr-feed">
-                    {filteredExercisePrSessions.length ? (
-                      filteredExercisePrSessions.slice(0, 5).map((session) => (
-                        <article key={`exercise-pr-${session.workoutId}`} className="progress-pr-card">
-                          <div>
-                            <span className="metric-label">PR session</span>
-                            <strong>{formatDisplayDate(session.date)}</strong>
-                            <p>{getExercisePrLead(session, formatNumber)}</p>
-                          </div>
-                          <div className="tag-row">
-                            {session.personalRecords.weight && <span className="tag pr-tag">Weight PR</span>}
-                            {session.personalRecords.reps && <span className="tag pr-tag">Reps PR</span>}
-                            {session.personalRecords.volume && <span className="tag pr-tag">Volume PR</span>}
-                          </div>
-                        </article>
-                      ))
-                    ) : (
-                      <div className="progress-pr-card progress-pr-card-empty">
-                        <span className="metric-label">PR center</span>
-                        <strong>No PR yet</strong>
-                        <p>
-                          {selectedExercisePrFilter === 'all'
-                            ? 'Keep logging this exercise to build a clearer best-lift story.'
-                            : `No ${EXERCISE_PR_FILTERS.find((filter) => filter.id === selectedExercisePrFilter)?.label.toLowerCase()} PRs in this range.`}
-                        </p>
-                      </div>
-                    )}
+                      {filteredExercisePrSessions.length ? (
+                        filteredExercisePrSessions.slice(0, 5).map((session) => (
+                          <article
+                            key={`exercise-pr-${session.workoutId}`}
+                            className="progress-pr-card"
+                          >
+                            <div>
+                              <span className="metric-label">PR session</span>
+                              <strong>{formatDisplayDate(session.date)}</strong>
+                              <p>{getExercisePrLead(session, formatNumber)}</p>
+                            </div>
+                            <div className="tag-row">
+                              {session.personalRecords.weight && (
+                                <span className="tag pr-tag">Weight PR</span>
+                              )}
+                              {session.personalRecords.reps && (
+                                <span className="tag pr-tag">Reps PR</span>
+                              )}
+                              {session.personalRecords.volume && (
+                                <span className="tag pr-tag">Volume PR</span>
+                              )}
+                            </div>
+                          </article>
+                        ))
+                      ) : (
+                        <div className="progress-pr-card progress-pr-card-empty">
+                          <span className="metric-label">PR center</span>
+                          <strong>No PR yet</strong>
+                          <p>
+                            {selectedExercisePrFilter === 'all'
+                              ? 'Keep logging this exercise to build a clearer best-lift story.'
+                              : `No ${EXERCISE_PR_FILTERS.find((filter) => filter.id === selectedExercisePrFilter)?.label.toLowerCase()} PRs in this range.`}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="progress-module progress-module-chart">
@@ -967,7 +1004,8 @@ export default function ProgressView({
                       <div className="workout-card-header">
                         <strong>{formatDisplayDate(session.date)}</strong>
                         <span>
-                          {metricConfig.label} {formatNumber(
+                          {metricConfig.label}{' '}
+                          {formatNumber(
                             selectedProgressMetric === 'weight'
                               ? session.metrics.bestWeight
                               : selectedProgressMetric === 'reps'
@@ -991,23 +1029,28 @@ export default function ProgressView({
                         </div>
                       </div>
                       <div className="tag-row">
-                        {session.personalRecords.weight && <span className="tag pr-tag">Weight PR</span>}
-                        {session.personalRecords.reps && <span className="tag pr-tag">Reps PR</span>}
-                        {session.personalRecords.volume && <span className="tag pr-tag">Volume PR</span>}
+                        {session.personalRecords.weight && (
+                          <span className="tag pr-tag">Weight PR</span>
+                        )}
+                        {session.personalRecords.reps && (
+                          <span className="tag pr-tag">Reps PR</span>
+                        )}
+                        {session.personalRecords.volume && (
+                          <span className="tag pr-tag">Volume PR</span>
+                        )}
                         {session.improvements.weight && <span className="tag">Weight up</span>}
                         {session.improvements.reps && <span className="tag">Reps up</span>}
                         {session.improvements.volume && <span className="tag">Volume up</span>}
                         {!session.previousMetrics && <span className="tag muted">First entry</span>}
                         {!hasPersonalRecord(session.personalRecords) &&
                           !hasImprovement(session.improvements) &&
-                          session.previousMetrics && (
-                            <span className="tag muted">No new high</span>
-                          )}
+                          session.previousMetrics && <span className="tag muted">No new high</span>}
                       </div>
                       <div className="previous-row progress-previous-row">
                         {session.previousMetrics ? (
                           <p>
-                            {ANALYTICS_TERMS.baseline} vs previous entry • wt {formatNumber(session.previousMetrics.bestWeight)} • reps{' '}
+                            {ANALYTICS_TERMS.baseline} vs previous entry • wt{' '}
+                            {formatNumber(session.previousMetrics.bestWeight)} • reps{' '}
                             {formatNumber(session.previousMetrics.bestReps)} • volume{' '}
                             {formatNumber(session.previousMetrics.totalVolume)}
                           </p>

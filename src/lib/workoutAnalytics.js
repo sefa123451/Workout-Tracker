@@ -95,9 +95,7 @@ export function suggestNextSets(workouts, exerciseId, exercise = null) {
   const hasGoal = targetRepMin || targetRepMax;
 
   if (hasGoal) {
-    const allSetsAtGoalTop = targetRepMax
-      ? sets.every((set) => set.reps >= targetRepMax)
-      : false;
+    const allSetsAtGoalTop = targetRepMax ? sets.every((set) => set.reps >= targetRepMax) : false;
     const hasSetsBelowGoalFloor = targetRepMin
       ? sets.some((set) => set.reps < targetRepMin)
       : false;
@@ -272,7 +270,9 @@ export function buildTrainingHeatmap(workouts, days = 28) {
 
   const heatmapDays = getRecentDays(days);
   const heatmapMaxVolume = Math.max(
-    ...heatmapDays.map((date) => recentActivityByDate.get(getInputValueFromDate(date))?.volume ?? 0),
+    ...heatmapDays.map(
+      (date) => recentActivityByDate.get(getInputValueFromDate(date))?.volume ?? 0,
+    ),
     1,
   );
 
@@ -366,14 +366,20 @@ export function getBodyweightSummary(entries, days = 30) {
   };
 }
 
-export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY_WORKOUT_GOAL, splits = []) {
+export function getDashboardSummary(
+  workouts,
+  weeklyWorkoutGoal = DEFAULT_WEEKLY_WORKOUT_GOAL,
+  splits = [],
+) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const currentWeekStart = getStartOfCurrentWeek();
   const previousWeekStart = new Date(currentWeekStart);
   previousWeekStart.setDate(previousWeekStart.getDate() - 7);
   const currentMonthStart = getStartOfMonth(new Date());
-  const weeklyWorkouts = workouts.filter((workout) => isDateInWeekRange(workout.date, currentWeekStart));
+  const weeklyWorkouts = workouts.filter((workout) =>
+    isDateInWeekRange(workout.date, currentWeekStart),
+  );
   const previousWeekWorkouts = workouts.filter((workout) =>
     isDateInWeekRange(workout.date, previousWeekStart),
   );
@@ -449,7 +455,10 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
       0,
     );
 
-    weeklyVolumeByDate.set(workout.date, (weeklyVolumeByDate.get(workout.date) ?? 0) + workoutVolume);
+    weeklyVolumeByDate.set(
+      workout.date,
+      (weeklyVolumeByDate.get(workout.date) ?? 0) + workoutVolume,
+    );
   }
 
   for (const workout of monthlyWorkouts) {
@@ -470,7 +479,10 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
   }
 
   const recentPrHits = Array.from(exerciseIds).reduce((count, exerciseId) => {
-    const recentHistory = filterProgressHistoryByDays(buildProgressHistory(workouts, exerciseId), 30);
+    const recentHistory = filterProgressHistoryByDays(
+      buildProgressHistory(workouts, exerciseId),
+      30,
+    );
 
     return (
       count +
@@ -527,9 +539,9 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
     (currentBest, day) => (day.volume > currentBest.volume ? day : currentBest),
     { label: '', volume: 0 },
   );
-  const uniqueWeekKeys = Array.from(new Set(workouts.map((workout) => getWeekKey(workout.date)))).sort(
-    (left, right) => right.localeCompare(left),
-  );
+  const uniqueWeekKeys = Array.from(
+    new Set(workouts.map((workout) => getWeekKey(workout.date))),
+  ).sort((left, right) => right.localeCompare(left));
   let activeWeekStreak = 0;
 
   if (uniqueWeekKeys.length > 0) {
@@ -551,10 +563,7 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
     } else {
       const previousWeekStartDate = getStartOfWeek(parseInputDate(previousWeekKey));
       previousWeekStartDate.setDate(previousWeekStartDate.getDate() + 7);
-      currentRun =
-        getInputValueFromDate(previousWeekStartDate) === weekKey
-          ? currentRun + 1
-          : 1;
+      currentRun = getInputValueFromDate(previousWeekStartDate) === weekKey ? currentRun + 1 : 1;
     }
 
     longestActiveWeekStreak = Math.max(longestActiveWeekStreak, currentRun);
@@ -596,7 +605,11 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
       (entrySum, entry) => entrySum + getEntryMetrics(entry).totalVolume,
       0,
     );
-    const current = recentSplitStats.get(workout.splitId) ?? { volume: 0, count: 0, latestDate: '' };
+    const current = recentSplitStats.get(workout.splitId) ?? {
+      volume: 0,
+      count: 0,
+      latestDate: '',
+    };
 
     recentSplitStats.set(workout.splitId, {
       volume: current.volume + workoutVolume,
@@ -613,7 +626,8 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
     if (
       !strongestRecentSplit ||
       averageVolume > strongestRecentSplit.averageVolume ||
-      (averageVolume === strongestRecentSplit.averageVolume && info.latestDate > strongestRecentSplit.latestDate)
+      (averageVolume === strongestRecentSplit.averageVolume &&
+        info.latestDate > strongestRecentSplit.latestDate)
     ) {
       strongestRecentSplit = { splitId, ...info, averageVolume };
     }
@@ -638,7 +652,10 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
   let mostImprovedExercise = null;
 
   for (const exerciseId of exerciseIds) {
-    const recentHistory = filterProgressHistoryByDays(buildProgressHistory(workouts, exerciseId), 90);
+    const recentHistory = filterProgressHistoryByDays(
+      buildProgressHistory(workouts, exerciseId),
+      90,
+    );
     const summary = getProgressWindowSummary(recentHistory);
 
     if (!summary?.comparison) {
@@ -685,13 +702,14 @@ export function getDashboardSummary(workouts, weeklyWorkoutGoal = DEFAULT_WEEKLY
   const daysRemainingThisWeek = Math.max(7 - daysElapsedThisWeek, 0);
   const weeklyGoalRemaining = Math.max(weeklyWorkoutGoal - weeklyWorkouts.length, 0);
   const expectedSessionsByNow = weeklyWorkoutGoal * (daysElapsedThisWeek / 7);
-  const weeklyGoalStatus = weeklyWorkouts.length >= weeklyWorkoutGoal
-    ? 'Goal reached'
-    : weeklyWorkouts.length >= expectedSessionsByNow
-      ? 'On pace'
-      : daysRemainingThisWeek === 0
-        ? 'Last day'
-        : 'Behind pace';
+  const weeklyGoalStatus =
+    weeklyWorkouts.length >= weeklyWorkoutGoal
+      ? 'Goal reached'
+      : weeklyWorkouts.length >= expectedSessionsByNow
+        ? 'On pace'
+        : daysRemainingThisWeek === 0
+          ? 'Last day'
+          : 'Behind pace';
 
   return {
     lastTrainingDay: workouts[0]?.date ?? '',
@@ -901,9 +919,7 @@ export function getProgressWindowSummary(history) {
     averageVolume: totalVolume / chronologicalHistory.length,
     recentImprovementCount: chronologicalHistory.filter(
       (session) =>
-        session.improvements.weight ||
-        session.improvements.reps ||
-        session.improvements.volume,
+        session.improvements.weight || session.improvements.reps || session.improvements.volume,
     ).length,
     bestVolume,
     bestVolumeDate: bestVolumeSession.date,
@@ -962,7 +978,8 @@ export function getSplitProgressWindowSummary(history) {
     personalRecordCount: chronologicalHistory.filter((session) => session.personalRecords.volume)
       .length,
     recentImprovementCount: chronologicalHistory.filter(
-      (session) => session.improvements.volume || session.improvements.sets || session.improvements.exercises,
+      (session) =>
+        session.improvements.volume || session.improvements.sets || session.improvements.exercises,
     ).length,
     averageVolume: totalVolume / chronologicalHistory.length,
     averageSets: totalSets / chronologicalHistory.length,

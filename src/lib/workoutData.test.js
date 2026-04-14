@@ -5,6 +5,7 @@ import {
   buildWorkoutHistoryCsv,
   estimateOneRepMax,
   filterProgressHistoryByDays,
+  formatDisplayDate,
   getBodyweightSummary,
   getEntryMetrics,
   getDashboardSummary,
@@ -55,6 +56,11 @@ describe('validation helpers', () => {
     expect(parseSet({ weight: '40', reps: '8.5' })).toEqual({
       error: 'Reps must be a whole number.',
     });
+  });
+
+  it('formats invalid display dates safely', () => {
+    expect(formatDisplayDate('')).toBe('--');
+    expect(formatDisplayDate('not-a-date')).toBe('--');
   });
 });
 
@@ -690,8 +696,13 @@ describe('progress history', () => {
 
     const history = buildProgressHistory(workouts, 'squat');
 
-    expect(filterProgressHistoryByDays(history, 7).map((session) => session.workoutId)).toEqual(['w2']);
-    expect(filterProgressHistoryByDays(history, 30).map((session) => session.workoutId)).toEqual(['w2', 'w1']);
+    expect(filterProgressHistoryByDays(history, 7).map((session) => session.workoutId)).toEqual([
+      'w2',
+    ]);
+    expect(filterProgressHistoryByDays(history, 30).map((session) => session.workoutId)).toEqual([
+      'w2',
+      'w1',
+    ]);
   });
 
   it('summarizes progress windows with PR count and average volume', () => {

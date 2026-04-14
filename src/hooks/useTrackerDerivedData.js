@@ -45,9 +45,7 @@ export function useTrackerDerivedData({
         sum + workout.entries.reduce((entrySum, entry) => entrySum + entry.sets.length, 0),
       0,
     );
-    const exerciseNameMap = new Map(
-      exercises.map((exercise) => [exercise.id, exercise.name]),
-    );
+    const exerciseNameMap = new Map(exercises.map((exercise) => [exercise.id, exercise.name]));
     const splitNameMap = new Map(splits.map((split) => [split.id, split.name]));
 
     return {

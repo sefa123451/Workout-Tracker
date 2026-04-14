@@ -14,7 +14,9 @@ function DashboardGuidanceState({
         'db-guidance-state',
         `db-guidance-state-${variant}`,
         compact ? 'db-guidance-state-compact' : '',
-      ].filter(Boolean).join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <span className="db-guidance-label">{label}</span>
       <strong>{title}</strong>
@@ -22,7 +24,9 @@ function DashboardGuidanceState({
       {points.length ? (
         <div className="db-guidance-points">
           {points.map((point) => (
-            <span key={point} className="db-guidance-pill">{point}</span>
+            <span key={point} className="db-guidance-pill">
+              {point}
+            </span>
           ))}
         </div>
       ) : null}
@@ -120,7 +124,11 @@ function DashboardHeroPath({
                 </button>
               )}
               {lastUsedTemplate && (
-                <button type="button" className="ghost-button" onClick={startWorkoutFromLastUsedTemplate}>
+                <button
+                  type="button"
+                  className="ghost-button"
+                  onClick={startWorkoutFromLastUsedTemplate}
+                >
                   Start last template
                 </button>
               )}
@@ -133,9 +141,7 @@ function DashboardHeroPath({
                 <span className="db-label">This week</span>
                 <h3 className="db-card-title">{weekStatusTitle}</h3>
               </div>
-              <span className="db-meta-pill">
-                {dashboardSummary.weeklyGoalStatus}
-              </span>
+              <span className="db-meta-pill">{dashboardSummary.weeklyGoalStatus}</span>
             </div>
             <p className="db-card-sub">{weekStatusBody}</p>
             <div
@@ -169,12 +175,24 @@ function DashboardHeroPath({
               <div>
                 <span>Recommended path</span>
                 <strong>{recommendedPathLabel}</strong>
-                <p>{suggestedSplitId ? 'Best match for your current rotation' : lastUsedTemplate ? 'Fastest saved setup' : 'Build fresh from scratch'}</p>
+                <p>
+                  {suggestedSplitId
+                    ? 'Best match for your current rotation'
+                    : lastUsedTemplate
+                      ? 'Fastest saved setup'
+                      : 'Build fresh from scratch'}
+                </p>
               </div>
               <div>
                 <span>{isFirstSession ? 'What unlocks' : 'Last session'}</span>
-                <strong>{latestWorkout ? formatDisplayDate(latestWorkout.date) : 'Session recap'}</strong>
-                <p>{latestWorkout ? latestWorkoutSplitName || 'Custom workout' : 'Exercises, top sets, and total volume land here after workout 1.'}</p>
+                <strong>
+                  {latestWorkout ? formatDisplayDate(latestWorkout.date) : 'Session recap'}
+                </strong>
+                <p>
+                  {latestWorkout
+                    ? latestWorkoutSplitName || 'Custom workout'
+                    : 'Exercises, top sets, and total volume land here after workout 1.'}
+                </p>
               </div>
               <div>
                 <span>Week focus</span>
@@ -243,9 +261,17 @@ function DashboardWeekSupportCard({
       ) : (
         <div className="db-support-stack">
           <div className="db-support-item">
-            <span>{dashboardSummary.workoutsThisWeek === 0 ? 'Best first move' : 'Suggested path'}</span>
+            <span>
+              {dashboardSummary.workoutsThisWeek === 0 ? 'Best first move' : 'Suggested path'}
+            </span>
             <strong>{suggestedSplitName || lastUsedTemplate?.name || 'Custom workout'}</strong>
-            <p>{suggestedSplitName ? 'Stay with your recent split rotation.' : lastUsedTemplate ? 'Reuse your last template for the fastest start.' : 'No split targets yet. Start a clean session.'}</p>
+            <p>
+              {suggestedSplitName
+                ? 'Stay with your recent split rotation.'
+                : lastUsedTemplate
+                  ? 'Reuse your last template for the fastest start.'
+                  : 'No split targets yet. Start a clean session.'}
+            </p>
           </div>
           <div className="db-support-item">
             <span>{dashboardSummary.workoutsThisWeek === 0 ? 'Target pace' : 'Volume pace'}</span>
@@ -317,7 +343,10 @@ function DashboardPerformanceSnapshot({
               {dashboardSummary.volumeDeltaVsLastWeek >= 0 ? '+' : ''}
               {formatNumber(dashboardSummary.volumeDeltaVsLastWeek)}
             </strong>
-            <p>{formatNumber(dashboardSummary.totalVolumeThisWeek)} vs {formatNumber(dashboardSummary.totalVolumeLastWeek)}</p>
+            <p>
+              {formatNumber(dashboardSummary.totalVolumeThisWeek)} vs{' '}
+              {formatNumber(dashboardSummary.totalVolumeLastWeek)}
+            </p>
           </div>
           <div className="db-momentum-item">
             <span>Sessions delta</span>
@@ -325,7 +354,9 @@ function DashboardPerformanceSnapshot({
               {dashboardSummary.workoutDeltaVsLastWeek >= 0 ? '+' : ''}
               {dashboardSummary.workoutDeltaVsLastWeek}
             </strong>
-            <p>{dashboardSummary.workoutsThisWeek} vs {dashboardSummary.workoutsLastWeek}</p>
+            <p>
+              {dashboardSummary.workoutsThisWeek} vs {dashboardSummary.workoutsLastWeek}
+            </p>
           </div>
         </div>
       </div>
@@ -362,7 +393,9 @@ function DashboardPerformanceSnapshot({
                 </div>
                 <div className="tag-row">
                   {record.labels.slice(0, 2).map((label) => (
-                    <span key={label} className="tag pr-tag">{label}</span>
+                    <span key={label} className="tag pr-tag">
+                      {label}
+                    </span>
                   ))}
                 </div>
               </div>
@@ -405,7 +438,7 @@ function DashboardWorkoutSetup({
           <span className="db-section-label">Split insights</span>
           <strong>Your go-to splits</strong>
         </div>
-        {(dashboardSummary.topSplitThisMonth || dashboardSummary.mostUsedSplit) ? (
+        {dashboardSummary.topSplitThisMonth || dashboardSummary.mostUsedSplit ? (
           <div className="db-split-list">
             {dashboardSummary.topSplitThisMonth && (
               <div className="db-split-row db-split-primary">
@@ -414,7 +447,8 @@ function DashboardWorkoutSetup({
                   <strong>{getSplitName(dashboardSummary.topSplitThisMonth.splitId)}</strong>
                 </div>
                 <span className="db-meta-pill">
-                  {formatNumber(dashboardSummary.topSplitThisMonth.volume)} vol · {dashboardSummary.topSplitThisMonth.count} sessions
+                  {formatNumber(dashboardSummary.topSplitThisMonth.volume)} vol ·{' '}
+                  {dashboardSummary.topSplitThisMonth.count} sessions
                 </span>
               </div>
             )}
@@ -424,7 +458,9 @@ function DashboardWorkoutSetup({
                   <span>Most used overall</span>
                   <strong>{getSplitName(dashboardSummary.mostUsedSplit.splitId)}</strong>
                 </div>
-                <span className="db-meta-pill">{dashboardSummary.mostUsedSplit.count} sessions</span>
+                <span className="db-meta-pill">
+                  {dashboardSummary.mostUsedSplit.count} sessions
+                </span>
               </div>
             )}
           </div>
@@ -481,10 +517,7 @@ function DashboardWorkoutSetup({
   );
 }
 
-function DashboardCalendarState({
-  dashboardSummary,
-  weeklyWorkoutGoal,
-}) {
+function DashboardCalendarState({ dashboardSummary, weeklyWorkoutGoal }) {
   return (
     <div className="db-calendar-state">
       <div className="db-calendar-preview" aria-hidden="true">
@@ -500,7 +533,9 @@ function DashboardCalendarState({
         <p>This space turns into a real training calendar once you put one workout on the board.</p>
         <div className="db-guidance-points">
           <span className="db-guidance-pill">{weeklyWorkoutGoal} session goal</span>
-          <span className="db-guidance-pill">{dashboardSummary.daysRemainingThisWeek}d left this week</span>
+          <span className="db-guidance-pill">
+            {dashboardSummary.daysRemainingThisWeek}d left this week
+          </span>
         </div>
       </div>
     </div>
@@ -532,13 +567,10 @@ export default function DashboardView({
   const suggestedSplitId =
     latestWorkout?.splitId && latestWorkout.splitId !== ''
       ? latestWorkout.splitId
-      : splits[0]?.id ?? '';
+      : (splits[0]?.id ?? '');
   const suggestedSplitName = suggestedSplitId ? getSplitName(suggestedSplitId) : '';
   const latestWorkoutVolume = latestWorkout
-    ? latestWorkout.entries.reduce(
-        (sum, entry) => sum + getEntryMetrics(entry).totalVolume,
-        0,
-      )
+    ? latestWorkout.entries.reduce((sum, entry) => sum + getEntryMetrics(entry).totalVolume, 0)
     : 0;
   const weeklyTrendMax = Math.max(
     ...dashboardSummary.weeklyVolumeTrend.map((day) => day.volume),
@@ -550,15 +582,17 @@ export default function DashboardView({
     : null;
   const bodyweightValues = bodyweightSummary.recentEntries.map((entry) => entry.weight);
   const bodyweightMin = bodyweightValues.length ? Math.min(...bodyweightValues) : 0;
-  const bodyweightRange = bodyweightValues.length ? Math.max(...bodyweightValues) - bodyweightMin || 1 : 1;
+  const bodyweightRange = bodyweightValues.length
+    ? Math.max(...bodyweightValues) - bodyweightMin || 1
+    : 1;
   const hasWeeklySplitPlan = dashboardSummary.weeklySplitPlan.length > 0;
   const latestWorkoutSplitName = latestWorkout?.splitId ? getSplitName(latestWorkout.splitId) : '';
   const isEmptyWeek = dashboardSummary.workoutsThisWeek === 0;
   const hasPerformanceBaseline =
-    Boolean(dashboardSummary.bestWeek)
-    || Boolean(dashboardSummary.bestMonth)
-    || dashboardSummary.latestPersonalRecords.length > 0
-    || dashboardSummary.totalVolumeThisMonth > 0;
+    Boolean(dashboardSummary.bestWeek) ||
+    Boolean(dashboardSummary.bestMonth) ||
+    dashboardSummary.latestPersonalRecords.length > 0 ||
+    dashboardSummary.totalVolumeThisMonth > 0;
 
   return (
     <main className="db">
@@ -585,7 +619,9 @@ export default function DashboardView({
               <span className="db-label">Weekly support</span>
               <h3 className="db-card-title">How this week is going</h3>
             </div>
-            <strong className="db-card-header-value">{formatNumber(dashboardSummary.totalVolumeThisWeek)}</strong>
+            <strong className="db-card-header-value">
+              {formatNumber(dashboardSummary.totalVolumeThisWeek)}
+            </strong>
           </div>
           <p className="db-card-sub">
             {dashboardSummary.totalVolumeThisWeek
@@ -597,7 +633,10 @@ export default function DashboardView({
               label="Weekly rhythm"
               title="Start with one complete session"
               body="Use the first session to set the pace for this week."
-              points={[`${weeklyWorkoutGoal} session goal`, `${dashboardSummary.daysRemainingThisWeek}d left this week`]}
+              points={[
+                `${weeklyWorkoutGoal} session goal`,
+                `${dashboardSummary.daysRemainingThisWeek}d left this week`,
+              ]}
               variant="accent"
             />
           ) : (
@@ -607,7 +646,9 @@ export default function DashboardView({
                   <div className="db-bar-track">
                     <div
                       className="db-bar-fill"
-                      style={{ height: `${Math.max((day.volume / weeklyTrendMax) * 100, day.volume ? 14 : 4)}%` }}
+                      style={{
+                        height: `${Math.max((day.volume / weeklyTrendMax) * 100, day.volume ? 14 : 4)}%`,
+                      }}
                     />
                   </div>
                   <span className="db-bar-value">{formatNumber(day.volume)}</span>
@@ -635,7 +676,9 @@ export default function DashboardView({
             <div className="db-card-header">
               <div>
                 <span className="db-label">Training calendar</span>
-                <h3 className="db-card-title">{heatmapActiveDays ? 'Last 28 days' : 'Get your month started'}</h3>
+                <h3 className="db-card-title">
+                  {heatmapActiveDays ? 'Last 28 days' : 'Get your month started'}
+                </h3>
               </div>
               <span className="db-meta-pill">{heatmapActiveDays} active days</span>
             </div>
@@ -692,7 +735,9 @@ export default function DashboardView({
               <div>
                 <span className="db-label">Bodyweight</span>
                 <h3 className="db-card-title">
-                  {bodyweightSummary.latestWeight !== null ? `${formatNumber(bodyweightSummary.latestWeight)} kg` : 'Bodyweight tracking'}
+                  {bodyweightSummary.latestWeight !== null
+                    ? `${formatNumber(bodyweightSummary.latestWeight)} kg`
+                    : 'Bodyweight tracking'}
                 </h3>
               </div>
               <span className="db-meta-pill">
@@ -755,7 +800,11 @@ export default function DashboardView({
               <h3 className="db-card-title">{formatDisplayDate(latestWorkout.date)}</h3>
             </div>
             <div className="db-latest-meta">
-              {latestWorkout.splitId && <span className="db-meta-pill db-pill-accent">{getSplitName(latestWorkout.splitId)}</span>}
+              {latestWorkout.splitId && (
+                <span className="db-meta-pill db-pill-accent">
+                  {getSplitName(latestWorkout.splitId)}
+                </span>
+              )}
               <span className="db-meta-pill">{latestWorkout.entries.length} exercises</span>
               <span className="db-meta-pill">{formatNumber(latestWorkoutVolume)} vol</span>
             </div>
@@ -764,7 +813,10 @@ export default function DashboardView({
             {latestWorkout.entries.map((entry) => {
               const metrics = getEntryMetrics(entry);
               return (
-                <div key={`${latestWorkout.id}-${entry.exerciseId}`} className="db-latest-entry timeline-item">
+                <div
+                  key={`${latestWorkout.id}-${entry.exerciseId}`}
+                  className="db-latest-entry timeline-item"
+                >
                   <div className="timeline-node"></div>
                   <div className="timeline-content">
                     <strong>{getExerciseName(entry.exerciseId)}</strong>
@@ -804,13 +856,33 @@ export default function DashboardView({
 
       {/* ---- DATA ACTIONS ---- */}
       <div className="db-footer-actions">
-        <button type="button" className="ghost-button" onClick={exportAppData}>Export JSON</button>
-        <button type="button" className="ghost-button" onClick={() => fileInputRef.current?.click()}>Import JSON</button>
-        <input ref={fileInputRef} type="file" accept="application/json,.json" className="hidden-input" onChange={handleImportFile} />
+        <button type="button" className="ghost-button" onClick={exportAppData}>
+          Export JSON
+        </button>
+        <button
+          type="button"
+          className="ghost-button"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          Import JSON
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden-input"
+          onChange={handleImportFile}
+        />
       </div>
       {dataMessage.text && (
         <p
-          className={dataMessage.type === 'error' ? 'feedback error' : dataMessage.type === 'warning' ? 'feedback warning' : 'feedback success'}
+          className={
+            dataMessage.type === 'error'
+              ? 'feedback error'
+              : dataMessage.type === 'warning'
+                ? 'feedback warning'
+                : 'feedback success'
+          }
           role={dataMessage.type === 'error' ? 'alert' : 'status'}
           aria-live={dataMessage.type === 'error' ? 'assertive' : 'polite'}
         >

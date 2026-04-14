@@ -12,7 +12,7 @@ class ErrorBoundary extends React.Component {
   static getDerivedStateFromError(error) {
     return {
       hasError: true,
-      message: error instanceof Error ? error.message : 'Unbekannter Fehler',
+      message: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 
@@ -22,8 +22,11 @@ class ErrorBoundary extends React.Component {
         <div className="app-shell">
           <section className="panel">
             <div className="empty-state">
-              <h3>Die App konnte nicht geladen werden</h3>
-              <p>Bitte lade die Seite neu. Wenn das Problem bleibt, sag mir die Fehlermeldung aus der Browser-Konsole.</p>
+              <h3>The app could not load</h3>
+              <p>
+                Please reload the page. If the issue continues, check the browser console for
+                details.
+              </p>
               <p>{this.state.message}</p>
             </div>
           </section>

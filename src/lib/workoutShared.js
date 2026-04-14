@@ -7,7 +7,10 @@ const dashboardDateFormatter = new Intl.DateTimeFormat(undefined, {
 });
 
 export function createId() {
-  if (typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function') {
+  if (
+    typeof globalThis.crypto !== 'undefined' &&
+    typeof globalThis.crypto.randomUUID === 'function'
+  ) {
     return globalThis.crypto.randomUUID();
   }
 
@@ -41,8 +44,30 @@ export function createSetFromValues(weight, reps) {
 }
 
 export function parseInputDate(value) {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  if (typeof value !== 'string') {
+    return new Date(Number.NaN);
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+
+  if (!match) {
+    return new Date(Number.NaN);
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(year, month - 1, day);
+
+  if (
+    parsedDate.getFullYear() !== year ||
+    parsedDate.getMonth() !== month - 1 ||
+    parsedDate.getDate() !== day
+  ) {
+    return new Date(Number.NaN);
+  }
+
+  return parsedDate;
 }
 
 export function getInputValueFromDate(date) {
@@ -231,7 +256,11 @@ export function normalizeWorkoutTemplate(rawTemplate) {
   const entries = Array.isArray(rawTemplate.entries)
     ? rawTemplate.entries
         .map((rawEntry) => {
-          if (!rawEntry || typeof rawEntry !== 'object' || typeof rawEntry.exerciseId !== 'string') {
+          if (
+            !rawEntry ||
+            typeof rawEntry !== 'object' ||
+            typeof rawEntry.exerciseId !== 'string'
+          ) {
             return null;
           }
 
@@ -329,8 +358,7 @@ export function normalizeSplit(rawSplit) {
           }
 
           return {
-            id:
-              typeof rawExercise.id === 'string' && rawExercise.id ? rawExercise.id : createId(),
+            id: typeof rawExercise.id === 'string' && rawExercise.id ? rawExercise.id : createId(),
             exerciseId: rawExercise.exerciseId,
             defaultSets,
           };
@@ -338,7 +366,11 @@ export function normalizeSplit(rawSplit) {
         .filter(Boolean)
     : [];
 
-  if (Array.isArray(rawSplit.exercises) && rawSplit.exercises.length > 0 && exercises.length === 0) {
+  if (
+    Array.isArray(rawSplit.exercises) &&
+    rawSplit.exercises.length > 0 &&
+    exercises.length === 0
+  ) {
     return null;
   }
 
@@ -432,7 +464,11 @@ export function normalizeWorkout(rawWorkout) {
   const entries = Array.isArray(rawWorkout.entries)
     ? rawWorkout.entries
         .map((rawEntry) => {
-          if (!rawEntry || typeof rawEntry !== 'object' || typeof rawEntry.exerciseId !== 'string') {
+          if (
+            !rawEntry ||
+            typeof rawEntry !== 'object' ||
+            typeof rawEntry.exerciseId !== 'string'
+          ) {
             return null;
           }
 
@@ -493,7 +529,13 @@ export function sortWorkouts(workouts) {
 }
 
 export function formatDisplayDate(value) {
-  return dashboardDateFormatter.format(parseInputDate(value));
+  const date = parseInputDate(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return dashboardDateFormatter.format(date);
 }
 
 export function formatCalendarDate(value) {
@@ -562,7 +604,7 @@ export function parseSet(set) {
 export function getEntryMetrics(entry) {
   const bestWeight = entry.sets.reduce((max, set) => Math.max(max, set.weight), 0);
   const bestReps = entry.sets.reduce((max, set) => Math.max(max, set.reps), 0);
-  const totalVolume = entry.sets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+  const totalVolume = entry.sets.reduce((sum, set) => sum + set.weight * set.reps, 0);
 
   return {
     bestWeight,

@@ -41,7 +41,11 @@ function renderExerciseView(overrides = {}) {
     startEditingSplit: vi.fn(),
     deleteSplit: vi.fn(),
     moveSavedSplit: vi.fn(),
-    createSplitExercise: vi.fn(() => ({ id: 'split-exercise-1', exerciseId: '', defaultSets: '3' })),
+    createSplitExercise: vi.fn(() => ({
+      id: 'split-exercise-1',
+      exerciseId: '',
+      defaultSets: '3',
+    })),
     getExerciseName: vi.fn(() => 'Back squat'),
     loadWorkoutTemplate: vi.fn(),
     deleteWorkoutTemplate: vi.fn(),
@@ -236,7 +240,9 @@ describe('ExerciseView', () => {
       ],
     });
 
-    await user.click(screen.getAllByRole('button', { name: 'Rename template Push template' }).at(-1));
+    await user.click(
+      screen.getAllByRole('button', { name: 'Rename template Push template' }).at(-1),
+    );
 
     expect(props.renameWorkoutTemplate).toHaveBeenCalledWith('template-1');
   });
@@ -287,7 +293,9 @@ describe('ExerciseView', () => {
       ],
     });
 
-    await user.click(screen.getByRole('button', { name: 'Use template Push template as a split template' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Use template Push template as a split template' }),
+    );
 
     expect(props.createSplitFromTemplate).toHaveBeenCalledWith('template-1');
   });

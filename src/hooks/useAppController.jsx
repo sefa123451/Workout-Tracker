@@ -14,7 +14,6 @@ import {
   createWorkoutForm,
   createWorkoutFormFromTemplate,
   createWorkoutFormFromWorkout,
-  formatCalendarDate,
   formatDelta,
   formatDisplayDate,
   formatNumber,
@@ -29,19 +28,10 @@ import {
   sortWorkouts,
   validateImportedData,
 } from '../lib/workoutData.js';
-import { THEME_OPTIONS, useThemeMode } from './useThemeMode.js';
+import { useThemeMode } from './useThemeMode.js';
 import { useTrackerDerivedData } from './useTrackerDerivedData.js';
 import { useTrackerPersistence } from './useTrackerPersistence.js';
 
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', a11yLabel: 'dashboard', icon: 'dashboard' },
-  { id: 'exercises', label: 'Exercises', a11yLabel: 'exercises', icon: 'exercises' },
-  { id: 'log', label: 'Log workout', a11yLabel: 'Log workout', icon: 'log' },
-  { id: 'history', label: 'History', a11yLabel: 'history', icon: 'history' },
-  { id: 'progress', label: 'Progress', a11yLabel: 'progress', icon: 'progress' },
-  { id: 'settings', label: 'Settings', a11yLabel: 'settings', icon: 'settings' },
-];
-const PROGRESS_WINDOWS = [7, 30, 90];
 const LAST_TEMPLATE_STORAGE_KEY = 'workout-tracker-last-template-id';
 const VIEW_META = {
   dashboard: { title: 'Good morning 👋' },
@@ -51,84 +41,6 @@ const VIEW_META = {
   progress: { title: 'Progress' },
   settings: { title: 'Settings' },
 };
-
-function SidebarIcon({ icon }) {
-  const commonProps = {
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: '1.8',
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    'aria-hidden': 'true',
-  };
-
-  switch (icon) {
-    case 'dashboard':
-      return (
-        <svg {...commonProps}>
-          <rect x="3.5" y="3.5" width="7" height="7" rx="2.2" />
-          <rect x="13.5" y="3.5" width="7" height="11" rx="2.2" />
-          <rect x="3.5" y="13.5" width="7" height="7" rx="2.2" />
-          <rect x="13.5" y="17.5" width="7" height="3" rx="1.5" />
-        </svg>
-      );
-    case 'exercises':
-      return (
-        <svg {...commonProps}>
-          <path d="M4 10.5h2.4" />
-          <path d="M17.6 10.5H20" />
-          <path d="M6.4 8.3v4.4" />
-          <path d="M17.6 8.3v4.4" />
-          <path d="M8.6 9.4v2.2" />
-          <path d="M15.4 9.4v2.2" />
-          <path d="M8.6 10.5h6.8" />
-          <path d="M11.1 8.1h1.8" />
-          <path d="M11.1 12.9h1.8" />
-        </svg>
-      );
-    case 'log':
-      return (
-        <svg {...commonProps}>
-          <path d="M12 5v14" />
-          <path d="M5 12h14" />
-          <rect x="3.5" y="3.5" width="17" height="17" rx="4" />
-        </svg>
-      );
-    case 'history':
-      return (
-        <svg {...commonProps}>
-          <path d="M4 12a8 8 0 118 8" />
-          <path d="M4 4v5h5" />
-          <path d="M12 8v5l3 2" />
-        </svg>
-      );
-    case 'progress':
-      return (
-        <svg {...commonProps}>
-          <path d="M4 18l5-6 4 3 7-9" />
-          <path d="M4 20h16" />
-        </svg>
-      );
-    case 'settings':
-      return (
-        <svg {...commonProps}>
-          <circle cx="12" cy="12" r="2.9" />
-          <path d="M12 3.8v2.1" />
-          <path d="M12 18.1v2.1" />
-          <path d="M20.2 12h-2.1" />
-          <path d="M5.9 12H3.8" />
-          <path d="M17.8 6.2l-1.5 1.5" />
-          <path d="M7.7 16.3l-1.5 1.5" />
-          <path d="M17.8 17.8l-1.5-1.5" />
-          <path d="M7.7 7.7L6.2 6.2" />
-          <circle cx="12" cy="12" r="6.2" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
 
 function getInitialLastTemplateId() {
   if (typeof window === 'undefined') {
@@ -173,6 +85,7 @@ export function useAppController() {
   const undoRestoreRef = useRef(null);
   const [dataMessage, setDataMessage] = useState({ type: '', text: '' });
   const [undoNotice, setUndoNotice] = useState(null);
+  const [activeDialog, setActiveDialog] = useState(null);
   const [pendingImport, setPendingImport] = useState(null);
   const [exerciseName, setExerciseName] = useState('');
   const [exerciseTargetWeight, setExerciseTargetWeight] = useState('');
@@ -224,6 +137,12 @@ export function useAppController() {
       setSelectedSplitProgressId(splits[0]?.id ?? '');
     }
   }, [selectedSplitProgressId, splits]);
+
+  useEffect(() => {
+    if (selectedProgressView === 'split' && splits.length === 0) {
+      setSelectedProgressView('exercise');
+    }
+  }, [selectedProgressView, splits.length]);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -336,6 +255,63 @@ export function useAppController() {
   function showUndoNotice(text, restore) {
     undoRestoreRef.current = restore;
     setUndoNotice({ text });
+  }
+
+  function openConfirmDialog({
+    title,
+    description = '',
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    tone = 'default',
+    onConfirm,
+  }) {
+    setActiveDialog({
+      kind: 'confirm',
+      title,
+      description,
+      confirmLabel,
+      cancelLabel,
+      tone,
+      onConfirm,
+    });
+  }
+
+  function openPromptDialog({
+    title,
+    description = '',
+    inputLabel = 'Name',
+    defaultValue = '',
+    confirmLabel = 'Save',
+    cancelLabel = 'Cancel',
+    tone = 'default',
+    onConfirm,
+  }) {
+    setActiveDialog({
+      kind: 'prompt',
+      title,
+      description,
+      inputLabel,
+      defaultValue,
+      confirmLabel,
+      cancelLabel,
+      tone,
+      onConfirm,
+    });
+  }
+
+  function handleDialogCancel() {
+    setActiveDialog(null);
+  }
+
+  function handleDialogConfirm(inputValue = '') {
+    setActiveDialog((currentDialog) => {
+      if (!currentDialog) {
+        return currentDialog;
+      }
+
+      const shouldClose = currentDialog.onConfirm?.(inputValue);
+      return shouldClose === false ? currentDialog : null;
+    });
   }
 
   function handleUndoDelete() {
@@ -518,17 +494,26 @@ export function useAppController() {
     const parsedTargetRepMax = normalizedTargetRepMax ? Number(normalizedTargetRepMax) : null;
     const parsedWeightStep = normalizedWeightStep ? Number(normalizedWeightStep) : 2.5;
 
-    if (normalizedTargetWeight && (!Number.isFinite(parsedTargetWeight) || parsedTargetWeight <= 0)) {
+    if (
+      normalizedTargetWeight &&
+      (!Number.isFinite(parsedTargetWeight) || parsedTargetWeight <= 0)
+    ) {
       setExerciseMessage({ type: 'error', text: 'Target weight must be a positive number.' });
       return;
     }
 
-    if (normalizedTargetRepMin && (!Number.isInteger(parsedTargetRepMin) || parsedTargetRepMin <= 0)) {
+    if (
+      normalizedTargetRepMin &&
+      (!Number.isInteger(parsedTargetRepMin) || parsedTargetRepMin <= 0)
+    ) {
       setExerciseMessage({ type: 'error', text: 'Target rep min must be a whole number.' });
       return;
     }
 
-    if (normalizedTargetRepMax && (!Number.isInteger(parsedTargetRepMax) || parsedTargetRepMax <= 0)) {
+    if (
+      normalizedTargetRepMax &&
+      (!Number.isInteger(parsedTargetRepMax) || parsedTargetRepMax <= 0)
+    ) {
       setExerciseMessage({ type: 'error', text: 'Target rep max must be a whole number.' });
       return;
     }
@@ -538,7 +523,10 @@ export function useAppController() {
       parsedTargetRepMax !== null &&
       parsedTargetRepMin > parsedTargetRepMax
     ) {
-      setExerciseMessage({ type: 'error', text: 'Target rep min cannot be higher than target rep max.' });
+      setExerciseMessage({
+        type: 'error',
+        text: 'Target rep min cannot be higher than target rep max.',
+      });
       return;
     }
 
@@ -622,83 +610,89 @@ export function useAppController() {
     const linkedWorkoutCount = getLinkedWorkoutCount(exerciseId);
     const historyMessage =
       linkedWorkoutCount > 0
-        ? ` Existing workout history will be kept and shown as "Unknown exercise (deleted)".`
-        : '';
-    const confirmed = window.confirm(
-      `Delete ${exercise.name}?${historyMessage}`,
-    );
+        ? 'Existing workout history will be kept and shown as "Unknown exercise (deleted)".'
+        : 'This removes it from your exercise library.';
 
-    if (!confirmed) {
-      return;
-    }
+    openConfirmDialog({
+      title: `Delete ${exercise.name}?`,
+      description: historyMessage,
+      confirmLabel: 'Delete exercise',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+      onConfirm: () => {
+        const previousExercises = exercises;
+        const previousSplits = splits;
+        const previousSplitForm = splitForm;
+        const previousWorkoutForm = workoutForm;
+        const previousTemplates = templates;
+        const previousEditingExerciseId = editingExerciseId;
+        const previousExerciseName = exerciseName;
+        const previousExerciseTargetWeight = exerciseTargetWeight;
+        const previousExerciseTargetRepMin = exerciseTargetRepMin;
+        const previousExerciseTargetRepMax = exerciseTargetRepMax;
+        const previousExerciseWeightStep = exerciseWeightStep;
 
-    const previousExercises = exercises;
-    const previousSplits = splits;
-    const previousSplitForm = splitForm;
-    const previousWorkoutForm = workoutForm;
-    const previousTemplates = templates;
-    const previousEditingExerciseId = editingExerciseId;
-    const previousExerciseName = exerciseName;
-    const previousExerciseTargetWeight = exerciseTargetWeight;
-    const previousExerciseTargetRepMin = exerciseTargetRepMin;
-    const previousExerciseTargetRepMax = exerciseTargetRepMax;
-    const previousExerciseWeightStep = exerciseWeightStep;
+        setExercises((current) => current.filter((item) => item.id !== exerciseId));
+        setSplits((current) =>
+          current.map((split) => ({
+            ...split,
+            exercises: split.exercises.filter(
+              (splitExercise) => splitExercise.exerciseId !== exerciseId,
+            ),
+          })),
+        );
+        setSplitForm((current) => ({
+          ...current,
+          exercises: current.exercises.filter((item) => item.exerciseId !== exerciseId),
+        }));
+        setWorkoutForm((current) => ({
+          ...current,
+          entries: current.entries.map((entry) =>
+            entry.exerciseId === exerciseId
+              ? {
+                  ...entry,
+                  exerciseId: '',
+                }
+              : entry,
+          ),
+          skippedEntries: current.skippedEntries.filter((entry) => entry.exerciseId !== exerciseId),
+        }));
+        setTemplates((current) =>
+          current.map((template) => ({
+            ...template,
+            entries: template.entries.filter((entry) => entry.exerciseId !== exerciseId),
+          })),
+        );
 
-    setExercises((current) => current.filter((item) => item.id !== exerciseId));
-    setSplits((current) =>
-      current.map((split) => ({
-        ...split,
-        exercises: split.exercises.filter((splitExercise) => splitExercise.exerciseId !== exerciseId),
-      })),
-    );
-    setSplitForm((current) => ({
-      ...current,
-      exercises: current.exercises.filter((item) => item.exerciseId !== exerciseId),
-    }));
-    setWorkoutForm((current) => ({
-      ...current,
-      entries: current.entries.map((entry) =>
-        entry.exerciseId === exerciseId
-          ? {
-              ...entry,
-              exerciseId: '',
-            }
-          : entry,
-      ),
-      skippedEntries: current.skippedEntries.filter((entry) => entry.exerciseId !== exerciseId),
-    }));
-    setTemplates((current) =>
-      current.map((template) => ({
-        ...template,
-        entries: template.entries.filter((entry) => entry.exerciseId !== exerciseId),
-      })),
-    );
+        if (editingExerciseId === exerciseId) {
+          resetExerciseForm();
+        } else {
+          setExerciseMessage({
+            type: 'success',
+            text:
+              linkedWorkoutCount > 0
+                ? `Deleted ${exercise.name}. Linked workout history was preserved.`
+                : `Deleted ${exercise.name}.`,
+          });
+        }
 
-    if (editingExerciseId === exerciseId) {
-      resetExerciseForm();
-    } else {
-      setExerciseMessage({
-        type: 'success',
-        text:
-          linkedWorkoutCount > 0
-            ? `Deleted ${exercise.name}. Linked workout history was preserved.`
-            : `Deleted ${exercise.name}.`,
-      });
-    }
+        showUndoNotice(`Deleted ${exercise.name}.`, () => {
+          setExercises(previousExercises);
+          setSplits(previousSplits);
+          setSplitForm(previousSplitForm);
+          setWorkoutForm(previousWorkoutForm);
+          setTemplates(previousTemplates);
+          setEditingExerciseId(previousEditingExerciseId);
+          setExerciseName(previousExerciseName);
+          setExerciseTargetWeight(previousExerciseTargetWeight);
+          setExerciseTargetRepMin(previousExerciseTargetRepMin);
+          setExerciseTargetRepMax(previousExerciseTargetRepMax);
+          setExerciseWeightStep(previousExerciseWeightStep);
+          setExerciseMessage({ type: 'success', text: `${exercise.name} restored.` });
+        });
 
-    showUndoNotice(`Deleted ${exercise.name}.`, () => {
-      setExercises(previousExercises);
-      setSplits(previousSplits);
-      setSplitForm(previousSplitForm);
-      setWorkoutForm(previousWorkoutForm);
-      setTemplates(previousTemplates);
-      setEditingExerciseId(previousEditingExerciseId);
-      setExerciseName(previousExerciseName);
-      setExerciseTargetWeight(previousExerciseTargetWeight);
-      setExerciseTargetRepMin(previousExerciseTargetRepMin);
-      setExerciseTargetRepMax(previousExerciseTargetRepMax);
-      setExerciseWeightStep(previousExerciseWeightStep);
-      setExerciseMessage({ type: 'success', text: `${exercise.name} restored.` });
+        return true;
+      },
     });
   }
 
@@ -749,13 +743,7 @@ export function useAppController() {
     return `${normalizedBaseName} ${suffix}`;
   }
 
-  function openSplitPlanner(
-    nextForm,
-    {
-      editingId = null,
-      message = { type: '', text: '' },
-    } = {},
-  ) {
+  function openSplitPlanner(nextForm, { editingId = null, message = { type: '', text: '' } } = {}) {
     setEditingSplitId(editingId);
     setSplitForm(nextForm);
     setSplitMessage(message);
@@ -818,32 +806,42 @@ export function useAppController() {
       return;
     }
 
-    const providedName = window.prompt('Template name', template.name);
+    openPromptDialog({
+      title: 'Rename template',
+      description: 'Choose a unique name for this template.',
+      inputLabel: 'Template name',
+      defaultValue: template.name,
+      confirmLabel: 'Rename template',
+      cancelLabel: 'Cancel',
+      onConfirm: (providedName) => {
+        const templateName = providedName.trim();
 
-    if (providedName === null) {
-      return;
-    }
+        if (!templateName) {
+          setExerciseMessage({ type: 'error', text: 'Template name cannot be empty.' });
+          return false;
+        }
 
-    const templateName = providedName.trim();
+        if (
+          templates.some(
+            (item) =>
+              item.id !== templateId &&
+              item.name.trim().toLowerCase() === templateName.toLowerCase(),
+          )
+        ) {
+          setExerciseMessage({ type: 'error', text: 'Template names should be unique.' });
+          return false;
+        }
 
-    if (!templateName) {
-      setExerciseMessage({ type: 'error', text: 'Template name cannot be empty.' });
-      return;
-    }
-
-    if (
-      templates.some(
-        (item) => item.id !== templateId && item.name.trim().toLowerCase() === templateName.toLowerCase(),
-      )
-    ) {
-      setExerciseMessage({ type: 'error', text: 'Template names should be unique.' });
-      return;
-    }
-
-    setTemplates((current) =>
-      current.map((item) => (item.id === templateId ? { ...item, name: templateName } : item)),
-    );
-    showExerciseLibraryMessage({ type: 'success', text: `Renamed template to ${templateName}.` });
+        setTemplates((current) =>
+          current.map((item) => (item.id === templateId ? { ...item, name: templateName } : item)),
+        );
+        showExerciseLibraryMessage({
+          type: 'success',
+          text: `Renamed template to ${templateName}.`,
+        });
+        return true;
+      },
+    });
   }
 
   function duplicateWorkoutTemplate(templateId) {
@@ -877,7 +875,8 @@ export function useAppController() {
     if (
       splits.some(
         (split) =>
-          split.id !== editingSplitId && split.name.trim().toLowerCase() === normalizedName.toLowerCase(),
+          split.id !== editingSplitId &&
+          split.name.trim().toLowerCase() === normalizedName.toLowerCase(),
       )
     ) {
       return { error: 'Split names should be unique.' };
@@ -908,7 +907,9 @@ export function useAppController() {
       }
 
       if (!Number.isInteger(defaultSets) || defaultSets < 1) {
-        return { error: `Split exercise ${index + 1}: default sets must be a whole number above 0.` };
+        return {
+          error: `Split exercise ${index + 1}: default sets must be a whole number above 0.`,
+        };
       }
 
       normalizedExercises.push({
@@ -983,49 +984,54 @@ export function useAppController() {
       linkedWorkoutCount > 0
         ? ' Existing workout history will be kept and shown with an unknown split label.'
         : '';
-    const confirmed = window.confirm(`Delete ${split.name}?${historyMessage}`);
+    openConfirmDialog({
+      title: `Delete ${split.name}?`,
+      description: historyMessage.trim() || 'This removes it from your split library.',
+      confirmLabel: 'Delete split',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+      onConfirm: () => {
+        const previousSplits = splits;
+        const previousWorkoutForm = workoutForm;
+        const previousTemplates = templates;
+        const previousEditingSplitId = editingSplitId;
+        const previousSplitForm = splitForm;
 
-    if (!confirmed) {
-      return;
-    }
+        setSplits((current) => current.filter((item) => item.id !== splitId));
+        setWorkoutForm((current) => ({
+          ...current,
+          splitId: current.splitId === splitId ? '' : current.splitId,
+        }));
+        setTemplates((current) =>
+          current.map((template) => ({
+            ...template,
+            splitId: template.splitId === splitId ? '' : template.splitId,
+          })),
+        );
 
-    const previousSplits = splits;
-    const previousWorkoutForm = workoutForm;
-    const previousTemplates = templates;
-    const previousEditingSplitId = editingSplitId;
-    const previousSplitForm = splitForm;
+        if (editingSplitId === splitId) {
+          resetSplitForm();
+        } else {
+          setSplitMessage({
+            type: 'success',
+            text:
+              linkedWorkoutCount > 0
+                ? `Deleted ${split.name}. Linked workout history was preserved.`
+                : `Deleted ${split.name}.`,
+          });
+        }
 
-    setSplits((current) => current.filter((item) => item.id !== splitId));
-    setWorkoutForm((current) => ({
-      ...current,
-      splitId: current.splitId === splitId ? '' : current.splitId,
-    }));
-    setTemplates((current) =>
-      current.map((template) => ({
-        ...template,
-        splitId: template.splitId === splitId ? '' : template.splitId,
-      })),
-    );
+        showUndoNotice(`Deleted ${split.name}.`, () => {
+          setSplits(previousSplits);
+          setWorkoutForm(previousWorkoutForm);
+          setTemplates(previousTemplates);
+          setEditingSplitId(previousEditingSplitId);
+          setSplitForm(previousSplitForm);
+          setSplitMessage({ type: 'success', text: `${split.name} restored.` });
+        });
 
-    if (editingSplitId === splitId) {
-      resetSplitForm();
-    } else {
-      setSplitMessage({
-        type: 'success',
-        text:
-          linkedWorkoutCount > 0
-            ? `Deleted ${split.name}. Linked workout history was preserved.`
-            : `Deleted ${split.name}.`,
-      });
-    }
-
-    showUndoNotice(`Deleted ${split.name}.`, () => {
-      setSplits(previousSplits);
-      setWorkoutForm(previousWorkoutForm);
-      setTemplates(previousTemplates);
-      setEditingSplitId(previousEditingSplitId);
-      setSplitForm(previousSplitForm);
-      setSplitMessage({ type: 'success', text: `${split.name} restored.` });
+        return true;
+      },
     });
   }
 
@@ -1160,12 +1166,12 @@ export function useAppController() {
     }
 
     if (form.entries.length === 0) {
-      return { error: 'This workout has no exercises yet. Add one or choose a split with exercises.' };
+      return {
+        error: 'This workout has no exercises yet. Add one or choose a split with exercises.',
+      };
     }
 
-    const chosenExerciseIds = form.entries
-      .map((entry) => entry.exerciseId)
-      .filter(Boolean);
+    const chosenExerciseIds = form.entries.map((entry) => entry.exerciseId).filter(Boolean);
 
     if (new Set(chosenExerciseIds).size !== chosenExerciseIds.length) {
       return { error: 'Use each exercise only once per workout entry.' };
@@ -1245,18 +1251,21 @@ export function useAppController() {
 
     const duplicatedForm = createWorkoutFormFromWorkout(workout);
 
-    openWorkoutComposer({
-      ...duplicatedForm,
-      date: getTodayInputValue(),
-      notes: '',
-      mood: '',
-      effort: '',
-    }, {
-      message: {
-        type: 'success',
-        text: `Loaded a copy of ${formatDisplayDate(workout.date)}. Save it as a new workout when ready.`,
+    openWorkoutComposer(
+      {
+        ...duplicatedForm,
+        date: getTodayInputValue(),
+        notes: '',
+        mood: '',
+        effort: '',
       },
-    });
+      {
+        message: {
+          type: 'success',
+          text: `Loaded a copy of ${formatDisplayDate(workout.date)}. Save it as a new workout when ready.`,
+        },
+      },
+    );
   }
 
   function saveWorkoutAsTemplate(workoutId) {
@@ -1267,8 +1276,12 @@ export function useAppController() {
       return;
     }
 
-    const sourceSplit = workout.splitId ? splits.find((split) => split.id === workout.splitId) : null;
-    const baseName = sourceSplit ? `${sourceSplit.name} template` : `${formatDisplayDate(workout.date)} template`;
+    const sourceSplit = workout.splitId
+      ? splits.find((split) => split.id === workout.splitId)
+      : null;
+    const baseName = sourceSplit
+      ? `${sourceSplit.name} template`
+      : `${formatDisplayDate(workout.date)} template`;
     const template = {
       id: createId(),
       name: getUniqueTemplateName(baseName),
@@ -1293,36 +1306,45 @@ export function useAppController() {
     const suggestedName = getUniqueTemplateName(
       workoutForm.splitId ? `${getSplitName(workoutForm.splitId)} template` : 'Workout template',
     );
-    const providedName = window.prompt('Template name', suggestedName);
+    openPromptDialog({
+      title: 'Save template',
+      description: 'Choose a unique template name before saving.',
+      inputLabel: 'Template name',
+      defaultValue: suggestedName,
+      confirmLabel: 'Save template',
+      cancelLabel: 'Cancel',
+      onConfirm: (providedName) => {
+        const templateName = providedName.trim();
 
-    if (providedName === null) {
-      return;
-    }
+        if (!templateName) {
+          setWorkoutMessage({ type: 'error', text: 'Template name cannot be empty.' });
+          return false;
+        }
 
-    const templateName = providedName.trim();
+        if (
+          templates.some(
+            (template) => template.name.trim().toLowerCase() === templateName.toLowerCase(),
+          )
+        ) {
+          setWorkoutMessage({ type: 'error', text: 'Template names should be unique.' });
+          return false;
+        }
 
-    if (!templateName) {
-      setWorkoutMessage({ type: 'error', text: 'Template name cannot be empty.' });
-      return;
-    }
+        const template = {
+          id: createId(),
+          name: templateName,
+          splitId: normalizedWorkout.value.splitId,
+          notes: normalizedWorkout.value.notes,
+          createdAt: new Date().toISOString(),
+          entries: normalizedWorkout.value.entries,
+        };
 
-    if (templates.some((template) => template.name.trim().toLowerCase() === templateName.toLowerCase())) {
-      setWorkoutMessage({ type: 'error', text: 'Template names should be unique.' });
-      return;
-    }
-
-    const template = {
-      id: createId(),
-      name: templateName,
-      splitId: normalizedWorkout.value.splitId,
-      notes: normalizedWorkout.value.notes,
-      createdAt: new Date().toISOString(),
-      entries: normalizedWorkout.value.entries,
-    };
-
-    setTemplates((current) => [...current, template]);
-    setSelectedWorkoutTemplateId(template.id);
-    setWorkoutMessage({ type: 'success', text: `Saved ${template.name}.` });
+        setTemplates((current) => [...current, template]);
+        setSelectedWorkoutTemplateId(template.id);
+        setWorkoutMessage({ type: 'success', text: `Saved ${template.name}.` });
+        return true;
+      },
+    });
   }
 
   function updateSelectedWorkoutTemplate() {
@@ -1443,7 +1465,9 @@ export function useAppController() {
       return;
     }
 
-    const sourceSplit = template.splitId ? splits.find((split) => split.id === template.splitId) : null;
+    const sourceSplit = template.splitId
+      ? splits.find((split) => split.id === template.splitId)
+      : null;
     const fallbackName = sourceSplit
       ? `${sourceSplit.name} copy`
       : template.name.toLowerCase().includes('template')
@@ -1470,8 +1494,12 @@ export function useAppController() {
       return;
     }
 
-    const sourceSplit = workout.splitId ? splits.find((split) => split.id === workout.splitId) : null;
-    const fallbackName = sourceSplit ? `${sourceSplit.name} copy` : `${formatDisplayDate(workout.date)} split`;
+    const sourceSplit = workout.splitId
+      ? splits.find((split) => split.id === workout.splitId)
+      : null;
+    const fallbackName = sourceSplit
+      ? `${sourceSplit.name} copy`
+      : `${formatDisplayDate(workout.date)} split`;
 
     const { seededExercises, form } = buildSeededSplitForm(workout.entries, fallbackName);
 
@@ -1512,31 +1540,36 @@ export function useAppController() {
       return;
     }
 
-    const confirmed = window.confirm(`Delete template ${template.name}?`);
+    openConfirmDialog({
+      title: `Delete template ${template.name}?`,
+      description: 'You can undo this from the banner after deleting.',
+      confirmLabel: 'Delete template',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+      onConfirm: () => {
+        const previousTemplates = templates;
+        const previousSelectedTemplateId = selectedWorkoutTemplateId;
+        const previousLastUsedTemplateId = lastUsedTemplateId;
 
-    if (!confirmed) {
-      return;
-    }
+        setTemplates((current) => current.filter((item) => item.id !== templateId));
 
-    const previousTemplates = templates;
-    const previousSelectedTemplateId = selectedWorkoutTemplateId;
-    const previousLastUsedTemplateId = lastUsedTemplateId;
+        if (selectedWorkoutTemplateId === templateId) {
+          setSelectedWorkoutTemplateId('');
+        }
 
-    setTemplates((current) => current.filter((item) => item.id !== templateId));
+        if (lastUsedTemplateId === templateId) {
+          setLastUsedTemplateId('');
+        }
 
-    if (selectedWorkoutTemplateId === templateId) {
-      setSelectedWorkoutTemplateId('');
-    }
+        showUndoNotice(`Deleted ${template.name}.`, () => {
+          setTemplates(previousTemplates);
+          setSelectedWorkoutTemplateId(previousSelectedTemplateId);
+          setLastUsedTemplateId(previousLastUsedTemplateId);
+          setExerciseMessage({ type: 'success', text: `${template.name} restored.` });
+        });
 
-    if (lastUsedTemplateId === templateId) {
-      setLastUsedTemplateId('');
-    }
-
-    showUndoNotice(`Deleted ${template.name}.`, () => {
-      setTemplates(previousTemplates);
-      setSelectedWorkoutTemplateId(previousSelectedTemplateId);
-      setLastUsedTemplateId(previousLastUsedTemplateId);
-      setExerciseMessage({ type: 'success', text: `${template.name} restored.` });
+        return true;
+      },
     });
   }
 
@@ -1577,27 +1610,32 @@ export function useAppController() {
       return;
     }
 
-    const confirmed = window.confirm(`Delete workout from ${formatDisplayDate(workout.date)}?`);
+    openConfirmDialog({
+      title: `Delete workout from ${formatDisplayDate(workout.date)}?`,
+      description: 'You can undo this from the banner after deleting.',
+      confirmLabel: 'Delete workout',
+      cancelLabel: 'Cancel',
+      tone: 'danger',
+      onConfirm: () => {
+        const previousWorkouts = workouts;
+        const previousEditingWorkoutId = editingWorkoutId;
+        const previousWorkoutForm = workoutForm;
 
-    if (!confirmed) {
-      return;
-    }
+        setWorkouts((current) => sortWorkouts(current.filter((item) => item.id !== workoutId)));
 
-    const previousWorkouts = workouts;
-    const previousEditingWorkoutId = editingWorkoutId;
-    const previousWorkoutForm = workoutForm;
+        if (editingWorkoutId === workoutId) {
+          resetWorkoutForm();
+        }
 
-    setWorkouts((current) => sortWorkouts(current.filter((item) => item.id !== workoutId)));
+        showUndoNotice(`Deleted workout from ${formatDisplayDate(workout.date)}.`, () => {
+          setWorkouts(previousWorkouts);
+          setEditingWorkoutId(previousEditingWorkoutId);
+          setWorkoutForm(previousWorkoutForm);
+          setWorkoutMessage({ type: 'success', text: 'Workout restored.' });
+        });
 
-    if (editingWorkoutId === workoutId) {
-      resetWorkoutForm();
-    }
-
-    showUndoNotice(`Deleted workout from ${formatDisplayDate(workout.date)}.`, () => {
-      setWorkouts(previousWorkouts);
-      setEditingWorkoutId(previousEditingWorkoutId);
-      setWorkoutForm(previousWorkoutForm);
-      setWorkoutMessage({ type: 'success', text: 'Workout restored.' });
+        return true;
+      },
     });
   }
 
@@ -1660,39 +1698,128 @@ export function useAppController() {
   }
 
   return {
-    activeView, setActiveView, activeViewMeta, sidebarSummary, themeMode, setThemeMode,
-    workouts, latestWorkout, dashboardSummary, getSplitName, getExerciseName,
-    formatDisplayDate, formatNumber, getEntryMetrics, dataMessage,
-    exportAppData, fileInputRef, handleImportFile, startWorkoutFromSplit,
-    repeatLatestWorkout, loadWorkoutTemplate, lastUsedTemplate,
-    startWorkoutFromLastUsedTemplate, bodyweightSummary, exercises, splits, templates,
-    weeklyWorkoutGoal, totalSetsLogged, editingExerciseId, exerciseName, setExerciseName,
-    exerciseTargetWeight, setExerciseTargetWeight, exerciseTargetRepMin,
-    setExerciseTargetRepMin, exerciseTargetRepMax, setExerciseTargetRepMax,
-    exerciseWeightStep, setExerciseWeightStep, handleExerciseSubmit,
-    resetExerciseForm, exerciseMessage, startEditingExercise, deleteExercise,
-    moveExercise, splitForm, setSplitForm, editingSplitId, splitMessage,
-    handleSplitSubmit, resetSplitForm, startEditingSplit, deleteSplit,
-    moveSavedSplit, createSplitExercise, deleteWorkoutTemplate,
-    moveWorkoutTemplate, renameWorkoutTemplate, duplicateWorkoutTemplate,
-    createSplitFromTemplate, startEditingWorkoutTemplate, workoutForm,
-    selectedWorkoutTemplateId, editingTemplateId, templateDraftName,
-    editingWorkoutId, workoutMessage, setWorkoutForm, setSelectedWorkoutTemplateId,
-    setTemplateDraftName, updateWorkoutEntry, applyLatestWorkoutToEntry,
-    handleWorkoutSplitChange, saveCurrentWorkoutAsTemplate,
-    updateSelectedWorkoutTemplate, handleTemplateEditorSubmit,
-    handleWorkoutSubmit, resetWorkoutForm, createSet, createSetFromValues,
-    createWorkoutEntry, sortedWorkouts, historyHeatmap, historyPrTimeline,
-    startEditingWorkout, duplicateWorkout, saveWorkoutAsTemplate,
-    createSplitFromWorkout, deleteWorkout, selectedProgressView,
-    setSelectedProgressView, selectedExerciseId, setSelectedExerciseId,
-    selectedSplitProgressId, setSelectedSplitProgressId, selectedProgressWindow,
-    setSelectedProgressWindow, selectedProgressMetric, setSelectedProgressMetric,
-    selectedExerciseHistory, selectedExerciseWindowHistory,
-    selectedExerciseWindowSummary, selectedSplitHistory, selectedSplitWindowHistory,
-    selectedSplitWindowSummary, formatDelta, hasPersonalRecord, hasImprovement,
-    bodyweightEntries, saveBodyweightEntry, setWeeklyWorkoutGoal, storageWarning,
-    pendingImport, exportWorkoutHistoryCsv, applyPendingImport, clearPendingImport,
-    SidebarIcon, NAV_ITEMS, undoNotice, handleUndoDelete, clearUndoNotice
+    activeView,
+    setActiveView,
+    activeViewMeta,
+    sidebarSummary,
+    themeMode,
+    setThemeMode,
+    workouts,
+    latestWorkout,
+    dashboardSummary,
+    getSplitName,
+    getExerciseName,
+    formatDisplayDate,
+    formatNumber,
+    getEntryMetrics,
+    dataMessage,
+    exportAppData,
+    fileInputRef,
+    handleImportFile,
+    startWorkoutFromSplit,
+    repeatLatestWorkout,
+    loadWorkoutTemplate,
+    lastUsedTemplate,
+    startWorkoutFromLastUsedTemplate,
+    bodyweightSummary,
+    exercises,
+    splits,
+    templates,
+    weeklyWorkoutGoal,
+    totalSetsLogged,
+    editingExerciseId,
+    exerciseName,
+    setExerciseName,
+    exerciseTargetWeight,
+    setExerciseTargetWeight,
+    exerciseTargetRepMin,
+    setExerciseTargetRepMin,
+    exerciseTargetRepMax,
+    setExerciseTargetRepMax,
+    exerciseWeightStep,
+    setExerciseWeightStep,
+    handleExerciseSubmit,
+    resetExerciseForm,
+    exerciseMessage,
+    startEditingExercise,
+    deleteExercise,
+    moveExercise,
+    splitForm,
+    setSplitForm,
+    editingSplitId,
+    splitMessage,
+    handleSplitSubmit,
+    resetSplitForm,
+    startEditingSplit,
+    deleteSplit,
+    moveSavedSplit,
+    createSplitExercise,
+    deleteWorkoutTemplate,
+    moveWorkoutTemplate,
+    renameWorkoutTemplate,
+    duplicateWorkoutTemplate,
+    createSplitFromTemplate,
+    startEditingWorkoutTemplate,
+    workoutForm,
+    selectedWorkoutTemplateId,
+    editingTemplateId,
+    templateDraftName,
+    editingWorkoutId,
+    workoutMessage,
+    setWorkoutForm,
+    setSelectedWorkoutTemplateId,
+    setTemplateDraftName,
+    updateWorkoutEntry,
+    applyLatestWorkoutToEntry,
+    handleWorkoutSplitChange,
+    saveCurrentWorkoutAsTemplate,
+    updateSelectedWorkoutTemplate,
+    handleTemplateEditorSubmit,
+    handleWorkoutSubmit,
+    resetWorkoutForm,
+    createSet,
+    createSetFromValues,
+    createWorkoutEntry,
+    sortedWorkouts,
+    historyHeatmap,
+    historyPrTimeline,
+    startEditingWorkout,
+    duplicateWorkout,
+    saveWorkoutAsTemplate,
+    createSplitFromWorkout,
+    deleteWorkout,
+    selectedProgressView,
+    setSelectedProgressView,
+    selectedExerciseId,
+    setSelectedExerciseId,
+    selectedSplitProgressId,
+    setSelectedSplitProgressId,
+    selectedProgressWindow,
+    setSelectedProgressWindow,
+    selectedProgressMetric,
+    setSelectedProgressMetric,
+    selectedExerciseHistory,
+    selectedExerciseWindowHistory,
+    selectedExerciseWindowSummary,
+    selectedSplitHistory,
+    selectedSplitWindowHistory,
+    selectedSplitWindowSummary,
+    formatDelta,
+    hasPersonalRecord,
+    hasImprovement,
+    bodyweightEntries,
+    saveBodyweightEntry,
+    setWeeklyWorkoutGoal,
+    storageWarning,
+    pendingImport,
+    exportWorkoutHistoryCsv,
+    applyPendingImport,
+    clearPendingImport,
+    undoNotice,
+    handleUndoDelete,
+    clearUndoNotice,
+    activeDialog,
+    handleDialogConfirm,
+    handleDialogCancel,
   };
 }

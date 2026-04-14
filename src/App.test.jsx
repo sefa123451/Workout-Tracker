@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.jsx';
-import { STORAGE_KEY } from './lib/workoutData.js';
+import { STORAGE_KEY, getInputValueFromDate } from './lib/workoutData.js';
 
 function renderAppWithStoredData(data = { exercises: [], workouts: [] }) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -301,9 +301,30 @@ describe('App integration flows', () => {
     const bodyweightSection = screen.getByText('Bodyweight').closest('section');
 
     expect(bodyweightSection).toBeTruthy();
-    expect(
-      within(bodyweightSection).getByRole('heading', { name: /82[.,]4 kg/i }),
-    ).toBeTruthy();
+    expect(within(bodyweightSection).getByRole('heading', { name: /82[.,]4 kg/i })).toBeTruthy();
+  });
+
+  it('uses a local calendar default for the bodyweight check-in date', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-14T12:00:00.000Z'));
+    vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('1999-12-31T23:59:59.000Z');
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings' }));
+
+    expect(screen.getByLabelText('Check-in date').value).toBe(
+      getInputValueFromDate(new Date('2026-04-14T12:00:00.000Z')),
+    );
   });
 
   it('shows best set, estimated one rep max, and best session in progress', async () => {
@@ -399,7 +420,9 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'history' }));
     await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
-    await user.click(screen.getByRole('button', { name: /Use workout from .* as a split template/ }));
+    await user.click(
+      screen.getByRole('button', { name: /Use workout from .* as a split template/ }),
+    );
 
     expect(screen.getByRole('heading', { name: 'Split planner' })).toBeTruthy();
     expect(screen.getByDisplayValue('Push copy')).toBeTruthy();
@@ -543,7 +566,6 @@ describe('App integration flows', () => {
 
   it('saves the current workout form as a new template', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'prompt').mockReturnValue('Upper day');
 
     renderAppWithStoredData({
       exercises: [
@@ -562,8 +584,11 @@ describe('App integration flows', () => {
     await user.type(screen.getByLabelText('Reps'), '8');
     await user.type(screen.getByLabelText('Notes'), 'Keep the setup tight');
     await user.click(screen.getByRole('button', { name: 'Save as template' }));
+    const saveTemplateDialog = screen.getByRole('dialog', { name: 'Save template' });
+    await user.clear(within(saveTemplateDialog).getByLabelText('Template name'));
+    await user.type(within(saveTemplateDialog).getByLabelText('Template name'), 'Upper day');
+    await user.click(within(saveTemplateDialog).getByRole('button', { name: 'Save template' }));
 
-    expect(window.prompt).toHaveBeenCalled();
     expect(screen.getByText('Saved Upper day.')).toBeTruthy();
     expect(screen.getByRole('option', { name: 'Upper day' }).selected).toBe(true);
 
@@ -573,7 +598,6 @@ describe('App integration flows', () => {
 
   it('renames a workout template from the library', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'prompt').mockReturnValue('Upper A');
 
     renderAppWithStoredData({
       exercises: [{ id: 'bench', name: 'Bench press', createdAt: '2024-01-01T10:00:00.000Z' }],
@@ -592,8 +616,11 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     await user.click(screen.getByRole('button', { name: 'Rename template Push template' }));
+    const renameTemplateDialog = screen.getByRole('dialog', { name: 'Rename template' });
+    await user.clear(within(renameTemplateDialog).getByLabelText('Template name'));
+    await user.type(within(renameTemplateDialog).getByLabelText('Template name'), 'Upper A');
+    await user.click(within(renameTemplateDialog).getByRole('button', { name: 'Rename template' }));
 
-    expect(window.prompt).toHaveBeenCalled();
     expect(screen.getByText('Renamed template to Upper A.')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Upper A' })).toBeTruthy();
   });
@@ -751,7 +778,9 @@ describe('App integration flows', () => {
     });
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
-    await user.click(screen.getByRole('button', { name: 'Use template Push template as a split template' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Use template Push template as a split template' }),
+    );
 
     expect(screen.getByRole('heading', { name: 'Split planner' })).toBeTruthy();
     expect(screen.getByDisplayValue('Push split')).toBeTruthy();
@@ -827,8 +856,16 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
-    expect(screen.getByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Review the import preview below before replacing or merging your current data.',
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        'Review the import preview below before replacing or merging your current data.',
+      ),
+    ).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Cancel import' }));
 
@@ -860,10 +897,18 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Review the import preview below before replacing or merging your current data.',
+      ),
+    ).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Replace data' }));
 
-    expect(await screen.findByText('Imported 1 exercises, 0 splits, 0 templates, 0 workouts, and 0 bodyweight check-ins.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Imported 1 exercises, 0 splits, 0 templates, 0 workouts, and 0 bodyweight check-ins.',
+      ),
+    ).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Imported exercise' })).toBeTruthy();
@@ -950,10 +995,18 @@ describe('App integration flows', () => {
 
     fireEvent.change(fileInput, { target: { files: [file] } });
 
-    expect(await screen.findByText('Review the import preview below before replacing or merging your current data.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Review the import preview below before replacing or merging your current data.',
+      ),
+    ).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Merge data' }));
 
-    expect(await screen.findByText('Merged import. You now have 2 exercises, 0 splits, 2 templates, 1 workouts, and 0 bodyweight check-ins.')).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Merged import. You now have 2 exercises, 0 splits, 2 templates, 1 workouts, and 0 bodyweight check-ins.',
+      ),
+    ).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     expect(screen.getByRole('heading', { name: 'Bench press' })).toBeTruthy();
@@ -1057,7 +1110,6 @@ describe('App integration flows', () => {
 
   it('edits and then deletes a workout from history', async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAppWithStoredData({
       exercises: [
@@ -1096,14 +1148,13 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
+    await user.click(screen.getByRole('button', { name: 'Delete workout' }));
 
-    expect(confirmSpy).toHaveBeenCalled();
     expect(screen.getByText('Workout history is empty')).toBeTruthy();
   });
 
   it('restores a deleted workout when undo is used', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAppWithStoredData({
       exercises: [
@@ -1131,6 +1182,7 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: 'history' }));
     await user.click(screen.getByRole('button', { name: /More actions for workout from/i }));
     await user.click(screen.getByRole('button', { name: /Delete workout from/i }));
+    await user.click(screen.getByRole('button', { name: 'Delete workout' }));
 
     expect(screen.getByText('Workout history is empty')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Undo delete' }));
@@ -1175,7 +1227,9 @@ describe('App integration flows', () => {
     await user.click(screen.getByRole('button', { name: /Duplicate workout from/i }));
 
     expect(screen.getByRole('heading', { name: 'Log workout' })).toBeTruthy();
-    expect(screen.getByText('Loaded a copy of Jan 12, 2024. Save it as a new workout when ready.')).toBeTruthy();
+    expect(
+      screen.getByText('Loaded a copy of Jan 12, 2024. Save it as a new workout when ready.'),
+    ).toBeTruthy();
     expect(screen.getByLabelText('Workout date').value).toBe(expectedDate);
     expect(screen.getByLabelText('Weight').value).toBe('80');
     expect(screen.getByLabelText('Reps').value).toBe('8');
@@ -1185,7 +1239,6 @@ describe('App integration flows', () => {
 
   it('preserves workout history as unknown exercise when deleting an exercise', async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAppWithStoredData({
       exercises: [
@@ -1212,9 +1265,11 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
+    await user.click(screen.getByRole('button', { name: 'Delete exercise' }));
 
-    expect(confirmSpy).toHaveBeenCalled();
-    expect(screen.getByText('Deleted Back squat. Linked workout history was preserved.')).toBeTruthy();
+    expect(
+      screen.getByText('Deleted Back squat. Linked workout history was preserved.'),
+    ).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'history' }));
     expect(screen.getByText('Unknown exercise (deleted)')).toBeTruthy();
@@ -1222,7 +1277,6 @@ describe('App integration flows', () => {
 
   it('restores a deleted exercise when undo is used', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderAppWithStoredData({
       exercises: [
@@ -1237,6 +1291,7 @@ describe('App integration flows', () => {
 
     await user.click(screen.getByRole('button', { name: 'exercises' }));
     await user.click(screen.getByRole('button', { name: 'Delete Back squat' }));
+    await user.click(screen.getByRole('button', { name: 'Delete exercise' }));
 
     expect(screen.getByText('No exercises yet')).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Undo delete' }));
@@ -1291,6 +1346,77 @@ describe('App integration flows', () => {
     expect(screen.getByText('PR timeline')).toBeTruthy();
     expect(screen.getByText('Recent wins')).toBeTruthy();
     expect(screen.getAllByText('Weight PR').length).toBeGreaterThan(0);
+  });
+
+  it('shows a safe day-review state when no heatmap day is selectable', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'squat',
+          name: 'Back squat',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-legacy',
+          date: '2020-01-12',
+          createdAt: '2020-01-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'squat', sets: [{ weight: 100, reps: 5 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'history' }));
+    await user.click(screen.getByRole('button', { name: 'Review selected day' }));
+
+    expect(screen.getByRole('heading', { name: 'Select a day' })).toBeTruthy();
+    expect(screen.getByText('No sessions on this day')).toBeTruthy();
+  });
+
+  it('falls back to exercise progress when the last split is deleted', async () => {
+    const user = userEvent.setup();
+
+    renderAppWithStoredData({
+      exercises: [
+        {
+          id: 'bench',
+          name: 'Bench press',
+          createdAt: '2024-01-01T10:00:00.000Z',
+        },
+      ],
+      splits: [
+        {
+          id: 'push',
+          name: 'Push',
+          createdAt: '2024-01-02T10:00:00.000Z',
+          exercises: [{ id: 'split-1', exerciseId: 'bench', defaultSets: 2 }],
+        },
+      ],
+      workouts: [
+        {
+          id: 'workout-1',
+          date: '2026-04-12',
+          splitId: 'push',
+          createdAt: '2026-04-12T10:00:00.000Z',
+          entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'progress' }));
+    await user.click(screen.getByRole('button', { name: 'Splits' }));
+    expect(screen.getByRole('heading', { name: 'Split progress' })).toBeTruthy();
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    await user.click(screen.getByRole('button', { name: 'Delete split Push' }));
+    await user.click(screen.getByRole('button', { name: 'Delete split' }));
+
+    await user.click(screen.getByRole('button', { name: 'progress' }));
+
+    expect(screen.getByRole('heading', { name: 'Exercise progress' })).toBeTruthy();
   });
 
   it('shows progress markers for an exercise with multiple workouts', async () => {

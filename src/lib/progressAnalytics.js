@@ -130,11 +130,7 @@ export function buildWhyItMattersCopy({
   return `${metricLabel} is flat with ${confidenceLabel}. Stability is good, but a deliberate overload step is needed for a clearer trend.`;
 }
 
-export function buildNextMoveGuidance({
-  signalProfile,
-  confidenceLabel,
-  noComparisonCopy,
-}) {
+export function buildNextMoveGuidance({ signalProfile, confidenceLabel, noComparisonCopy }) {
   if (!signalProfile || !Number.isFinite(signalProfile.delta)) {
     return noComparisonCopy;
   }

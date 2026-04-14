@@ -1,22 +1,58 @@
 {
   "name": "workout-tracker",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Local-first workout tracker built with React and Vite.",
+  "license": "MIT",
+  "author": "Sefa Adiguzel",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sefaadiguzel/Workout-Tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sefaadiguzel/Workout-Tracker/issues"
+  },
+  "homepage": "https://github.com/sefaadiguzel/Workout-Tracker#readme",
+  "keywords": [
+    "workout",
+    "fitness",
+    "tracker",
+    "react",
+    "vite",
+    "portfolio"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "node scripts/e2e-smoke.mjs",
+    "capture:media": "node scripts/capture-media.mjs",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.26",
+    "gifenc": "^1.0.3",
+    "globals": "^15.15.0",
     "jsdom": "^25.0.1",
+    "playwright": "^1.59.1",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.8.2",
     "vite": "^5.2.0",
     "vitest": "^2.1.8"
   }
