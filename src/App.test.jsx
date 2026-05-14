@@ -194,4 +194,72 @@ describe('App stitch screen rendering', () => {
       'Exercise names should be unique.',
     );
   });
+
+  it('adds practical mobile workout logging controls on iframe load', async () => {
+    window.innerWidth = 390;
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        exercises: [{ id: 'bench', name: 'Bench Press', createdAt: '2026-04-01T10:00:00.000Z' }],
+        splits: [],
+        templates: [],
+        workouts: [
+          {
+            id: 'workout-previous',
+            date: '2026-04-10',
+            createdAt: '2026-04-10T10:00:00.000Z',
+            entries: [{ exerciseId: 'bench', sets: [{ weight: 90, reps: 5 }] }],
+          },
+        ],
+        bodyweightEntries: [],
+        weeklyWorkoutGoal: 4,
+      }),
+    );
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'Log workout' }));
+    const frame = screen.getByTitle('Stitch log');
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(`
+      <body class="max-w-[390px]">
+        <main>
+          <section>
+            <h2>Bench Press</h2>
+            <p>Primary lift</p>
+            <div class="space-y-4">
+              <div class="grid grid-cols-12">
+                <div class="col-span-2 text-center font-bold">1</div>
+                <input type="number" />
+                <input type="number" />
+                <button><span class="material-symbols-outlined">check</span></button>
+              </div>
+              <button>+ Add Set</button>
+            </div>
+          </section>
+          <button>Add Exercise</button>
+        </main>
+        <nav class="md:hidden"></nav>
+        <div data-codex-rest-sheet><button>15mp</button></div>
+      </body>
+    `);
+    doc.close();
+    fireEvent.load(frame);
+
+    await waitFor(() => {
+      expect(doc.querySelector('[data-codex-log-mobile-dock]')).toBeTruthy();
+    });
+    expect(doc.querySelector('[data-codex-rest-sheet]')?.hasAttribute('hidden')).toBe(true);
+    expect(doc.querySelector('[data-codex-action="log-rest-timer"]')).toBeTruthy();
+    expect(doc.querySelector('[data-codex-action="log-add-exercise"]')).toBeTruthy();
+    expect(doc.querySelector('[data-codex-action="log-finish-workout"]')).toBeTruthy();
+
+    const inputs = doc.querySelectorAll('input[type="number"]');
+    expect(inputs[0].placeholder).toBe('90');
+    expect(inputs[0].inputMode).toBe('decimal');
+    expect(inputs[1].placeholder).toBe('5');
+    expect(inputs[1].inputMode).toBe('numeric');
+  });
 });

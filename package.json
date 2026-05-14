@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/sefa123451/Workout-Tracker/issues"
   },
-  "homepage": "https://github.com/sefa123451/Workout-Tracker#readme",
+  "homepage": "https://sefa123451.github.io/Workout-Tracker/",
   "keywords": [
     "workout",
     "fitness",
@@ -42,6 +42,7 @@
     "@eslint/js": "^9.39.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-react": "^7.37.5",

@@ -24,22 +24,28 @@ const VIEW_LABELS = {
   settings: 'settings',
 };
 
+function getAssetPath(path) {
+  const basePath = import.meta.env.BASE_URL || '/';
+  const normalizedBasePath = basePath.endsWith('/') ? basePath : `${basePath}/`;
+  return `${normalizedBasePath}${path.replace(/^\/+/, '')}`;
+}
+
 const VIEW_FILES = {
   desktop: {
-    dashboard: '/stitch/dashboard.html',
-    exercises: '/stitch/exercises.html',
-    log: '/stitch/log.html',
-    history: '/stitch/history.html',
-    progress: '/stitch/progress.html',
-    settings: '/stitch/settings.html',
+    dashboard: 'stitch/dashboard.html',
+    exercises: 'stitch/exercises.html',
+    log: 'stitch/log.html',
+    history: 'stitch/history.html',
+    progress: 'stitch/progress.html',
+    settings: 'stitch/settings.html',
   },
   mobile: {
-    dashboard: '/stitch/dashboard-mobile.html',
-    exercises: '/stitch/exercises-mobile.html',
-    log: '/stitch/log-mobile.html',
-    history: '/stitch/history-mobile.html',
-    progress: '/stitch/progress-mobile.html',
-    settings: '/stitch/settings-mobile.html',
+    dashboard: 'stitch/dashboard-mobile.html',
+    exercises: 'stitch/exercises-mobile.html',
+    log: 'stitch/log-mobile.html',
+    history: 'stitch/history-mobile.html',
+    progress: 'stitch/progress-mobile.html',
+    settings: 'stitch/settings-mobile.html',
   },
 };
 
@@ -693,7 +699,7 @@ function App() {
 
   const src = useMemo(() => {
     const variant = isMobileViewport ? 'mobile' : 'desktop';
-    return VIEW_FILES[variant][activeView] ?? VIEW_FILES[variant].dashboard;
+    return getAssetPath(VIEW_FILES[variant][activeView] ?? VIEW_FILES[variant].dashboard);
   }, [activeView, isMobileViewport]);
 
   useEffect(
@@ -1382,6 +1388,49 @@ function App() {
     };
   }
 
+  function isMobileLogDocument(doc) {
+    return Boolean(
+      doc?.body?.className?.includes('max-w-[390px]') || doc?.querySelector('nav.md\\:hidden'),
+    );
+  }
+
+  function injectLogMobileActionDock(doc) {
+    if (!doc || activeView !== 'log' || !isMobileLogDocument(doc)) {
+      return;
+    }
+
+    const existingDecorativeSheet = doc.querySelector('[data-codex-rest-sheet]');
+    if (existingDecorativeSheet) {
+      existingDecorativeSheet.setAttribute('hidden', '');
+    }
+
+    let dock = doc.querySelector('[data-codex-log-mobile-dock]');
+    if (dock) {
+      return;
+    }
+
+    dock = doc.createElement('div');
+    dock.setAttribute('data-codex-log-mobile-dock', '1');
+    dock.className = 'fixed inset-x-0 bottom-16 z-40 px-4';
+    dock.innerHTML = `
+      <div class="bg-surface-container-highest border border-outline-variant rounded-xl p-2 shadow-lg" style="max-width: 390px; margin: 0 auto;">
+        <div class="flex gap-2">
+          <button type="button" class="rounded-xl border border-outline-variant bg-surface-container-highest py-3 text-xs font-bold uppercase tracking-widest text-on-surface" style="flex: 1;" data-codex-action="log-rest-timer">
+            Rest
+          </button>
+          <button type="button" class="rounded-xl border border-outline-variant bg-primary-container py-3 text-xs font-bold uppercase tracking-widest text-on-primary-container" style="flex: 1;" data-codex-action="log-add-exercise">
+            Add
+          </button>
+          <button type="button" class="rounded-xl bg-primary py-3 text-xs font-bold uppercase tracking-widest text-on-primary" style="flex: 1;" data-codex-action="log-finish-workout">
+            Finish
+          </button>
+        </div>
+      </div>
+    `;
+
+    doc.body.appendChild(dock);
+  }
+
   function setSelectOptions(selectNode, options, selectedValue, emptyLabel) {
     if (!selectNode) {
       return '';
@@ -1605,6 +1654,8 @@ function App() {
     const addSetButton = [...section.querySelectorAll('button')].find((button) =>
       normalizeText(button.textContent).includes('add set'),
     );
+    const latestEntry = getLatestLoggedEntryForExercise(entry.exerciseId);
+    const fallbackLatest = latestEntry?.sets?.[latestEntry.sets.length - 1] ?? null;
     const sets = entry.sets.length ? entry.sets : [createSet()];
 
     section.classList.remove('opacity-60');
@@ -1636,11 +1687,16 @@ function App() {
       if (setCell) {
         setCell.textContent = String(setIndex + 1);
       }
+      const previousSet = latestEntry?.sets?.[setIndex] ?? fallbackLatest;
       if (inputs[0]) {
         inputs[0].value = String(set.weight ?? '');
+        inputs[0].placeholder = previousSet ? String(previousSet.weight || '') : 'kg';
+        inputs[0].inputMode = 'decimal';
       }
       if (inputs[1]) {
         inputs[1].value = String(set.reps ?? '');
+        inputs[1].placeholder = previousSet ? String(previousSet.reps || '') : 'reps';
+        inputs[1].inputMode = 'numeric';
       }
       if (statusButton) {
         statusButton.setAttribute('data-codex-action', 'log-toggle-set');
@@ -1663,7 +1719,7 @@ function App() {
     }
 
     const sourceForm = formOverride ?? workoutFormRef.current;
-    const entries = sourceForm.entries.length
+    const entries = sourceForm.entries.some((entry) => entry.exerciseId)
       ? sourceForm.entries
       : [createWorkoutEntry(exercisesRef.current[0]?.id ?? '', 1)];
     const docWindow = doc.defaultView;
@@ -1692,7 +1748,13 @@ function App() {
       heading.textContent = splitName;
     }
 
-    if (docWindow && typeof previousScrollY === 'number') {
+    const canRestoreScroll =
+      docWindow &&
+      typeof previousScrollY === 'number' &&
+      typeof docWindow.scrollTo === 'function' &&
+      !docWindow.navigator?.userAgent?.toLowerCase().includes('jsdom');
+
+    if (canRestoreScroll) {
       docWindow.scrollTo({ top: previousScrollY, left: 0, behavior: 'auto' });
     }
 
@@ -1705,6 +1767,7 @@ function App() {
     }
 
     injectLogQuickSetup(doc);
+    injectLogMobileActionDock(doc);
     const context = findLogExerciseContext(doc);
     context?.exerciseSections?.forEach((section, entryIndex) => {
       section.dataset.codexEntryIndex = String(entryIndex);

@@ -1,0 +1,19 @@
+{
+  "name": "Workout Tracker",
+  "short_name": "Workout",
+  "description": "Local-first workout tracking for logging sessions, progress, exercises, and splits.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
