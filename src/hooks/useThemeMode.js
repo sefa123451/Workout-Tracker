@@ -22,7 +22,7 @@ function getInitialThemeMode() {
     return storedTheme;
   }
 
-  return 'light';
+  return 'dark';
 }
 
 export function useThemeMode() {

@@ -107,6 +107,188 @@
         background: #27272a;
         border-radius: 10px;
       }
+      body.exercise-screen {
+        background:
+          radial-gradient(circle at 78% 0%, rgba(167, 139, 250, 0.11), transparent 28rem),
+          linear-gradient(180deg, #08080a 0%, #0b0b0e 46%, #09090b 100%);
+      }
+      .exercise-topbar {
+        background: rgba(8, 8, 10, 0.88) !important;
+        border-bottom-color: rgba(63, 63, 70, 0.68) !important;
+        backdrop-filter: blur(16px);
+      }
+      .exercise-topbar-brand {
+        font-size: 0.96rem !important;
+        letter-spacing: 0 !important;
+        color: #f4f4f5 !important;
+      }
+      .exercise-topbar nav a {
+        padding: 0.4rem 0.1rem;
+        font-size: 0.88rem;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      .exercise-search {
+        background: rgba(24, 24, 27, 0.68) !important;
+        border-color: rgba(82, 82, 91, 0.55) !important;
+        border-radius: 0.75rem !important;
+      }
+      .exercise-sidebar {
+        background: linear-gradient(
+          180deg,
+          rgba(12, 12, 15, 0.98),
+          rgba(9, 9, 11, 0.98)
+        ) !important;
+        border-right-color: rgba(63, 63, 70, 0.68) !important;
+      }
+      .exercise-sidebar .exercise-side-title {
+        font-size: 0.98rem !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+      }
+      .exercise-sidebar nav a {
+        border-radius: 0 0.85rem 0.85rem 0;
+        margin-right: 0.75rem;
+        font-size: 0.92rem;
+        font-weight: 650;
+      }
+      .exercise-main {
+        max-width: 1320px !important;
+        padding-top: 5.75rem !important;
+      }
+      .exercise-page-header {
+        align-items: flex-start !important;
+        margin-bottom: 1.35rem !important;
+      }
+      .exercise-page-title {
+        font-size: clamp(2rem, 3.1vw, 3.45rem) !important;
+        line-height: 0.95 !important;
+        letter-spacing: -0.035em !important;
+        text-transform: none !important;
+      }
+      .exercise-page-subtitle {
+        max-width: 42rem;
+        color: #b6b6c2 !important;
+        font-size: 0.94rem !important;
+      }
+      .exercise-overview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        margin-top: 1rem;
+      }
+      .exercise-overview span {
+        border: 1px solid rgba(63, 63, 70, 0.7);
+        border-radius: 999px;
+        background: rgba(18, 18, 21, 0.74);
+        color: #a1a1aa;
+        padding: 0.42rem 0.7rem;
+        font-size: 0.72rem;
+        font-weight: 750;
+      }
+      .exercise-overview strong {
+        color: #fafafa;
+      }
+      .exercise-filter-row {
+        margin-top: 1.15rem !important;
+        gap: 0.45rem !important;
+      }
+      .exercise-filter-row button {
+        padding: 0.52rem 0.85rem !important;
+        border-radius: 0.7rem !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+      }
+      .exercise-filter-row .exercise-filter-active {
+        background: #a78bfa !important;
+        color: #0a0012 !important;
+      }
+      .exercise-add-button {
+        border-color: rgba(167, 139, 250, 0.48) !important;
+        background: rgba(167, 139, 250, 0.08) !important;
+        border-radius: 0.85rem !important;
+      }
+      .exercise-grid {
+        gap: 0.9rem !important;
+      }
+      .exercise-card {
+        background: rgba(18, 18, 21, 0.78) !important;
+        border-color: rgba(63, 63, 70, 0.72) !important;
+        box-shadow: 0 18px 46px rgba(0, 0, 0, 0.18);
+      }
+      .exercise-card h3,
+      .exercise-card h4 {
+        letter-spacing: -0.02em !important;
+        text-transform: none !important;
+      }
+      .exercise-featured {
+        min-height: 17.25rem;
+        border-left-width: 0 !important;
+        position: relative;
+        overflow: hidden;
+      }
+      .exercise-featured::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-left: 3px solid #a78bfa;
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      .exercise-featured h3 {
+        font-size: clamp(1.85rem, 2.25vw, 2.55rem) !important;
+      }
+      .exercise-standard {
+        min-height: 15.75rem;
+      }
+      .exercise-card-icon {
+        background: rgba(39, 39, 42, 0.78) !important;
+        border: 1px solid rgba(63, 63, 70, 0.7);
+      }
+      .exercise-tag {
+        background: rgba(63, 63, 70, 0.65) !important;
+        color: #c6c6d0 !important;
+        border-radius: 0.45rem !important;
+        letter-spacing: 0 !important;
+      }
+      .exercise-list-row {
+        background: rgba(30, 30, 34, 0.78) !important;
+        border-color: rgba(63, 63, 70, 0.65) !important;
+        border-radius: 0.85rem !important;
+      }
+      .exercise-insight {
+        background: linear-gradient(
+          135deg,
+          rgba(39, 39, 42, 0.74),
+          rgba(18, 18, 21, 0.88)
+        ) !important;
+      }
+      .exercise-tip {
+        opacity: 1 !important;
+        border-style: solid !important;
+        border-color: rgba(82, 82, 91, 0.52) !important;
+        background: rgba(9, 9, 11, 0.46) !important;
+      }
+      @media (max-width: 767px) {
+        .exercise-topbar {
+          height: 3.75rem !important;
+          padding-inline: 1rem !important;
+        }
+        .exercise-main {
+          padding-top: 4.9rem !important;
+          padding-inline: 1rem !important;
+        }
+        .exercise-page-title {
+          font-size: 2rem !important;
+        }
+        .exercise-overview span {
+          font-size: 0.68rem;
+        }
+        .exercise-featured,
+        .exercise-standard {
+          min-height: auto;
+        }
+      }
     </style>
     <style data-stitch-injected="">
       /* For Webkit Browsers (Chrome, Safari, Edge) */
@@ -1514,13 +1696,13 @@
       }
     </style>
   </head>
-  <body class="bg-background text-on-background">
+  <body class="exercise-screen bg-background text-on-background">
     <!-- TopNavBar (Shared Component) -->
     <header
-      class="bg-[#09090b] border-b border-[#27272a] flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 font-geist tracking-tight"
+      class="exercise-topbar bg-[#09090b] border-b border-[#27272a] flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 font-geist tracking-tight"
     >
       <div class="flex items-center gap-8">
-        <span class="text-xl font-bold text-[#fafafa]">Workout Tracker</span>
+        <span class="exercise-topbar-brand text-xl font-bold text-[#fafafa]">Workout Tracker</span>
         <nav class="hidden md:flex items-center gap-6">
           <a
             class="text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-colors duration-200"
@@ -1551,7 +1733,7 @@
       </div>
       <div class="flex items-center gap-4">
         <div
-          class="hidden md:flex items-center bg-[#18181b] rounded-lg px-3 py-1.5 border border-[#27272a]"
+          class="exercise-search hidden md:flex items-center bg-[#18181b] rounded-lg px-3 py-1.5 border border-[#27272a]"
         >
           <span class="material-symbols-outlined text-sm text-[#a1a1aa] mr-2">search</span>
           <input
@@ -1575,7 +1757,7 @@
     </header>
     <!-- SideNavBar (Shared Component) -->
     <aside
-      class="hidden md:flex flex-col fixed left-0 top-0 h-full py-8 bg-[#0c0c0f] w-64 border-r border-[#27272a] z-40 font-geist"
+      class="exercise-sidebar hidden md:flex flex-col fixed left-0 top-0 h-full py-8 bg-[#0c0c0f] w-64 border-r border-[#27272a] z-40 font-geist"
     >
       <div class="px-6 mb-10 mt-12">
         <div class="flex items-center gap-3">
@@ -1587,7 +1769,9 @@
             >
           </div>
           <div>
-            <h1 class="text-lg font-black text-[#fafafa] leading-none uppercase tracking-tighter">
+            <h1
+              class="exercise-side-title text-lg font-black text-[#fafafa] leading-none uppercase tracking-tighter"
+            >
               Workout Tracker
             </h1>
             <p class="text-[10px] text-secondary tracking-widest mt-1">Elite Performance</p>
@@ -1644,21 +1828,32 @@
     </aside>
     <!-- Main Content Canvas -->
     <main
-      class="md:ml-64 pt-20 pb-24 md:pb-8 px-4 md:px-8 max-w-[1440px] mx-auto min-h-[884px]"
+      class="exercise-main md:ml-64 pt-20 pb-24 md:pb-8 px-4 md:px-8 max-w-[1440px] mx-auto min-h-[884px]"
       data-stitch-vh="min-h-[884px]===min-h-screen"
     >
       <!-- Page Header & Search -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+      <div
+        class="exercise-page-header flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8"
+      >
         <div class="flex-1">
-          <h2 class="text-3xl font-black text-on-background tracking-tight mb-2 uppercase">
+          <h2
+            class="exercise-page-title text-3xl font-black text-on-background tracking-tight mb-2 uppercase"
+          >
             Exercise Library
           </h2>
-          <p class="text-secondary-fixed text-sm">
-            240+ professional exercises with form guides and historical data.
+          <p class="exercise-page-subtitle text-secondary-fixed text-sm">
+            Manage saved movements, recent performance, and template-ready accessories.
           </p>
-          <div class="mt-6 flex flex-wrap gap-2 overflow-x-auto pb-2 custom-scrollbar">
+          <div class="exercise-overview">
+            <span><strong>8</strong> tracked movements</span>
+            <span><strong>5</strong> trained this month</span>
+            <span><strong>3</strong> active split groups</span>
+          </div>
+          <div
+            class="exercise-filter-row mt-6 flex flex-wrap gap-2 overflow-x-auto pb-2 custom-scrollbar"
+          >
             <button
-              class="px-4 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold uppercase tracking-wider whitespace-nowrap"
+              class="exercise-filter-active px-4 py-1.5 rounded-full bg-primary text-on-primary text-xs font-bold uppercase tracking-wider whitespace-nowrap"
             >
               All Exercises
             </button>
@@ -1696,7 +1891,7 @@
         </div>
         <div class="flex items-center gap-3">
           <button
-            class="px-6 py-2.5 bg-surface-container border border-primary/30 text-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-primary/5 transition-colors flex items-center gap-2"
+            class="exercise-add-button px-6 py-2.5 bg-surface-container border border-primary/30 text-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-primary/5 transition-colors flex items-center gap-2"
           >
             <span class="material-symbols-outlined text-[18px]">add</span>
             Add Custom
@@ -1704,10 +1899,10 @@
         </div>
       </div>
       <!-- Exercise Grid (Compact Bento) -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="exercise-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <!-- Featured Exercise (Information Dense) -->
         <div
-          class="lg:col-span-2 bg-surface-container rounded-xl border-l-4 border-l-primary border border-outline-variant p-6 flex flex-col justify-between"
+          class="exercise-card exercise-featured lg:col-span-2 bg-surface-container rounded-xl border-l-4 border-l-primary border border-outline-variant p-6 flex flex-col justify-between"
         >
           <div>
             <div class="flex items-center justify-between mb-4">
@@ -1772,12 +1967,12 @@
         </div>
         <!-- Standard Card - Weighted Pullups -->
         <div
-          class="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
+          class="exercise-card exercise-standard bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
         >
           <div>
             <div class="flex justify-between items-start mb-4">
               <div
-                class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
+                class="exercise-card-icon w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
               >
                 <span class="material-symbols-outlined">keyboard_double_arrow_up</span>
               </div>
@@ -1788,11 +1983,11 @@
             </h3>
             <div class="flex flex-wrap gap-1.5 mb-4">
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Back</span
               >
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Calisthenics</span
               >
             </div>
@@ -1812,12 +2007,12 @@
         </div>
         <!-- Standard Card - Barbell Squats -->
         <div
-          class="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
+          class="exercise-card exercise-standard bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
         >
           <div>
             <div class="flex justify-between items-start mb-4">
               <div
-                class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
+                class="exercise-card-icon w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
               >
                 <span class="material-symbols-outlined">downhill_skiing</span>
               </div>
@@ -1826,11 +2021,11 @@
             <h3 class="font-black text-on-surface mb-2 tracking-tight uppercase">Barbell Squats</h3>
             <div class="flex flex-wrap gap-1.5 mb-4">
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Legs</span
               >
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Compound</span
               >
             </div>
@@ -1851,7 +2046,7 @@
         <!-- Dense List Style Row -->
         <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3">
           <div
-            class="bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
+            class="exercise-list-row bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
           >
             <div
               class="w-8 h-8 rounded bg-surface-container-low flex items-center justify-center text-primary"
@@ -1868,7 +2063,7 @@
             </div>
           </div>
           <div
-            class="bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
+            class="exercise-list-row bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
           >
             <div
               class="w-8 h-8 rounded bg-surface-container-low flex items-center justify-center text-primary"
@@ -1885,7 +2080,7 @@
             </div>
           </div>
           <div
-            class="bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
+            class="exercise-list-row bg-surface-container-highest border border-outline-variant rounded-lg p-3 flex items-center gap-4 hover:bg-surface-container transition-colors"
           >
             <div
               class="w-8 h-8 rounded bg-surface-container-low flex items-center justify-center text-primary"
@@ -1904,7 +2099,7 @@
         </div>
         <!-- Insight Card -->
         <div
-          class="bg-surface-container border border-primary/20 rounded-xl p-5 flex flex-col justify-between"
+          class="exercise-card exercise-insight bg-surface-container border border-primary/20 rounded-xl p-5 flex flex-col justify-between"
         >
           <div class="flex items-center gap-3 mb-4">
             <div
@@ -1928,12 +2123,12 @@
         </div>
         <!-- Standard Card - Hammer Curls -->
         <div
-          class="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
+          class="exercise-card exercise-standard bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
         >
           <div>
             <div class="flex justify-between items-start mb-4">
               <div
-                class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
+                class="exercise-card-icon w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
               >
                 <span class="material-symbols-outlined">hand_gesture</span>
               </div>
@@ -1942,11 +2137,11 @@
             <h3 class="font-black text-on-surface mb-2 tracking-tight uppercase">Hammer Curls</h3>
             <div class="flex flex-wrap gap-1.5 mb-4">
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Arms</span
               >
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Dumbbell</span
               >
             </div>
@@ -1966,12 +2161,12 @@
         </div>
         <!-- Standard Card - Overhead Press -->
         <div
-          class="bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
+          class="exercise-card exercise-standard bg-surface-container-low border border-outline-variant rounded-xl p-5 flex flex-col justify-between hover:border-primary/50 transition-all group"
         >
           <div>
             <div class="flex justify-between items-start mb-4">
               <div
-                class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
+                class="exercise-card-icon w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors"
               >
                 <span class="material-symbols-outlined">vertical_align_top</span>
               </div>
@@ -1980,11 +2175,11 @@
             <h3 class="font-black text-on-surface mb-2 tracking-tight uppercase">Overhead Press</h3>
             <div class="flex flex-wrap gap-1.5 mb-4">
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Shoulders</span
               >
               <span
-                class="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
+                class="exercise-tag px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase tracking-tighter"
                 >Barbell</span
               >
             </div>
@@ -2004,7 +2199,7 @@
         </div>
         <!-- Small Training Tip -->
         <div
-          class="bg-surface-container-lowest border-dashed border border-outline rounded-xl p-5 flex flex-col items-center justify-center text-center opacity-60 hover:opacity-100 transition-opacity"
+          class="exercise-card exercise-tip bg-surface-container-lowest border-dashed border border-outline rounded-xl p-5 flex flex-col items-center justify-center text-center opacity-60 hover:opacity-100 transition-opacity"
         >
           <span class="material-symbols-outlined text-primary mb-2">lightbulb</span>
           <p class="text-[10px] font-bold uppercase tracking-widest text-secondary-fixed mb-1">

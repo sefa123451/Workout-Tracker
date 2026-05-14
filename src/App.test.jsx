@@ -28,6 +28,15 @@ describe('App stitch screen rendering', () => {
     expect(window.location.hash).toBe('#/dashboard');
   });
 
+  it('defaults new visitors to the dark visual theme', async () => {
+    render(<App />);
+
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe('dark');
+    });
+    expect(window.localStorage.getItem('workout-tracker-theme')).toBe('dark');
+  });
+
   it('switches to the selected stitch screen when nav is used', async () => {
     window.innerWidth = 1280;
     const user = userEvent.setup();
