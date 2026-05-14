@@ -1,19 +1,16 @@
 import React, { useState } from 'react';
-import { getTodayInputValue } from '../lib/workoutData.js';
+import { getTodayInputValue, MAX_WEEKLY_WORKOUT_GOAL } from '../lib/workoutData.js';
+
+const IMPORT_PREVIEW_TEXT =
+  'Review the import preview below before replacing or merging your current data.';
 
 export default function SettingsView({
-  bodyweightEntries,
   bodyweightSummary,
   saveBodyweightEntry,
-  themeMode,
-  setThemeMode,
-  themeOptions,
   weeklyWorkoutGoal,
   setWeeklyWorkoutGoal,
   dataMessage,
-  storageWarning,
   pendingImport,
-  exportAppData,
   exportWorkoutHistoryCsv,
   fileInputRef,
   handleImportFile,
@@ -22,425 +19,265 @@ export default function SettingsView({
 }) {
   const [bodyweightDate, setBodyweightDate] = useState(getTodayInputValue);
   const [bodyweightValue, setBodyweightValue] = useState('');
-  const bodyweightDeltaLabel =
+
+  const handleLogWeight = () => {
+    if (!bodyweightValue) return;
+    const didSave = saveBodyweightEntry(bodyweightDate, bodyweightValue);
+    if (didSave) {
+      setBodyweightValue('');
+    }
+  };
+
+  const latestBodyweight = bodyweightSummary.latestWeight ?? '0.0';
+  const deltaLabel =
     bodyweightSummary.deltaInRange !== null
-      ? `${bodyweightSummary.deltaInRange > 0 ? '+' : ''}${bodyweightSummary.deltaInRange} kg in 30 days`
-      : 'Log your first check-in to start a trend.';
-  const latestBodyweightValue =
-    bodyweightSummary.latestWeight !== null
-      ? `${bodyweightSummary.latestWeight} kg`
-      : 'No check-ins yet';
-  const importCounts = pendingImport
-    ? [
-        {
-          label: 'Bodyweight',
-          value: pendingImport.value.bodyweightEntries?.length ?? 0,
-          body: 'Check-ins found in this import.',
-        },
-        {
-          label: 'Exercises',
-          value: pendingImport.value.exercises.length,
-          body: 'Library items ready to import.',
-        },
-        {
-          label: 'Splits',
-          value: pendingImport.value.splits.length,
-          body: 'Planner templates included.',
-        },
-        {
-          label: 'Templates',
-          value: pendingImport.value.templates?.length ?? 0,
-          body: 'Reusable workout blueprints in this import.',
-        },
-        {
-          label: 'Workouts',
-          value: pendingImport.value.workouts.length,
-          body: 'Logged sessions included in this backup.',
-        },
-      ]
-    : [];
+      ? `${bodyweightSummary.deltaInRange > 0 ? '↑' : '↓'} ${Math.abs(bodyweightSummary.deltaInRange)}kg this week`
+      : 'No recent trend';
+  const showDataMessage = dataMessage?.text && dataMessage.text !== IMPORT_PREVIEW_TEXT;
 
   return (
-    <main className="content-grid settings-layout">
-      <section className="settings-control-surface" aria-label="Settings control center">
-        <article className="settings-control-hero">
-          <div className="settings-control-copy">
-            <p className="section-label">Control center</p>
-            <h2>
-              Change the app, your training defaults, and your local backup flow from one calm
-              surface.
-            </h2>
-          </div>
-          <div className="settings-overview-grid" aria-label="Settings overview">
-            <a
-              className="settings-overview-card settings-overview-card-primary settings-overview-link"
-              href="#settings-experience"
-            >
-              <span className="section-label">Appearance</span>
-              <strong>{themeMode}</strong>
-              <p>Theme and display mode</p>
-            </a>
-            <a className="settings-overview-card settings-overview-link" href="#settings-training">
-              <span className="section-label">Training</span>
-              <strong>{weeklyWorkoutGoal} sessions</strong>
-              <p>
-                {latestBodyweightValue}. {bodyweightDeltaLabel}
-              </p>
-            </a>
-            <a className="settings-overview-card settings-overview-link" href="#settings-data">
-              <span className="section-label">Data safety</span>
-              <strong>{pendingImport ? 'Import ready' : 'Backup tools ready'}</strong>
-              <p>
-                {pendingImport
-                  ? 'Preview first, then choose replace or merge.'
-                  : 'Export or restore local data without surprises.'}
-              </p>
-            </a>
-          </div>
-        </article>
-      </section>
-
-      <section className="settings-main-grid" aria-label="Settings sections">
-        <section id="settings-experience" className="panel panel-highlight settings-panel">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">App experience</p>
-              <h2>Appearance</h2>
-              <p className="section-body">Choose how the product should look.</p>
-            </div>
-          </div>
-          <article className="settings-card">
-            <div className="settings-card-intro">
-              <strong>Pick one appearance mode for the whole app.</strong>
-              <p>System follows your device. Light and dark stay fixed.</p>
-            </div>
-            <div
-              className="theme-switcher settings-switcher"
-              role="group"
-              aria-label="Theme preferences"
-            >
-              {themeOptions.map((option) => (
-                <button
-                  key={option}
-                  type="button"
-                  className={
-                    option === themeMode
-                      ? 'view-button active theme-button'
-                      : 'view-button theme-button'
-                  }
-                  onClick={() => setThemeMode(option)}
-                  aria-pressed={option === themeMode}
-                >
-                  {option}
-                </button>
-              ))}
-            </div>
-            <div className="settings-note-card">
-              <span className="section-label">Current mode</span>
-              <strong>{themeMode}</strong>
-              <p>
-                {themeMode === 'system'
-                  ? 'Follows your device setting automatically.'
-                  : `Always use ${themeMode} mode.`}
-              </p>
-            </div>
-          </article>
-        </section>
-
-        <section id="settings-training" className="panel panel-highlight settings-panel">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Training defaults</p>
-              <h2>Training defaults</h2>
-              <p className="section-body">Set weekly pace and bodyweight check-ins together.</p>
-            </div>
-          </div>
-          <article className="settings-card settings-card-training">
-            <div className="settings-card-intro">
-              <strong>Keep weekly pace and bodyweight check-ins in one preference flow.</strong>
-              <p>Set the target week once, then keep quick check-ins close to it.</p>
-            </div>
-            <div className="settings-training-summary settings-training-summary-compact">
-              <div className="settings-note-card">
-                <span className="section-label">Weekly target</span>
-                <strong>{weeklyWorkoutGoal} sessions</strong>
-                <p>Used as the weekly pace target across the product.</p>
-              </div>
-              <div className="settings-note-card">
-                <span className="section-label">Latest check-in</span>
-                <strong>{latestBodyweightValue}</strong>
-                <p>
-                  {bodyweightSummary.deltaInRange !== null
-                    ? `${bodyweightSummary.deltaInRange > 0 ? '+' : ''}${bodyweightSummary.deltaInRange} kg over the last 30 days`
-                    : 'Add at least two check-ins to compare your trend.'}
-                </p>
-              </div>
-            </div>
-            <div className="settings-training-flow settings-training-flow-unified">
-              <div className="settings-preference-block">
-                <div className="settings-preference-copy">
-                  <span className="section-label">Weekly target</span>
-                  <strong>Set what a normal training week should aim for.</strong>
-                  <p>The dashboard and recovery pacing use this as your baseline.</p>
-                </div>
-                <label className="field field-compact">
-                  <span>Target sessions</span>
-                  <select
-                    value={String(weeklyWorkoutGoal)}
-                    onChange={(event) => setWeeklyWorkoutGoal(Number(event.target.value))}
-                  >
-                    {Array.from({ length: 7 }, (_, index) => index + 1).map((value) => (
-                      <option key={value} value={value}>
-                        {value} {value === 1 ? 'session' : 'sessions'}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section id="settings-bodyweight" className="panel panel-highlight settings-panel">
-          <div className="section-heading">
-            <div>
-              <p className="section-label">Bodyweight check-ins</p>
-              <h2>Bodyweight check-ins</h2>
-              <p className="section-body">
-                Keep an ongoing log of your bodyweight to compare against performance.
-              </p>
-            </div>
-          </div>
-          <article className="settings-card">
-            <div className="settings-preference-block settings-preference-block-bodyweight">
-              <div className="settings-preference-copy">
-                <span className="section-label">Log a check-in</span>
-                <strong>Save a quick check-in.</strong>
-                <p>Recent entries stay beside the form so the trend is always easy to read.</p>
-              </div>
-              <form
-                className="stack settings-bodyweight-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const didSave = saveBodyweightEntry(bodyweightDate, bodyweightValue);
-
-                  if (didSave) {
-                    setBodyweightValue('');
-                  }
-                }}
-              >
-                <div className="settings-bodyweight-grid">
-                  <label className="field field-compact">
-                    <span>Check-in date</span>
-                    <input
-                      type="date"
-                      value={bodyweightDate}
-                      onChange={(event) => setBodyweightDate(event.target.value)}
-                    />
-                  </label>
-                  <label className="field field-compact">
-                    <span>Bodyweight (kg)</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.1"
-                      value={bodyweightValue}
-                      onChange={(event) => setBodyweightValue(event.target.value)}
-                      placeholder="82.4"
-                    />
-                  </label>
-                </div>
-                <div className="actions settings-training-actions">
-                  <button type="submit" className="primary-button">
-                    Save bodyweight
-                  </button>
-                </div>
-              </form>
-              <div className="settings-bodyweight-list">
-                {(bodyweightEntries ?? []).slice(0, 5).map((entry) => (
-                  <div key={entry.id} className="settings-bodyweight-item">
-                    <span>{entry.date}</span>
-                    <strong>{entry.weight} kg</strong>
-                  </div>
-                ))}
-                {!bodyweightEntries?.length && (
-                  <div className="settings-bodyweight-item settings-bodyweight-item-empty">
-                    <span>No check-ins yet</span>
-                    <strong>Start with today</strong>
-                  </div>
-                )}
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section
-          id="settings-data"
-          className="panel panel-highlight settings-panel settings-panel-data"
+    <>
+      {showDataMessage ? (
+        <p
+          className={`rounded-lg border px-3 py-2 text-sm ${
+            dataMessage.type === 'error'
+              ? 'border-error/40 bg-error-container/30 text-error'
+              : 'border-outline-variant bg-surface-container-high text-on-surface'
+          }`}
+          role="status"
+          aria-live="polite"
         >
-          <div className="section-heading">
+          {dataMessage.text}
+        </p>
+      ) : null}
+
+      {/* Profile Bento Card */}
+      <section className="grid grid-cols-6 gap-3">
+        <div className="col-span-6 bg-surface-container border border-outline-variant rounded-xl p-4 flex items-center gap-4">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary">
+            <img
+              className="w-full h-full object-cover"
+              alt="Profile"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAw2PvQCMZxBi8XDit9O5Xlgygcg8hu6TPDjFwS5R7h6BtgO-U44NxGXilgRAF8H6W0Nja32VzP6-xs14T6DSWPSDcjDtuxjMzba3fmQIcE1M3eqNL6XkznhSg7V5WC7BZ1U_Z0GmHhBx4QLGZvBgmmWpTB1t8Ut_Qg3qjbNy1m6aZ2TL7m5NZC7rInrOQlE2JsId-pnVz6Fb5hFdsS8OS0qP2O0CImdB-pVuPigDxbxPkvKZL9HNdQBVofZaCitYCRo9yHQp0G-sc"
+            />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-on-surface">Alex Rivera</h2>
+            <p className="text-sm text-on-surface-variant">Elite Member since 2023</p>
+          </div>
+          <div className="ml-auto">
+            <span className="material-symbols-outlined text-primary">edit</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Bodyweight Log Entry */}
+      <section className="space-y-3">
+        <h3 className="text-xs uppercase tracking-widest text-on-surface-variant font-bold px-2">
+          Metric Tracker
+        </h3>
+        <div className="bg-surface-container-high border border-outline-variant rounded-xl p-5">
+          <div className="flex justify-between items-end mb-4">
             <div>
-              <p className="section-label">Data safety</p>
-              <h2>Data safety</h2>
-              <p className="section-body">Back up and restore local data from one calm place.</p>
+              <p className="text-sm text-on-surface-variant mb-1">Current Bodyweight</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-on-surface">{latestBodyweight}</span>
+                <span className="text-primary font-bold">kg</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-tertiary font-medium">{deltaLabel}</p>
             </div>
           </div>
-          <article className="settings-card">
-            <div className="settings-card-intro">
-              <strong>
-                Review every import before you apply it and keep exports easy to trust.
-              </strong>
-              <p>
-                Your local data stays exactly as it is until you choose what should happen next.
-              </p>
-            </div>
-            <div
-              className="settings-trust-strip settings-trust-strip-prominent"
-              aria-label="Data safety cues"
+          <div className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+            <label className="sr-only" htmlFor="bodyweight-date">
+              Check-in date
+            </label>
+            <input
+              id="bodyweight-date"
+              aria-label="Check-in date"
+              className="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none"
+              type="date"
+              value={bodyweightDate}
+              onChange={(event) => setBodyweightDate(event.target.value)}
+            />
+            <label className="sr-only" htmlFor="bodyweight-kg-input">
+              Bodyweight (kg)
+            </label>
+            <input
+              id="bodyweight-kg-input"
+              aria-label="Bodyweight (kg)"
+              className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none placeholder:text-secondary"
+              placeholder="Enter weight..."
+              type="number"
+              min="0"
+              step="0.1"
+              value={bodyweightValue}
+              onChange={(e) => setBodyweightValue(e.target.value)}
+            />
+            <button
+              className="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold transition-all active:scale-95"
+              onClick={handleLogWeight}
             >
-              <span className="settings-trust-pill">Stored locally</span>
-              <span className="settings-trust-pill">Preview before apply</span>
-              <span className="settings-trust-pill">
-                {pendingImport ? 'Import decision pending' : 'Nothing changes on export'}
-              </span>
-            </div>
-            <div className="settings-data-surface">
-              <div className="settings-data-grid">
-                <div className="settings-action-card settings-action-card-primary">
-                  <div>
-                    <span className="section-label">Export</span>
-                    <h3>Back up all data</h3>
-                    <p>
-                      Create a full JSON backup or save workout history as CSV without changing
-                      anything in the app.
-                    </p>
-                  </div>
-                  <div className="settings-action-buttons">
-                    <button type="button" className="secondary-button" onClick={exportAppData}>
-                      Export JSON
-                    </button>
-                    <button
-                      type="button"
-                      className="ghost-button"
-                      onClick={exportWorkoutHistoryCsv}
-                    >
-                      Export CSV
-                    </button>
-                  </div>
-                </div>
-                <div className="settings-action-card">
-                  <div>
-                    <span className="section-label">Import</span>
-                    <h3>Restore from file</h3>
-                    <p>
-                      Open a backup, review its contents, then choose whether it should replace or
-                      merge into current local data.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    Import JSON
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="application/json,.json"
-                    className="hidden-input"
-                    onChange={handleImportFile}
-                  />
-                </div>
-              </div>
-            </div>
-            {pendingImport && (
-              <div className="settings-import-preview" role="status" aria-live="polite">
-                <div className="settings-import-preview-header">
-                  <div>
-                    <span className="section-label">Import preview</span>
-                    <h3>{pendingImport.fileName}</h3>
-                    <p>
-                      Review the backup first. Current local data stays untouched until you choose
-                      replace or merge.
-                    </p>
-                  </div>
-                </div>
-                <div className="settings-import-reassurance">
-                  <strong>Nothing changes yet.</strong>
-                  <p>
-                    Replace switches fully to this backup. Merge keeps current local data and only
-                    adds what is new.
-                  </p>
-                </div>
-                <div className="settings-import-decision-grid">
-                  <div className="settings-import-decision-card settings-import-decision-card-primary">
-                    <span className="section-label">Replace</span>
-                    <strong>Replace current local data</strong>
-                    <p>Use this when the backup should become the new source of truth.</p>
-                    <button
-                      type="button"
-                      className="primary-button"
-                      onClick={() => applyPendingImport('replace')}
-                    >
-                      Replace data
-                    </button>
-                  </div>
-                  <div className="settings-import-decision-card">
-                    <span className="section-label">Merge</span>
-                    <strong>Keep current data and add what is new</strong>
-                    <p>
-                      Use this when you want to keep what is already here and bring in only the
-                      extra items from the backup.
-                    </p>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => applyPendingImport('merge')}
-                    >
-                      Merge data
-                    </button>
-                  </div>
-                </div>
-                <div className="settings-import-preview-grid">
-                  {importCounts.map((item) => (
-                    <div key={item.label} className="settings-note-card">
-                      <span className="section-label">{item.label}</span>
-                      <strong>{item.value}</strong>
-                      <p>{item.body}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="settings-import-actions">
-                  <button type="button" className="ghost-button" onClick={clearPendingImport}>
-                    Cancel import
-                  </button>
-                </div>
-              </div>
-            )}
-            {dataMessage.text && (
-              <p
-                className={
-                  dataMessage.type === 'error'
-                    ? 'feedback error'
-                    : dataMessage.type === 'warning'
-                      ? 'feedback warning'
-                      : 'feedback success'
-                }
-                role={dataMessage.type === 'error' ? 'alert' : 'status'}
-                aria-live={dataMessage.type === 'error' ? 'assertive' : 'polite'}
-              >
-                {dataMessage.text}
-              </p>
-            )}
-            {storageWarning && (
-              <p className="feedback warning" role="status" aria-live="polite">
-                {storageWarning}
-              </p>
-            )}
-          </article>
-        </section>
+              Save bodyweight
+            </button>
+          </div>
+        </div>
       </section>
-    </main>
+
+      {/* General Settings */}
+      <section className="space-y-2">
+        <h3 className="text-xs uppercase tracking-widest text-on-surface-variant font-bold px-2">
+          General
+        </h3>
+        <div className="flex flex-col gap-2">
+          <label className="bg-surface-container border border-outline-variant rounded-xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-bold text-on-surface">Weekly Goal</p>
+              <p className="text-xs text-on-surface-variant">Target sessions per week</p>
+            </div>
+            <input
+              aria-label="Target sessions"
+              className="w-24 bg-surface-container-lowest border border-outline-variant rounded-lg px-3 py-2 text-on-surface text-right"
+              min="1"
+              max={MAX_WEEKLY_WORKOUT_GOAL}
+              step="1"
+              type="number"
+              value={weeklyWorkoutGoal}
+              onChange={(event) => {
+                const parsed = Number(event.target.value);
+                if (Number.isFinite(parsed)) {
+                  const nextGoal = Math.min(
+                    MAX_WEEKLY_WORKOUT_GOAL,
+                    Math.max(1, Math.round(parsed)),
+                  );
+                  setWeeklyWorkoutGoal(nextGoal);
+                }
+              }}
+            />
+          </label>
+
+          {/* Theme Toggle Item */}
+          <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex items-center justify-between hover:bg-surface-container-high transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">dark_mode</span>
+              </div>
+              <div>
+                <p className="font-bold text-on-surface">Dark Mode</p>
+                <p className="text-xs text-on-surface-variant">Optimized for low light</p>
+              </div>
+            </div>
+            <div className="w-12 h-6 bg-primary rounded-full relative flex items-center px-1">
+              <div className="w-4 h-4 bg-on-primary rounded-full ml-auto"></div>
+            </div>
+          </div>
+
+          <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex items-center justify-between hover:bg-surface-container-high transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">notifications_active</span>
+              </div>
+              <div>
+                <p className="font-bold text-on-surface">Notifications</p>
+                <p className="text-xs text-on-surface-variant">Manage alerts and sounds</p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+          </div>
+
+          <div className="bg-surface-container border border-outline-variant rounded-xl p-4 flex items-center justify-between hover:bg-surface-container-high transition-colors">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary">health_and_safety</span>
+              </div>
+              <div>
+                <p className="font-bold text-on-surface">Privacy &amp; Security</p>
+                <p className="text-xs text-on-surface-variant">Data permissions and biometrics</p>
+              </div>
+            </div>
+            <span className="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Data Management */}
+      <section className="space-y-3">
+        <h3 className="text-xs uppercase tracking-widest text-on-surface-variant font-bold px-2">
+          Data Management
+        </h3>
+        <div className="bg-surface-container border border-outline-variant rounded-xl overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between p-4 border-b border-outline-variant hover:bg-surface-container-high transition-colors group"
+            onClick={exportWorkoutHistoryCsv}
+          >
+            <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">
+                cloud_download
+              </span>
+              <span className="font-bold text-on-surface">Export Workout History</span>
+            </div>
+            <span className="text-xs font-mono text-on-surface-variant">.CSV / .JSON</span>
+          </button>
+
+          <button
+            className="w-full flex items-center justify-between p-4 hover:bg-surface-container-high transition-colors group"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-on-surface-variant group-hover:text-tertiary transition-colors">
+                cloud_upload
+              </span>
+              <span className="font-bold text-on-surface">Import Data</span>
+            </div>
+            <span className="text-xs font-mono text-on-surface-variant">FROM WEARABLES</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={handleImportFile}
+          />
+        </div>
+        <p className="text-[10px] text-center text-on-secondary-fixed-variant px-4">
+          Last synced with Apple Health today at 08:42 AM
+        </p>
+
+        {pendingImport && (
+          <div className="bg-surface-container-high border border-outline-variant rounded-xl p-4 space-y-4">
+            <h4 className="font-bold text-on-surface">Import Ready: {pendingImport.fileName}</h4>
+            <p className="text-xs text-on-surface-variant">{IMPORT_PREVIEW_TEXT}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => applyPendingImport('replace')}
+                className="flex-1 bg-primary text-on-primary py-2 rounded-lg font-bold text-sm"
+              >
+                Replace data
+              </button>
+              <button
+                onClick={() => applyPendingImport('merge')}
+                className="flex-1 bg-surface-variant border border-outline-variant py-2 rounded-lg font-bold text-sm"
+              >
+                Merge data
+              </button>
+            </div>
+            <button
+              onClick={clearPendingImport}
+              className="w-full py-2 text-xs text-on-surface-variant"
+            >
+              Cancel import
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* Danger Zone */}
+      <section className="pb-10">
+        <button className="w-full bg-error-container/20 border border-error/30 text-error rounded-xl py-4 font-bold active:bg-error/10 transition-colors">
+          Sign Out
+        </button>
+      </section>
+    </>
   );
 }

@@ -28,7 +28,6 @@ import {
   sortWorkouts,
   validateImportedData,
 } from '../lib/workoutData.js';
-import { useThemeMode } from './useThemeMode.js';
 import { useTrackerDerivedData } from './useTrackerDerivedData.js';
 import { useTrackerPersistence } from './useTrackerPersistence.js';
 
@@ -72,7 +71,6 @@ function moveItem(list, fromIndex, toIndex) {
 export function useAppController() {
   const [storedData] = useState(readStoredData);
   const [activeView, setActiveView] = useState('dashboard');
-  const { themeMode, setThemeMode } = useThemeMode();
   const [exercises, setExercises] = useState(storedData.exercises);
   const [splits, setSplits] = useState(storedData.splits);
   const [templates, setTemplates] = useState(storedData.templates ?? []);
@@ -580,6 +578,87 @@ export function useAppController() {
     }
 
     setActiveView('exercises');
+  }
+
+  function saveCustomExercise({
+    name,
+    targetWeight = '',
+    targetRepMin = '',
+    targetRepMax = '',
+    weightStep = '2.5',
+  }) {
+    const normalizedName = String(name ?? '').trim();
+    const normalizedTargetWeight = String(targetWeight ?? '').trim();
+    const normalizedTargetRepMin = String(targetRepMin ?? '').trim();
+    const normalizedTargetRepMax = String(targetRepMax ?? '').trim();
+    const normalizedWeightStep = String(weightStep ?? '').trim() || '2.5';
+
+    if (!normalizedName) {
+      return { ok: false, message: 'Exercise name cannot be empty.' };
+    }
+
+    const parsedTargetWeight = normalizedTargetWeight ? Number(normalizedTargetWeight) : null;
+    const parsedTargetRepMin = normalizedTargetRepMin ? Number(normalizedTargetRepMin) : null;
+    const parsedTargetRepMax = normalizedTargetRepMax ? Number(normalizedTargetRepMax) : null;
+    const parsedWeightStep = normalizedWeightStep ? Number(normalizedWeightStep) : 2.5;
+
+    if (
+      normalizedTargetWeight &&
+      (!Number.isFinite(parsedTargetWeight) || parsedTargetWeight <= 0)
+    ) {
+      return { ok: false, message: 'Target weight must be a positive number.' };
+    }
+
+    if (
+      normalizedTargetRepMin &&
+      (!Number.isInteger(parsedTargetRepMin) || parsedTargetRepMin <= 0)
+    ) {
+      return { ok: false, message: 'Target rep min must be a whole number.' };
+    }
+
+    if (
+      normalizedTargetRepMax &&
+      (!Number.isInteger(parsedTargetRepMax) || parsedTargetRepMax <= 0)
+    ) {
+      return { ok: false, message: 'Target rep max must be a whole number.' };
+    }
+
+    if (
+      parsedTargetRepMin !== null &&
+      parsedTargetRepMax !== null &&
+      parsedTargetRepMin > parsedTargetRepMax
+    ) {
+      return { ok: false, message: 'Target rep min cannot be higher than target rep max.' };
+    }
+
+    if (!Number.isFinite(parsedWeightStep) || parsedWeightStep <= 0) {
+      return { ok: false, message: 'Weight step must be a positive number.' };
+    }
+
+    if (
+      exercises.some(
+        (exercise) => exercise.name.trim().toLowerCase() === normalizedName.toLowerCase(),
+      )
+    ) {
+      return { ok: false, message: 'Exercise names should be unique.' };
+    }
+
+    const newExercise = {
+      id: createId(),
+      name: normalizedName,
+      targetWeight: parsedTargetWeight,
+      targetRepMin: parsedTargetRepMin,
+      targetRepMax: parsedTargetRepMax,
+      weightStep: parsedWeightStep,
+      createdAt: new Date().toISOString(),
+    };
+
+    setExercises((current) => [...current, newExercise]);
+    setExerciseMessage({ type: 'success', text: `Added ${normalizedName}.` });
+    setSelectedExerciseId(newExercise.id);
+    setActiveView('exercises');
+
+    return { ok: true, exercise: newExercise, message: `Added ${normalizedName}.` };
   }
 
   function startEditingExercise(exerciseId) {
@@ -1639,11 +1718,12 @@ export function useAppController() {
     });
   }
 
-  function handleWorkoutSubmit(event) {
+  function handleWorkoutSubmit(event, formOverride = null) {
     event.preventDefault();
     setWorkoutMessage({ type: '', text: '' });
 
-    const normalizedWorkout = normalizeWorkoutEntries(workoutForm);
+    const submissionForm = formOverride ?? workoutForm;
+    const normalizedWorkout = normalizeWorkoutEntries(submissionForm);
 
     if (normalizedWorkout.error) {
       setWorkoutMessage({ type: 'error', text: normalizedWorkout.error });
@@ -1702,8 +1782,6 @@ export function useAppController() {
     setActiveView,
     activeViewMeta,
     sidebarSummary,
-    themeMode,
-    setThemeMode,
     workouts,
     latestWorkout,
     dashboardSummary,
@@ -1739,6 +1817,7 @@ export function useAppController() {
     exerciseWeightStep,
     setExerciseWeightStep,
     handleExerciseSubmit,
+    saveCustomExercise,
     resetExerciseForm,
     exerciseMessage,
     startEditingExercise,

@@ -1,6 +1,7 @@
 export const STORAGE_KEY = 'workout-tracker-data-v1';
 export const STORAGE_VERSION = 1;
 export const DEFAULT_WEEKLY_WORKOUT_GOAL = 4;
+export const MAX_WEEKLY_WORKOUT_GOAL = 14;
 
 const dashboardDateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
@@ -101,7 +102,7 @@ export function normalizeWeeklyWorkoutGoal(value) {
     return DEFAULT_WEEKLY_WORKOUT_GOAL;
   }
 
-  return Math.min(7, Math.max(1, parsedValue));
+  return Math.min(MAX_WEEKLY_WORKOUT_GOAL, Math.max(1, parsedValue));
 }
 
 export function normalizePositiveNumber(value) {
@@ -517,14 +518,59 @@ export function normalizeWorkout(rawWorkout) {
 }
 
 export function sortWorkouts(workouts) {
+  function parseTimestamp(value) {
+    if (typeof value !== 'string' || !value) {
+      return Number.NaN;
+    }
+
+    return Date.parse(value);
+  }
+
+  function parseWorkoutDate(value) {
+    const parsedDate = parseInputDate(value);
+    return parsedDate.getTime();
+  }
+
   return [...workouts].sort((left, right) => {
-    const dateCompare = right.date.localeCompare(left.date);
+    const leftDateTimestamp = parseWorkoutDate(left?.date);
+    const rightDateTimestamp = parseWorkoutDate(right?.date);
+
+    if (Number.isFinite(leftDateTimestamp) && Number.isFinite(rightDateTimestamp)) {
+      const dateTimestampCompare = rightDateTimestamp - leftDateTimestamp;
+      if (dateTimestampCompare !== 0) {
+        return dateTimestampCompare;
+      }
+    } else if (Number.isFinite(leftDateTimestamp) || Number.isFinite(rightDateTimestamp)) {
+      return Number.isFinite(leftDateTimestamp) ? -1 : 1;
+    }
+
+    const dateCompare = String(right?.date ?? '').localeCompare(String(left?.date ?? ''));
 
     if (dateCompare !== 0) {
       return dateCompare;
     }
 
-    return right.createdAt.localeCompare(left.createdAt);
+    const leftCreatedTimestamp = parseTimestamp(left?.createdAt);
+    const rightCreatedTimestamp = parseTimestamp(right?.createdAt);
+
+    if (Number.isFinite(leftCreatedTimestamp) && Number.isFinite(rightCreatedTimestamp)) {
+      const createdTimestampCompare = rightCreatedTimestamp - leftCreatedTimestamp;
+      if (createdTimestampCompare !== 0) {
+        return createdTimestampCompare;
+      }
+    } else if (Number.isFinite(leftCreatedTimestamp) || Number.isFinite(rightCreatedTimestamp)) {
+      return Number.isFinite(leftCreatedTimestamp) ? -1 : 1;
+    }
+
+    const createdAtCompare = String(right?.createdAt ?? '').localeCompare(
+      String(left?.createdAt ?? ''),
+    );
+
+    if (createdAtCompare !== 0) {
+      return createdAtCompare;
+    }
+
+    return String(right?.id ?? '').localeCompare(String(left?.id ?? ''));
   });
 }
 

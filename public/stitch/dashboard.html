@@ -1,0 +1,2256 @@
+<!doctype html>
+<!-- saved from url=(0012)about:srcdoc -->
+<html class="dark" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Workout Tracker - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com/?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100;300;400;500;600;700;800;900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-container': '#121215',
+              'on-tertiary-fixed-variant': '#047857',
+              'on-secondary-fixed-variant': '#3f3f46',
+              'surface-container-high': '#18181b',
+              'secondary-fixed': '#a1a1aa',
+              'on-primary': '#0a0012',
+              'surface-container-lowest': '#09090b',
+              'on-tertiary': '#001a12',
+              'on-secondary-fixed': '#18181b',
+              'on-tertiary-container': '#bbf7d0',
+              'inverse-primary': '#5b21b6',
+              'error-container': '#3b1111',
+              'surface-variant': '#18181b',
+              'surface-container-highest': '#1e1e22',
+              'on-secondary-container': '#a1a1aa',
+              'primary-fixed-dim': '#c4b5fd',
+              'secondary-fixed-dim': '#71717a',
+              tertiary: '#34d399',
+              'secondary-container': '#27272a',
+              'on-primary-fixed-variant': '#5b21b6',
+              'surface-tint': '#a78bfa',
+              'inverse-surface': '#fafafa',
+              'tertiary-fixed-dim': '#6ee7b7',
+              surface: '#0c0c0f',
+              'on-primary-container': '#ede9fe',
+              'inverse-on-surface': '#09090b',
+              'on-error-container': '#fca5a5',
+              'primary-container': '#7c3aed',
+              error: '#ef4444',
+              primary: '#a78bfa',
+              'on-surface-variant': '#a1a1aa',
+              'on-secondary': '#09090b',
+              outline: '#52525b',
+              'tertiary-fixed': '#bbf7d0',
+              background: '#09090b',
+              'tertiary-container': '#065f46',
+              'outline-variant': '#27272a',
+              'surface-bright': '#18181b',
+              'on-primary-fixed': '#2e1065',
+              'primary-fixed': '#ede9fe',
+              'on-background': '#fafafa',
+              secondary: '#71717a',
+              'on-tertiary-fixed': '#003318',
+              'on-surface': '#fafafa',
+              'on-error': '#1a0000',
+              'surface-container-low': '#0f0f12',
+              'surface-dim': '#0c0c0f',
+            },
+            borderRadius: {
+              DEFAULT: '0.25rem',
+              lg: '0.5rem',
+              xl: '0.75rem',
+              full: '9999px',
+            },
+            fontFamily: {
+              headline: ['Geist'],
+              body: ['Geist'],
+              label: ['Geist'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: 'Geist', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+    </style>
+    <style data-stitch-injected="">
+      /* For Webkit Browsers (Chrome, Safari, Edge) */
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* For Firefox */
+      html {
+        scrollbar-width: none;
+      }
+
+      /* For IE/Edge */
+      body {
+        -ms-overflow-style: none;
+        min-height: auto !important;
+      }
+    </style>
+    <script data-stitch-injected="">
+      (function z() {
+        window.addEventListener(`message`, async function (e) {
+          let t = e.data;
+          if (!t || t.type !== `capture_screenshot` || e.source !== window.parent) return;
+          let n = t.requestId,
+            r = t.captureEngineSource,
+            i = t.options || {},
+            a = window.innerWidth,
+            o = window.innerHeight,
+            s = window.scrollX,
+            c = window.scrollY,
+            l = document.documentElement,
+            u = l.style.width,
+            d = l.style.height,
+            f = l.style.overflow,
+            p = l.style.position;
+          try {
+            if (!window.snapdom && r) {
+              let e = document.createElement(`script`);
+              (e.setAttribute(`data-stitch-injected`, ``),
+                (e.textContent = r),
+                document.head.appendChild(e));
+            }
+            let e = window.snapdom;
+            if (!e) {
+              window.parent.postMessage(
+                {
+                  type: `screenshot_error`,
+                  requestId: n,
+                  errorCode: `CAPTURE_ENGINE_UNAVAILABLE`,
+                  error: `Capture engine not available. Ensure source is sent with the capture request.`,
+                },
+                `*`,
+              );
+              return;
+            }
+            let t = i.exclude || [`[data-stitch-injected]`];
+            (window.scrollTo(0, 0),
+              (l.style.width = a + `px`),
+              (l.style.height = o + `px`),
+              (l.style.overflow = `hidden`),
+              (l.style.position = `relative`));
+            let u = (
+              await (
+                await e(document.documentElement, {
+                  exclude: t,
+                  embedFonts: !0,
+                  scale: i.scale || 1,
+                  quality: i.quality || 1,
+                  plugins: [
+                    {
+                      name: `stitch-viewport-clip`,
+                      afterClone: function (e) {
+                        let t = e.clone;
+                        if (!(t instanceof HTMLElement)) return;
+                        ((t.style.position = `relative`),
+                          (t.style.width = a + `px`),
+                          (t.style.height = o + `px`),
+                          (t.style.overflow = `hidden`));
+                        let n = [],
+                          r = t.querySelectorAll(`*`);
+                        for (let e = 0; e < r.length; e++) {
+                          let t = r[e];
+                          t instanceof HTMLElement &&
+                            (t.style.position ||
+                              (t.__snapdomComputedStyle || window.getComputedStyle(t)).position) ===
+                              `fixed` &&
+                            n.push(t);
+                        }
+                        if (s !== 0 || c !== 0) {
+                          let e = t.querySelector(`body`);
+                          e && ((e.style.marginTop = -c + `px`), (e.style.marginLeft = -s + `px`));
+                        }
+                        for (let e = 0; e < n.length; e++)
+                          ((n[e].style.position = `absolute`), t.appendChild(n[e]));
+                      },
+                    },
+                  ],
+                })
+              ).toCanvas({ width: a, height: o })
+            ).toDataURL(`image/png`);
+            window.parent.postMessage(
+              { type: `screenshot_captured`, requestId: n, dataUrl: u, width: a, height: o },
+              `*`,
+            );
+          } catch (e) {
+            window.parent.postMessage(
+              {
+                type: `screenshot_error`,
+                requestId: n,
+                error: e instanceof Error ? e.message : String(e),
+              },
+              `*`,
+            );
+          } finally {
+            ((l.style.width = u),
+              (l.style.height = d),
+              (l.style.overflow = f),
+              (l.style.position = p),
+              window.scrollTo(s, c));
+          }
+        });
+      })();
+    </script>
+    <script data-stitch-injected="">
+      (function V() {
+        let e = `__stitch-highlight-css`,
+          t = `stitch-highlight-element`,
+          n = null;
+        function r() {
+          if (document.getElementById(e)) return;
+          let n = document.createElement(`style`);
+          ((n.id = e),
+            (n.textContent = [
+              `@keyframes stitch-highlight-pulse {`,
+              `  0%, 100% { box-shadow: 0 0 0 3px rgba(113,105,237,0.8), 0 0 12px 4px rgba(113,105,237,0.3); }`,
+              `  50%      { box-shadow: 0 0 0 3px rgba(113,105,237,0.4), 0 0 6px 2px rgba(113,105,237,0.15); }`,
+              `}`,
+              `.` + t + ` {`,
+              `  outline: 3px solid rgba(113,105,237,0.8) !important;`,
+              `  outline-offset: 2px !important;`,
+              `  animation: stitch-highlight-pulse 1.5s ease-in-out infinite !important;`,
+              `  border-radius: inherit;`,
+              `}`,
+            ].join(`
+`)),
+            document.head.appendChild(n));
+        }
+        function i(e) {
+          let t = e.toLowerCase().trim(),
+            n = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, null),
+            r = null,
+            i = -1,
+            a = n.nextNode();
+          for (; a; ) {
+            if ((a.textContent || ``).trim().toLowerCase().includes(t)) {
+              let e = 0,
+                t = a.parentElement;
+              for (; t; ) (e++, (t = t.parentElement));
+              e > i && ((i = e), (r = a));
+            }
+            a = n.nextNode();
+          }
+          return r;
+        }
+        function a(e) {
+          setTimeout(function () {
+            let t = e.getBoundingClientRect(),
+              n = window.innerWidth || 1,
+              r = window.innerHeight || 1;
+            window.parent.postMessage(
+              {
+                type: `stitch:highlight-element-rect`,
+                normalizedX: (t.left + t.width / 2) / n,
+                normalizedY: (t.top + t.height / 2) / r,
+                normalizedWidth: t.width / n,
+                normalizedHeight: t.height / r,
+              },
+              `*`,
+            );
+          }, 400);
+        }
+        window.addEventListener(`message`, function (e) {
+          if (!e.data || e.data.type !== `stitch:highlight-element`) return;
+          n &&= (n.classList.remove(t), null);
+          let { text: o, selector: s } = e.data;
+          if (!o && !s) return;
+          r();
+          let c = null;
+          if ((o && (c = i(o)), !c && s))
+            try {
+              c = document.querySelector(s);
+            } catch {}
+          c &&
+            (c.classList.add(t),
+            c.scrollIntoView({ behavior: `smooth`, block: `center` }),
+            (n = c),
+            a(c));
+        });
+      })();
+    </script>
+    <script data-stitch-injected="">
+      (function ce() {
+        function e() {
+          window.parent.postMessage(
+            { type: `stitch:content-dimensions`, height: document.documentElement.scrollHeight },
+            `*`,
+          );
+        }
+        (document.readyState === `loading`
+          ? document.addEventListener(`DOMContentLoaded`, () => setTimeout(e, 50))
+          : setTimeout(e, 50),
+          window.addEventListener(`load`, () => setTimeout(e, 100)));
+      })();
+    </script>
+    <style>
+      *,
+      ::before,
+      ::after {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      }
+      ::backdrop {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      } /* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */
+      *,
+      ::after,
+      ::before {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+      }
+      ::after,
+      ::before {
+        --tw-content: '';
+      }
+      :host,
+      html {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        tab-size: 4;
+        font-family:
+          ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+          'Segoe UI Symbol', 'Noto Color Emoji';
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        margin: 0;
+        line-height: inherit;
+      }
+      hr {
+        height: 0;
+        color: inherit;
+        border-top-width: 1px;
+      }
+      abbr:where([title]) {
+        -webkit-text-decoration: underline dotted;
+        text-decoration: underline dotted;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+      a {
+        color: inherit;
+        text-decoration: inherit;
+      }
+      b,
+      strong {
+        font-weight: bolder;
+      }
+      code,
+      kbd,
+      pre,
+      samp {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+          monospace;
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        font-size: 1em;
+      }
+      small {
+        font-size: 80%;
+      }
+      sub,
+      sup {
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+      }
+      sub {
+        bottom: -0.25em;
+      }
+      sup {
+        top: -0.5em;
+      }
+      table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+      }
+      button,
+      input,
+      optgroup,
+      select,
+      textarea {
+        font-family: inherit;
+        font-feature-settings: inherit;
+        font-variation-settings: inherit;
+        font-size: 100%;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+      }
+      button,
+      select {
+        text-transform: none;
+      }
+      button,
+      input:where([type='button']),
+      input:where([type='reset']),
+      input:where([type='submit']) {
+        -webkit-appearance: button;
+        background-color: transparent;
+        background-image: none;
+      }
+      :-moz-focusring {
+        outline: auto;
+      }
+      :-moz-ui-invalid {
+        box-shadow: none;
+      }
+      progress {
+        vertical-align: baseline;
+      }
+      ::-webkit-inner-spin-button,
+      ::-webkit-outer-spin-button {
+        height: auto;
+      }
+      [type='search'] {
+        -webkit-appearance: textfield;
+        outline-offset: -2px;
+      }
+      ::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+      ::-webkit-file-upload-button {
+        -webkit-appearance: button;
+        font: inherit;
+      }
+      summary {
+        display: list-item;
+      }
+      blockquote,
+      dd,
+      dl,
+      figure,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      hr,
+      p,
+      pre {
+        margin: 0;
+      }
+      fieldset {
+        margin: 0;
+        padding: 0;
+      }
+      legend {
+        padding: 0;
+      }
+      menu,
+      ol,
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      dialog {
+        padding: 0;
+      }
+      textarea {
+        resize: vertical;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        opacity: 1;
+        color: #9ca3af;
+      }
+      [role='button'],
+      button {
+        cursor: pointer;
+      }
+      :disabled {
+        cursor: default;
+      }
+      audio,
+      canvas,
+      embed,
+      iframe,
+      img,
+      object,
+      svg,
+      video {
+        display: block;
+        vertical-align: middle;
+      }
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+      [hidden]:where(:not([hidden='until-found'])) {
+        display: none;
+      }
+      [type='text'],
+      input:where(:not([type])),
+      [type='email'],
+      [type='url'],
+      [type='password'],
+      [type='number'],
+      [type='date'],
+      [type='datetime-local'],
+      [type='month'],
+      [type='search'],
+      [type='tel'],
+      [type='time'],
+      [type='week'],
+      [multiple],
+      textarea,
+      select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #fff;
+        border-color: #6b7280;
+        border-width: 1px;
+        border-radius: 0px;
+        padding-top: 0.5rem;
+        padding-right: 0.75rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5rem;
+        --tw-shadow: 0 0 #0000;
+      }
+      [type='text']:focus,
+      input:where(:not([type])):focus,
+      [type='email']:focus,
+      [type='url']:focus,
+      [type='password']:focus,
+      [type='number']:focus,
+      [type='date']:focus,
+      [type='datetime-local']:focus,
+      [type='month']:focus,
+      [type='search']:focus,
+      [type='tel']:focus,
+      [type='time']:focus,
+      [type='week']:focus,
+      [multiple]:focus,
+      textarea:focus,
+      select:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-inset: var(--tw-empty, /*!*/ /*!*/);
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: #2563eb;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+        border-color: #2563eb;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: #6b7280;
+        opacity: 1;
+      }
+      ::-webkit-datetime-edit-fields-wrapper {
+        padding: 0;
+      }
+      ::-webkit-date-and-time-value {
+        min-height: 1.5em;
+        text-align: inherit;
+      }
+      ::-webkit-datetime-edit {
+        display: inline-flex;
+      }
+      ::-webkit-datetime-edit,
+      ::-webkit-datetime-edit-year-field,
+      ::-webkit-datetime-edit-month-field,
+      ::-webkit-datetime-edit-day-field,
+      ::-webkit-datetime-edit-hour-field,
+      ::-webkit-datetime-edit-minute-field,
+      ::-webkit-datetime-edit-second-field,
+      ::-webkit-datetime-edit-millisecond-field,
+      ::-webkit-datetime-edit-meridiem-field {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        print-color-adjust: exact;
+      }
+      [multiple],
+      [size]:where(select:not([size='1'])) {
+        background-image: initial;
+        background-position: initial;
+        background-repeat: unset;
+        background-size: initial;
+        padding-right: 0.75rem;
+        print-color-adjust: unset;
+      }
+      [type='checkbox'],
+      [type='radio'] {
+        -webkit-appearance: none;
+        appearance: none;
+        padding: 0;
+        print-color-adjust: exact;
+        display: inline-block;
+        vertical-align: middle;
+        background-origin: border-box;
+        -webkit-user-select: none;
+        user-select: none;
+        flex-shrink: 0;
+        height: 1rem;
+        width: 1rem;
+        color: #2563eb;
+        background-color: #fff;
+        border-color: #6b7280;
+        border-width: 1px;
+        --tw-shadow: 0 0 #0000;
+      }
+      [type='checkbox'] {
+        border-radius: 0px;
+      }
+      [type='radio'] {
+        border-radius: 100%;
+      }
+      [type='checkbox']:focus,
+      [type='radio']:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-inset: var(--tw-empty, /*!*/ /*!*/);
+        --tw-ring-offset-width: 2px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: #2563eb;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+      }
+      [type='checkbox']:checked,
+      [type='radio']:checked {
+        border-color: transparent;
+        background-color: currentColor;
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      [type='checkbox']:checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+      }
+      @media (forced-colors: active) {
+        [type='checkbox']:checked {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='radio']:checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+      }
+      @media (forced-colors: active) {
+        [type='radio']:checked {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='checkbox']:checked:hover,
+      [type='checkbox']:checked:focus,
+      [type='radio']:checked:hover,
+      [type='radio']:checked:focus {
+        border-color: transparent;
+        background-color: currentColor;
+      }
+      [type='checkbox']:indeterminate {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
+        border-color: transparent;
+        background-color: currentColor;
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      @media (forced-colors: active) {
+        [type='checkbox']:indeterminate {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='checkbox']:indeterminate:hover,
+      [type='checkbox']:indeterminate:focus {
+        border-color: transparent;
+        background-color: currentColor;
+      }
+      [type='file'] {
+        background: unset;
+        border-color: inherit;
+        border-width: 0;
+        border-radius: 0;
+        padding: 0;
+        font-size: unset;
+        line-height: inherit;
+      }
+      [type='file']:focus {
+        outline: 1px solid ButtonText;
+        outline: 1px auto -webkit-focus-ring-color;
+      }
+      .fixed {
+        position: fixed;
+      }
+      .absolute {
+        position: absolute;
+      }
+      .relative {
+        position: relative;
+      }
+      .inset-0 {
+        inset: 0px;
+      }
+      .bottom-0 {
+        bottom: 0px;
+      }
+      .bottom-4 {
+        bottom: 1rem;
+      }
+      .left-0 {
+        left: 0px;
+      }
+      .left-4 {
+        left: 1rem;
+      }
+      .right-0 {
+        right: 0px;
+      }
+      .top-0 {
+        top: 0px;
+      }
+      .z-40 {
+        z-index: 40;
+      }
+      .z-50 {
+        z-index: 50;
+      }
+      .mb-1 {
+        margin-bottom: 0.25rem;
+      }
+      .mb-10 {
+        margin-bottom: 2.5rem;
+      }
+      .mb-2 {
+        margin-bottom: 0.5rem;
+      }
+      .mb-3 {
+        margin-bottom: 0.75rem;
+      }
+      .mb-4 {
+        margin-bottom: 1rem;
+      }
+      .mb-6 {
+        margin-bottom: 1.5rem;
+      }
+      .mb-8 {
+        margin-bottom: 2rem;
+      }
+      .mr-1 {
+        margin-right: 0.25rem;
+      }
+      .mr-2 {
+        margin-right: 0.5rem;
+      }
+      .mr-3 {
+        margin-right: 0.75rem;
+      }
+      .mt-1 {
+        margin-top: 0.25rem;
+      }
+      .mt-4 {
+        margin-top: 1rem;
+      }
+      .mt-6 {
+        margin-top: 1.5rem;
+      }
+      .mt-auto {
+        margin-top: auto;
+      }
+      .flex {
+        display: flex;
+      }
+      .grid {
+        display: grid;
+      }
+      .hidden {
+        display: none;
+      }
+      .h-12 {
+        height: 3rem;
+      }
+      .h-16 {
+        height: 4rem;
+      }
+      .h-2 {
+        height: 0.5rem;
+      }
+      .h-3 {
+        height: 0.75rem;
+      }
+      .h-48 {
+        height: 12rem;
+      }
+      .h-5 {
+        height: 1.25rem;
+      }
+      .h-8 {
+        height: 2rem;
+      }
+      .h-\[100\%\] {
+        height: 100%;
+      }
+      .h-\[30\%\] {
+        height: 30%;
+      }
+      .h-\[40\%\] {
+        height: 40%;
+      }
+      .h-\[45\%\] {
+        height: 45%;
+      }
+      .h-\[50\%\] {
+        height: 50%;
+      }
+      .h-\[55\%\] {
+        height: 55%;
+      }
+      .h-\[60\%\] {
+        height: 60%;
+      }
+      .h-\[65\%\] {
+        height: 65%;
+      }
+      .h-\[70\%\] {
+        height: 70%;
+      }
+      .h-\[75\%\] {
+        height: 75%;
+      }
+      .h-\[80\%\] {
+        height: 80%;
+      }
+      .h-\[85\%\] {
+        height: 85%;
+      }
+      .h-\[90\%\] {
+        height: 90%;
+      }
+      .h-full {
+        height: 100%;
+      }
+      .min-h-\[884px\] {
+        min-height: 884px;
+      }
+      .w-2 {
+        width: 0.5rem;
+      }
+      .w-3 {
+        width: 0.75rem;
+      }
+      .w-48 {
+        width: 12rem;
+      }
+      .w-5 {
+        width: 1.25rem;
+      }
+      .w-64 {
+        width: 16rem;
+      }
+      .w-8 {
+        width: 2rem;
+      }
+      .w-96 {
+        width: 24rem;
+      }
+      .w-fit {
+        width: -moz-fit-content;
+        width: fit-content;
+      }
+      .w-full {
+        width: 100%;
+      }
+      .max-w-\[1440px\] {
+        max-width: 1440px;
+      }
+      .flex-1 {
+        flex: 1 1 0%;
+      }
+      .-rotate-90 {
+        --tw-rotate: -90deg;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .scale-95 {
+        --tw-scale-x: 0.95;
+        --tw-scale-y: 0.95;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .transform {
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .grid-cols-1 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+      .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .grid-rows-7 {
+        grid-template-rows: repeat(7, minmax(0, 1fr));
+      }
+      .flex-col {
+        flex-direction: column;
+      }
+      .items-end {
+        align-items: flex-end;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .justify-center {
+        justify-content: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .justify-around {
+        justify-content: space-around;
+      }
+      .gap-1 {
+        gap: 0.25rem;
+      }
+      .gap-2 {
+        gap: 0.5rem;
+      }
+      .gap-4 {
+        gap: 1rem;
+      }
+      .gap-6 {
+        gap: 1.5rem;
+      }
+      .gap-8 {
+        gap: 2rem;
+      }
+      .space-x-1 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-x-reverse: 0;
+        margin-right: calc(0.25rem * var(--tw-space-x-reverse));
+        margin-left: calc(0.25rem * calc(1 - var(--tw-space-x-reverse)));
+      }
+      .space-x-2 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-x-reverse: 0;
+        margin-right: calc(0.5rem * var(--tw-space-x-reverse));
+        margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse)));
+      }
+      .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-x-reverse: 0;
+        margin-right: calc(1rem * var(--tw-space-x-reverse));
+        margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+      }
+      .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+      }
+      .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+      }
+      .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+      }
+      .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+      }
+      .overflow-hidden {
+        overflow: hidden;
+      }
+      .overflow-x-auto {
+        overflow-x: auto;
+      }
+      .rounded {
+        border-radius: 0.25rem;
+      }
+      .rounded-full {
+        border-radius: 9999px;
+      }
+      .rounded-lg {
+        border-radius: 0.5rem;
+      }
+      .rounded-sm {
+        border-radius: 0.125rem;
+      }
+      .rounded-xl {
+        border-radius: 0.75rem;
+      }
+      .rounded-t-sm {
+        border-top-left-radius: 0.125rem;
+        border-top-right-radius: 0.125rem;
+      }
+      .border {
+        border-width: 1px;
+      }
+      .border-b {
+        border-bottom-width: 1px;
+      }
+      .border-r {
+        border-right-width: 1px;
+      }
+      .border-r-2 {
+        border-right-width: 2px;
+      }
+      .border-t {
+        border-top-width: 1px;
+      }
+      .border-none {
+        border-style: none;
+      }
+      .border-\[\#27272a\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(39 39 42 / var(--tw-border-opacity, 1));
+      }
+      .border-\[\#a78bfa\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(167 139 250 / var(--tw-border-opacity, 1));
+      }
+      .border-outline-variant {
+        --tw-border-opacity: 1;
+        border-color: rgb(39 39 42 / var(--tw-border-opacity, 1));
+      }
+      .bg-\[\#09090b\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(9 9 11 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#0c0c0f\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(12 12 15 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#0c0c0f\]\/95 {
+        background-color: rgb(12 12 15 / 0.95);
+      }
+      .bg-\[\#18181b\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .bg-background {
+        --tw-bg-opacity: 1;
+        background-color: rgb(9 9 11 / var(--tw-bg-opacity, 1));
+      }
+      .bg-primary {
+        --tw-bg-opacity: 1;
+        background-color: rgb(167 139 250 / var(--tw-bg-opacity, 1));
+      }
+      .bg-primary\/20 {
+        background-color: rgb(167 139 250 / 0.2);
+      }
+      .bg-primary\/40 {
+        background-color: rgb(167 139 250 / 0.4);
+      }
+      .bg-primary\/50 {
+        background-color: rgb(167 139 250 / 0.5);
+      }
+      .bg-secondary-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(39 39 42 / var(--tw-bg-opacity, 1));
+      }
+      .bg-secondary-fixed {
+        --tw-bg-opacity: 1;
+        background-color: rgb(161 161 170 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(18 18 21 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-high {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-highest {
+        --tw-bg-opacity: 1;
+        background-color: rgb(30 30 34 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-low {
+        --tw-bg-opacity: 1;
+        background-color: rgb(15 15 18 / var(--tw-bg-opacity, 1));
+      }
+      .bg-tertiary {
+        --tw-bg-opacity: 1;
+        background-color: rgb(52 211 153 / var(--tw-bg-opacity, 1));
+      }
+      .bg-tertiary\/10 {
+        background-color: rgb(52 211 153 / 0.1);
+      }
+      .bg-transparent {
+        background-color: transparent;
+      }
+      .bg-gradient-to-t {
+        background-image: linear-gradient(to top, var(--tw-gradient-stops));
+      }
+      .from-surface-container {
+        --tw-gradient-from: #121215 var(--tw-gradient-from-position);
+        --tw-gradient-to: rgb(18 18 21 / 0) var(--tw-gradient-to-position);
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+      }
+      .to-transparent {
+        --tw-gradient-to: transparent var(--tw-gradient-to-position);
+      }
+      .object-cover {
+        object-fit: cover;
+      }
+      .p-3 {
+        padding: 0.75rem;
+      }
+      .p-5 {
+        padding: 1.25rem;
+      }
+      .p-6 {
+        padding: 1.5rem;
+      }
+      .p-8 {
+        padding: 2rem;
+      }
+      .px-1 {
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+      }
+      .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      .px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .px-6 {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .py-0\.5 {
+        padding-top: 0.125rem;
+        padding-bottom: 0.125rem;
+      }
+      .py-1\.5 {
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+      }
+      .py-3 {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+      .py-4 {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      .py-8 {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      .pb-2 {
+        padding-bottom: 0.5rem;
+      }
+      .pb-20 {
+        padding-bottom: 5rem;
+      }
+      .pt-24 {
+        padding-top: 6rem;
+      }
+      .pt-3 {
+        padding-top: 0.75rem;
+      }
+      .pt-4 {
+        padding-top: 1rem;
+      }
+      .text-left {
+        text-align: left;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-2xl {
+        font-size: 1.5rem;
+        line-height: 2rem;
+      }
+      .text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+      }
+      .text-\[10px\] {
+        font-size: 10px;
+      }
+      .text-\[14px\] {
+        font-size: 14px;
+      }
+      .text-lg {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+      }
+      .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      .text-xl {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+      }
+      .text-xs {
+        font-size: 0.75rem;
+        line-height: 1rem;
+      }
+      .font-black {
+        font-weight: 900;
+      }
+      .font-bold {
+        font-weight: 700;
+      }
+      .font-extrabold {
+        font-weight: 800;
+      }
+      .font-medium {
+        font-weight: 500;
+      }
+      .font-normal {
+        font-weight: 400;
+      }
+      .font-semibold {
+        font-weight: 600;
+      }
+      .uppercase {
+        text-transform: uppercase;
+      }
+      .tracking-\[0\.2em\] {
+        letter-spacing: 0.2em;
+      }
+      .tracking-tight {
+        letter-spacing: -0.025em;
+      }
+      .tracking-wider {
+        letter-spacing: 0.05em;
+      }
+      .tracking-widest {
+        letter-spacing: 0.1em;
+      }
+      .text-\[\#a1a1aa\] {
+        --tw-text-opacity: 1;
+        color: rgb(161 161 170 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#a78bfa\] {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#fafafa\] {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-on-background {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-on-primary {
+        --tw-text-opacity: 1;
+        color: rgb(10 0 18 / var(--tw-text-opacity, 1));
+      }
+      .text-on-surface {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-on-surface-variant {
+        --tw-text-opacity: 1;
+        color: rgb(161 161 170 / var(--tw-text-opacity, 1));
+      }
+      .text-primary {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .text-secondary {
+        --tw-text-opacity: 1;
+        color: rgb(113 113 122 / var(--tw-text-opacity, 1));
+      }
+      .text-secondary-fixed {
+        --tw-text-opacity: 1;
+        color: rgb(161 161 170 / var(--tw-text-opacity, 1));
+      }
+      .text-surface-container-highest {
+        --tw-text-opacity: 1;
+        color: rgb(30 30 34 / var(--tw-text-opacity, 1));
+      }
+      .text-tertiary {
+        --tw-text-opacity: 1;
+        color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+      }
+      .opacity-60 {
+        opacity: 0.6;
+      }
+      .shadow-lg {
+        --tw-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --tw-shadow-colored:
+          0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000),
+          var(--tw-shadow);
+      }
+      .shadow-primary\/10 {
+        --tw-shadow-color: rgb(167 139 250 / 0.1);
+        --tw-shadow: var(--tw-shadow-colored);
+      }
+      .grayscale {
+        --tw-grayscale: grayscale(100%);
+        filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale)
+          var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia)
+          var(--tw-drop-shadow);
+      }
+      .backdrop-blur-md {
+        --tw-backdrop-blur: blur(12px);
+        -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+        backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+      }
+      .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-colors {
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-property:
+          color, background-color, border-color, text-decoration-color, fill, stroke;
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          text-decoration-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-opacity {
+        transition-property: opacity;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-transform {
+        transition-property: transform;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .duration-100 {
+        transition-duration: 100ms;
+      }
+      .duration-200 {
+        transition-duration: 200ms;
+      }
+      .placeholder\:text-secondary\/50::placeholder {
+        color: rgb(113 113 122 / 0.5);
+      }
+      .hover\:bg-\[\#18181b\]:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:bg-surface-container-high:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:text-\[\#fafafa\]:hover {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .hover\:text-primary:hover {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .hover\:underline:hover {
+        -webkit-text-decoration-line: underline;
+        text-decoration-line: underline;
+      }
+      .hover\:opacity-90:hover {
+        opacity: 0.9;
+      }
+      .focus\:ring-0:focus {
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+      }
+      .active\:bg-\[\#18181b\]:active {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .group:hover .group-hover\:scale-110 {
+        --tw-scale-x: 1.1;
+        --tw-scale-y: 1.1;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      @media (min-width: 768px) {
+        .md\:left-64 {
+          left: 16rem;
+        }
+        .md\:ml-64 {
+          margin-left: 16rem;
+        }
+        .md\:flex {
+          display: flex;
+        }
+        .md\:hidden {
+          display: none;
+        }
+        .md\:grid-cols-2 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .md\:flex-row {
+          flex-direction: row;
+        }
+        .md\:pb-8 {
+          padding-bottom: 2rem;
+        }
+      }
+      @media (min-width: 1024px) {
+        .lg\:col-span-4 {
+          grid-column: span 4 / span 4;
+        }
+        .lg\:col-span-5 {
+          grid-column: span 5 / span 5;
+        }
+        .lg\:col-span-7 {
+          grid-column: span 7 / span 7;
+        }
+        .lg\:col-span-8 {
+          grid-column: span 8 / span 8;
+        }
+        .lg\:grid-cols-12 {
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+        .lg\:grid-cols-4 {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background text-on-background min-h-[884px]"
+    data-stitch-vh="min-h-[884px]===min-h-screen"
+  >
+    <!-- SideNavBar (Desktop) -->
+    <nav
+      class="hidden md:flex flex-col fixed left-0 top-0 h-full py-8 bg-[#0c0c0f] w-64 border-r border-[#27272a] z-50 font-geist"
+    >
+      <div class="px-6 mb-10">
+        <h1 class="text-lg font-black text-[#fafafa] tracking-tight">Workout Tracker</h1>
+        <p class="text-xs text-secondary-fixed mt-1">Elite Performance</p>
+      </div>
+      <div class="flex-1 px-4 space-y-1">
+        <a
+          class="flex items-center px-4 py-3 text-[#a78bfa] border-r-2 border-[#a78bfa] bg-[#18181b] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined mr-3" data-icon="dashboard">dashboard</span>
+          <span class="font-medium">Dashboard</span>
+        </a>
+        <a
+          class="flex items-center px-4 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined mr-3" data-icon="fitness_center"
+            >fitness_center</span
+          >
+          <span class="font-medium">Workouts</span>
+        </a>
+        <a
+          class="flex items-center px-4 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined mr-3" data-icon="menu_book">menu_book</span>
+          <span class="font-medium">Exercises</span>
+        </a>
+        <a
+          class="flex items-center px-4 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined mr-3" data-icon="calendar_month"
+            >calendar_month</span
+          >
+          <span class="font-medium">History</span>
+        </a>
+        <a
+          class="flex items-center px-4 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined mr-3" data-icon="monitoring">monitoring</span>
+          <span class="font-medium">Analytics</span>
+        </a>
+      </div>
+      <div class="px-4 mt-auto">
+        <button
+          class="w-full py-3 bg-primary text-on-primary font-bold rounded-lg shadow-lg shadow-primary/10 hover:opacity-90 transition-opacity"
+        >
+          Start Workout
+        </button>
+      </div>
+    </nav>
+    <!-- TopAppBar (Mobile & Global Search) -->
+    <header
+      class="fixed top-0 right-0 left-0 md:left-64 h-16 bg-[#09090b] border-b border-[#27272a] flex justify-between items-center px-6 z-40 font-geist"
+    >
+      <div class="flex items-center md:hidden">
+        <span class="text-xl font-bold text-[#fafafa]">Workout Tracker</span>
+      </div>
+      <div
+        class="hidden md:flex items-center bg-surface-container-high px-3 py-1.5 rounded-lg border border-outline-variant w-96"
+      >
+        <span class="material-symbols-outlined text-secondary text-sm" data-icon="search"
+          >search</span
+        >
+        <input
+          class="bg-transparent border-none focus:ring-0 text-sm text-on-surface-variant w-full placeholder:text-secondary/50"
+          placeholder="Search exercises or routines..."
+          type="text"
+        />
+        <span class="text-[10px] text-secondary border border-outline-variant px-1 rounded"
+          >⌘K</span
+        >
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="text-secondary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+        </button>
+        <button class="text-secondary hover:text-primary transition-colors">
+          <span class="material-symbols-outlined" data-icon="settings">settings</span>
+        </button>
+        <div
+          class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden"
+        >
+          <img
+            alt="User profile"
+            class="w-full h-full object-cover"
+            data-alt="close-up portrait of a professional athlete with focused expression in a dark moody gym environment"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCoQbEan5q5hzDwijWjOEjpKQWd0zllc4b9XPIxlpS9NH8Bs3zAfVDxAJmcRpdjK7Qvk4sksFWHLJ852ggNM4ImKot39Uj-AQVHk6cHjMC9x9aLLQ19vx5juIHhDZLNSpOHoSGDHX3NXEzloDZu9vBoFghsPDW_IMYeL44-3TWkl0GKSiYqAm_L7-4_6BOPOg-FcrxF0KQGnk-G8trXsiQSPuZPYyt2uPY1oFlOg0O1tyVdvOfXLyW90_c0TDgLFblNKm9MtgEyJAE"
+          />
+        </div>
+      </div>
+    </header>
+    <!-- Main Content -->
+    <main class="pt-24 pb-20 md:pb-8 px-6 md:ml-64 max-w-[1440px]">
+      <!-- Welcome Header -->
+      <section class="mb-10">
+        <h2 class="text-3xl font-extrabold tracking-tight text-on-surface mb-1">
+          Welcome back, Alex
+        </h2>
+        <p class="text-secondary-fixed">
+          You're 84% of the way to your weekly volume goal. Keep it up.
+        </p>
+      </section>
+      <!-- Top Bento Grid: Goals & Quick Actions -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
+        <!-- Goal Rings Card (Bento Large) -->
+        <div
+          class="lg:col-span-8 bg-surface-container border border-outline-variant rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-8"
+        >
+          <div class="flex-1">
+            <h3 class="text-xl font-bold mb-6 flex items-center">
+              <span class="material-symbols-outlined text-primary mr-2" data-icon="track_changes"
+                >track_changes</span
+              >
+              Weekly Goal Progress
+            </h3>
+            <div class="space-y-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-2 h-2 rounded-full bg-primary mr-3"></div>
+                  <span class="text-on-surface-variant font-medium">Workouts</span>
+                </div>
+                <span class="text-on-surface font-bold">4 / 5</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-2 h-2 rounded-full bg-tertiary mr-3"></div>
+                  <span class="text-on-surface-variant font-medium">Calories</span>
+                </div>
+                <span class="text-on-surface font-bold">12,400 / 15,000</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-2 h-2 rounded-full bg-secondary-fixed mr-3"></div>
+                  <span class="text-on-surface-variant font-medium">Volume</span>
+                </div>
+                <span class="text-on-surface font-bold">48.2k / 55k lbs</span>
+              </div>
+            </div>
+          </div>
+          <!-- Circular Progress Rings (Mockup using SVG) -->
+          <div class="relative w-48 h-48 flex items-center justify-center">
+            <svg class="w-full h-full transform -rotate-90">
+              <!-- Background Circles -->
+              <circle
+                class="text-surface-container-highest"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="80"
+                stroke="currentColor"
+                stroke-width="12"
+              ></circle>
+              <circle
+                class="text-surface-container-highest"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="64"
+                stroke="currentColor"
+                stroke-width="12"
+              ></circle>
+              <circle
+                class="text-surface-container-highest"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="48"
+                stroke="currentColor"
+                stroke-width="12"
+              ></circle>
+              <!-- Progress Circles -->
+              <circle
+                class="text-primary"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="80"
+                stroke="currentColor"
+                stroke-dasharray="502"
+                stroke-dashoffset="100"
+                stroke-linecap="round"
+                stroke-width="12"
+              ></circle>
+              <circle
+                class="text-tertiary"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="64"
+                stroke="currentColor"
+                stroke-dasharray="402"
+                stroke-dashoffset="80"
+                stroke-linecap="round"
+                stroke-width="12"
+              ></circle>
+              <circle
+                class="text-secondary-fixed"
+                cx="96"
+                cy="96"
+                fill="transparent"
+                r="48"
+                stroke="currentColor"
+                stroke-dasharray="301"
+                stroke-dashoffset="40"
+                stroke-linecap="round"
+                stroke-width="12"
+              ></circle>
+            </svg>
+            <div class="absolute flex flex-col items-center">
+              <span class="text-2xl font-black text-on-surface">84%</span>
+              <span class="text-[10px] uppercase tracking-widest text-secondary">Total</span>
+            </div>
+          </div>
+        </div>
+        <!-- Quick Actions (Bento Small) -->
+        <div
+          class="lg:col-span-4 bg-surface-container border border-outline-variant rounded-xl p-6 flex flex-col"
+        >
+          <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
+          <button
+            class="w-full py-4 bg-primary text-on-primary font-bold rounded-lg mb-6 flex items-center justify-center group hover:opacity-90 transition-all"
+          >
+            <span
+              class="material-symbols-outlined mr-2 group-hover:scale-110 transition-transform"
+              data-icon="add_circle"
+              >add_circle</span
+            >
+            Start Empty Workout
+          </button>
+          <div class="flex-1">
+            <p class="text-xs font-bold text-secondary-fixed uppercase tracking-wider mb-3">
+              Recently Used Templates
+            </p>
+            <div class="space-y-2">
+              <button
+                class="w-full text-left p-3 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-between"
+              >
+                <span class="text-sm font-medium">Push Day A (Hypertrophy)</span>
+                <span
+                  class="material-symbols-outlined text-secondary text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </button>
+              <button
+                class="w-full text-left p-3 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-between"
+              >
+                <span class="text-sm font-medium">Legs - Strength focus</span>
+                <span
+                  class="material-symbols-outlined text-secondary text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </button>
+              <button
+                class="w-full text-left p-3 rounded-lg border border-outline-variant bg-surface-container-low hover:bg-surface-container-high transition-colors flex items-center justify-between"
+              >
+                <span class="text-sm font-medium">Upper Body Mobility</span>
+                <span
+                  class="material-symbols-outlined text-secondary text-sm"
+                  data-icon="chevron_right"
+                  >chevron_right</span
+                >
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Recent Personal Records Section -->
+      <section class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-bold tracking-tight">Recent Personal Records</h3>
+          <button class="text-primary text-sm font-semibold hover:underline">
+            View All Records
+          </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- PR Card 1 -->
+          <div
+            class="bg-surface-container border border-outline-variant rounded-xl p-5 relative overflow-hidden group"
+          >
+            <div class="absolute top-0 right-0 p-3">
+              <span
+                class="material-symbols-outlined text-tertiary text-lg"
+                data-icon="workspace_premium"
+                data-weight="fill"
+                >workspace_premium</span
+              >
+            </div>
+            <p class="text-xs text-secondary-fixed mb-1">Bench Press</p>
+            <h4 class="text-2xl font-black text-on-surface mb-2">
+              225 <span class="text-sm font-normal text-secondary">lbs</span>
+            </h4>
+            <div
+              class="flex items-center text-tertiary text-xs font-bold bg-tertiary/10 w-fit px-2 py-0.5 rounded-full"
+            >
+              <span class="material-symbols-outlined text-[14px] mr-1" data-icon="trending_up"
+                >trending_up</span
+              >
+              +15 lbs
+            </div>
+            <div class="mt-4 h-12 w-full flex items-end gap-1">
+              <div class="flex-1 bg-secondary-container h-[40%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[55%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[50%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[70%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary/40 h-[85%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary h-[100%] rounded-t-sm"></div>
+            </div>
+          </div>
+          <!-- PR Card 2 -->
+          <div
+            class="bg-surface-container border border-outline-variant rounded-xl p-5 relative overflow-hidden"
+          >
+            <div class="absolute top-0 right-0 p-3">
+              <span
+                class="material-symbols-outlined text-tertiary text-lg"
+                data-icon="workspace_premium"
+                data-weight="fill"
+                >workspace_premium</span
+              >
+            </div>
+            <p class="text-xs text-secondary-fixed mb-1">Deadlift</p>
+            <h4 class="text-2xl font-black text-on-surface mb-2">
+              405 <span class="text-sm font-normal text-secondary">lbs</span>
+            </h4>
+            <div
+              class="flex items-center text-tertiary text-xs font-bold bg-tertiary/10 w-fit px-2 py-0.5 rounded-full"
+            >
+              <span class="material-symbols-outlined text-[14px] mr-1" data-icon="trending_up"
+                >trending_up</span
+              >
+              +20 lbs
+            </div>
+            <div class="mt-4 h-12 w-full flex items-end gap-1">
+              <div class="flex-1 bg-secondary-container h-[30%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[45%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[60%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[55%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary/40 h-[75%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary h-[100%] rounded-t-sm"></div>
+            </div>
+          </div>
+          <!-- PR Card 3 -->
+          <div
+            class="bg-surface-container border border-outline-variant rounded-xl p-5 relative overflow-hidden"
+          >
+            <div class="absolute top-0 right-0 p-3">
+              <span
+                class="material-symbols-outlined text-tertiary text-lg"
+                data-icon="workspace_premium"
+                data-weight="fill"
+                >workspace_premium</span
+              >
+            </div>
+            <p class="text-xs text-secondary-fixed mb-1">Back Squat</p>
+            <h4 class="text-2xl font-black text-on-surface mb-2">
+              315 <span class="text-sm font-normal text-secondary">lbs</span>
+            </h4>
+            <div
+              class="flex items-center text-tertiary text-xs font-bold bg-tertiary/10 w-fit px-2 py-0.5 rounded-full"
+            >
+              <span class="material-symbols-outlined text-[14px] mr-1" data-icon="trending_up"
+                >trending_up</span
+              >
+              +10 lbs
+            </div>
+            <div class="mt-4 h-12 w-full flex items-end gap-1">
+              <div class="flex-1 bg-secondary-container h-[50%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[55%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[70%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[65%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary/40 h-[80%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary h-[100%] rounded-t-sm"></div>
+            </div>
+          </div>
+          <!-- PR Card 4 -->
+          <div
+            class="bg-surface-container border border-outline-variant rounded-xl p-5 relative overflow-hidden"
+          >
+            <div class="absolute top-0 right-0 p-3">
+              <span
+                class="material-symbols-outlined text-tertiary text-lg"
+                data-icon="workspace_premium"
+                data-weight="fill"
+                >workspace_premium</span
+              >
+            </div>
+            <p class="text-xs text-secondary-fixed mb-1">Overhead Press</p>
+            <h4 class="text-2xl font-black text-on-surface mb-2">
+              155 <span class="text-sm font-normal text-secondary">lbs</span>
+            </h4>
+            <div
+              class="flex items-center text-tertiary text-xs font-bold bg-tertiary/10 w-fit px-2 py-0.5 rounded-full"
+            >
+              <span class="material-symbols-outlined text-[14px] mr-1" data-icon="trending_up"
+                >trending_up</span
+              >
+              +5 lbs
+            </div>
+            <div class="mt-4 h-12 w-full flex items-end gap-1">
+              <div class="flex-1 bg-secondary-container h-[60%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[65%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[70%] rounded-t-sm"></div>
+              <div class="flex-1 bg-secondary-container h-[75%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary/40 h-[90%] rounded-t-sm"></div>
+              <div class="flex-1 bg-primary h-[100%] rounded-t-sm"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Asymmetric Visual: Last Session Recap -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div
+          class="lg:col-span-5 bg-surface-container border border-outline-variant rounded-xl overflow-hidden flex flex-col"
+        >
+          <div class="h-48 relative">
+            <img
+              alt="Gym"
+              class="w-full h-full object-cover grayscale opacity-60"
+              data-alt="professional powerlifting gym with heavy metal plates and industrial lighting in a moody dark aesthetic"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_oZIn0JBj7EmuWB1pmBqb03GP515JyJzKNlkwGNG8Zdb_1nEWe7pigGjFrQr0DXGbAFRDo8zybdA0KvzOTRBvw3uxvmjktTC4lW31TTYmoORL05k4Q_X8cq11viGYhTC3awo2mKiB9gK39X3q8SehN-ACv59ekvfBj4dVIpLOPstGY0fgXqzs9j-HJUOA1vwiJPdO1gOJfId7w562GNZQM6DdbiVlsLZaaA1sZgr7OG8yRFp0YMjUHp9o6obd3amRO2EiL9-ZPdk"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-surface-container to-transparent"
+            ></div>
+            <div class="absolute bottom-4 left-4">
+              <span class="text-[10px] uppercase tracking-[0.2em] text-primary font-bold"
+                >Last Session</span
+              >
+              <h4 class="text-xl font-bold">Push Day B</h4>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p class="text-xs text-secondary mb-1">Duration</p>
+                <p class="font-bold">72m</p>
+              </div>
+              <div>
+                <p class="text-xs text-secondary mb-1">Volume</p>
+                <p class="font-bold">14,205 lbs</p>
+              </div>
+              <div>
+                <p class="text-xs text-secondary mb-1">Intensity</p>
+                <p class="font-bold">High</p>
+              </div>
+            </div>
+            <div class="mt-6 space-y-3">
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-secondary">Incline Bench</span>
+                <span class="font-medium">3 x 10 @ 185 lbs</span>
+              </div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-secondary">DB Lateral Raise</span>
+                <span class="font-medium">4 x 15 @ 30 lbs</span>
+              </div>
+              <div
+                class="flex items-center justify-between text-sm border-t border-outline-variant pt-3"
+              >
+                <span class="text-on-surface font-semibold">Total Sets</span>
+                <span class="text-on-surface font-semibold">22</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Activity Heatmap Mockup -->
+        <div
+          class="lg:col-span-7 bg-surface-container border border-outline-variant rounded-xl p-6"
+        >
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-bold">Activity Consistency</h3>
+            <div class="flex items-center space-x-2">
+              <span class="text-[10px] text-secondary">Less</span>
+              <div class="flex space-x-1">
+                <div
+                  class="w-3 h-3 bg-surface-container-highest rounded-sm border border-outline-variant"
+                ></div>
+                <div class="w-3 h-3 bg-primary/20 rounded-sm"></div>
+                <div class="w-3 h-3 bg-primary/50 rounded-sm"></div>
+                <div class="w-3 h-3 bg-primary rounded-sm"></div>
+              </div>
+              <span class="text-[10px] text-secondary">More</span>
+            </div>
+          </div>
+          <!-- Heatmap Grid -->
+          <div class="flex gap-2 overflow-x-auto pb-2">
+            <!-- Column for each week (last 12 weeks) -->
+            <div class="grid grid-rows-7 gap-1">
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+            </div>
+            <!-- Repeating columns... -->
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+            </div>
+            <!-- Mocking more for visual density -->
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div
+                class="w-5 h-5 bg-surface-container-highest rounded-sm border border-outline-variant"
+              ></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+            </div>
+            <div class="grid grid-rows-7 gap-1">
+              <div class="w-5 h-5 bg-primary/20 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary/50 rounded-sm"></div>
+              <div class="w-5 h-5 bg-primary rounded-sm"></div>
+            </div>
+          </div>
+          <div class="mt-6 flex justify-between items-center border-t border-outline-variant pt-4">
+            <p class="text-sm text-secondary">
+              Longest Streak: <span class="text-on-surface font-bold">24 days</span>
+            </p>
+            <p class="text-sm text-secondary">
+              Total Workouts: <span class="text-on-surface font-bold">142</span>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- BottomNavBar (Mobile) -->
+    <nav
+      class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 pb-safe bg-[#0c0c0f]/95 backdrop-blur-md border-t border-[#27272a] font-geist text-[10px] uppercase tracking-wider"
+    >
+      <a
+        class="flex flex-col items-center justify-center text-[#a78bfa] duration-100 scale-95"
+        href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+      >
+        <span class="material-symbols-outlined mb-1" data-icon="home">home</span>
+        Home
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] duration-100 scale-95"
+        href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+      >
+        <span class="material-symbols-outlined mb-1" data-icon="add_circle">add_circle</span>
+        Log
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] duration-100 scale-95"
+        href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+      >
+        <span class="material-symbols-outlined mb-1" data-icon="format_list_bulleted"
+          >format_list_bulleted</span
+        >
+        Library
+      </a>
+      <a
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] duration-100 scale-95"
+        href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=6f5ac2061eee46cfa790dfbf393cb32d&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+      >
+        <span class="material-symbols-outlined mb-1" data-icon="query_stats">query_stats</span>
+        Stats
+      </a>
+    </nav>
+  </body>
+</html>

@@ -12,9 +12,11 @@ import {
   getProgressWindowSummary,
   getSplitProgressWindowSummary,
   isValidDateInput,
+  MAX_WEEKLY_WORKOUT_GOAL,
   mergeImportedData,
   parseSet,
   readStoredData,
+  sortWorkouts,
   STORAGE_KEY,
   suggestNextSets,
   validateImportedData,
@@ -64,8 +66,29 @@ describe('validation helpers', () => {
   });
 });
 
+describe('workout sorting', () => {
+  it('sorts same-day workouts by actual created timestamp', () => {
+    const workouts = [
+      {
+        id: 'offset-time',
+        date: '2026-04-18',
+        createdAt: '2026-04-18T09:00:00+02:00',
+        entries: [{ exerciseId: 'bench', sets: [{ weight: 80, reps: 8 }] }],
+      },
+      {
+        id: 'z-time',
+        date: '2026-04-18',
+        createdAt: '2026-04-18T08:30:00.000Z',
+        entries: [{ exerciseId: 'bench', sets: [{ weight: 82.5, reps: 6 }] }],
+      },
+    ];
+
+    expect(sortWorkouts(workouts).map((workout) => workout.id)).toEqual(['z-time', 'offset-time']);
+  });
+});
+
 describe('stored data bootstrap', () => {
-  it('returns realistic demo data when storage is empty', () => {
+  it('returns starter data without seeded workouts when storage is empty', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-03T12:00:00.000Z'));
     vi.stubGlobal('window', { localStorage: createMockLocalStorage() });
@@ -75,12 +98,11 @@ describe('stored data bootstrap', () => {
     expect(data.exercises.length).toBeGreaterThanOrEqual(16);
     expect(data.splits.length).toBe(4);
     expect(data.templates.length).toBe(3);
-    expect(data.workouts.length).toBeGreaterThanOrEqual(28);
-    expect(data.workouts.length).toBeLessThanOrEqual(32);
-    expect(data.workouts[0].date).toBe('2026-04-02');
+    expect(data.workouts).toEqual([]);
+    expect(data.bodyweightEntries).toEqual([]);
   });
 
-  it('falls back to demo data when stored collections are present but empty', () => {
+  it('falls back to starter data when stored collections are present but empty', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-03T12:00:00.000Z'));
     const localStorage = createMockLocalStorage();
@@ -102,8 +124,8 @@ describe('stored data bootstrap', () => {
     const data = readStoredData();
 
     expect(data.exercises.length).toBeGreaterThan(0);
-    expect(data.workouts.length).toBeGreaterThan(0);
-    expect(data.workouts[0].date).toBe('2026-04-02');
+    expect(data.workouts).toEqual([]);
+    expect(data.bodyweightEntries).toEqual([]);
   });
 
   it('preserves explicit stored data instead of replacing it with demo content', () => {
@@ -151,7 +173,156 @@ describe('stored data bootstrap', () => {
     expect(data.workouts[0].id).toBe('workout-1');
   });
 
-  it('normalizes a stored weekly workout goal', () => {
+  it('does not remove records only because ids look like seeded demo ids', () => {
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          exercises: [{ id: 'exercise-1', name: 'Custom squat' }],
+          splits: [],
+          templates: [],
+          workouts: [
+            {
+              id: 'workout-push-99',
+              date: '2026-03-01',
+              splitId: '',
+              notes: '',
+              mood: '',
+              effort: '',
+              createdAt: '2026-03-01T08:00:00.000Z',
+              entries: [{ exerciseId: 'exercise-1', sets: [{ weight: 100, reps: 5 }] }],
+            },
+            {
+              id: 'workout-real-1',
+              date: '2026-03-02',
+              splitId: '',
+              notes: '',
+              mood: '',
+              effort: '',
+              createdAt: '2026-03-02T08:00:00.000Z',
+              entries: [{ exerciseId: 'exercise-1', sets: [{ weight: 102.5, reps: 5 }] }],
+            },
+          ],
+          bodyweightEntries: [
+            {
+              id: 'bodyweight-4',
+              date: '2026-03-01',
+              weight: 83.5,
+              createdAt: '2026-03-01T07:00:00.000Z',
+            },
+            {
+              id: 'bw-real-1',
+              date: '2026-03-02',
+              weight: 83.3,
+              createdAt: '2026-03-02T07:00:00.000Z',
+            },
+          ],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.workouts).toHaveLength(2);
+    expect(data.workouts.map((workout) => workout.id)).toEqual([
+      'workout-real-1',
+      'workout-push-99',
+    ]);
+    expect(data.bodyweightEntries).toHaveLength(2);
+    expect(data.bodyweightEntries.map((entry) => entry.id)).toEqual(['bw-real-1', 'bodyweight-4']);
+  });
+
+  it('removes old seeded demo workouts only when full seeded fingerprint matches', () => {
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          exercises: [{ id: 'exercise-1', name: 'Custom squat' }],
+          splits: [],
+          templates: [],
+          workouts: [
+            {
+              id: 'workout-push-1',
+              date: '2020-01-02',
+              splitId: 'split-push',
+              notes: '',
+              mood: 'Good',
+              effort: 'Moderate',
+              createdAt: '2020-01-02T10:00:00.000Z',
+              entries: [
+                {
+                  exerciseId: 'exercise-bench-press',
+                  sets: [
+                    { weight: 72.5, reps: 8 },
+                    { weight: 72.5, reps: 8 },
+                    { weight: 75, reps: 6 },
+                    { weight: 75, reps: 6 },
+                  ],
+                },
+                {
+                  exerciseId: 'exercise-incline-db-press',
+                  sets: [
+                    { weight: 24, reps: 10 },
+                    { weight: 24, reps: 10 },
+                    { weight: 26, reps: 8 },
+                  ],
+                },
+                {
+                  exerciseId: 'exercise-overhead-press',
+                  sets: [
+                    { weight: 40, reps: 8 },
+                    { weight: 40, reps: 8 },
+                    { weight: 42.5, reps: 6 },
+                  ],
+                },
+                {
+                  exerciseId: 'exercise-lateral-raise',
+                  sets: [
+                    { weight: 9, reps: 15 },
+                    { weight: 9, reps: 14 },
+                    { weight: 9, reps: 14 },
+                  ],
+                },
+                {
+                  exerciseId: 'exercise-triceps-pushdown',
+                  sets: [
+                    { weight: 25, reps: 12 },
+                    { weight: 25, reps: 12 },
+                    { weight: 27.5, reps: 10 },
+                  ],
+                },
+              ],
+            },
+            {
+              id: 'workout-real-1',
+              date: '2026-03-02',
+              splitId: '',
+              notes: '',
+              mood: '',
+              effort: '',
+              createdAt: '2026-03-02T08:00:00.000Z',
+              entries: [{ exerciseId: 'exercise-1', sets: [{ weight: 102.5, reps: 5 }] }],
+            },
+          ],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.workouts).toHaveLength(1);
+    expect(data.workouts[0].id).toBe('workout-real-1');
+  });
+
+  it('preserves a stored weekly workout goal within the supported range', () => {
     const localStorage = createMockLocalStorage();
     vi.stubGlobal('window', { localStorage });
 
@@ -171,7 +342,30 @@ describe('stored data bootstrap', () => {
 
     const data = readStoredData();
 
-    expect(data.weeklyWorkoutGoal).toBe(7);
+    expect(data.weeklyWorkoutGoal).toBe(9);
+  });
+
+  it('clamps stored weekly workout goals to the supported maximum', () => {
+    const localStorage = createMockLocalStorage();
+    vi.stubGlobal('window', { localStorage });
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        data: {
+          weeklyWorkoutGoal: MAX_WEEKLY_WORKOUT_GOAL + 1,
+          exercises: [{ id: 'exercise-1', name: 'Custom squat' }],
+          splits: [],
+          templates: [],
+          workouts: [],
+        },
+      }),
+    );
+
+    const data = readStoredData();
+
+    expect(data.weeklyWorkoutGoal).toBe(MAX_WEEKLY_WORKOUT_GOAL);
   });
 });
 

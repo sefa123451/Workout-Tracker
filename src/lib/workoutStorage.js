@@ -474,6 +474,46 @@ function hasMeaningfulStoredData(data) {
   );
 }
 
+function getWorkoutSeedFingerprint(workout) {
+  return JSON.stringify({
+    id: workout.id,
+    splitId: workout.splitId ?? '',
+    notes: workout.notes ?? '',
+    mood: workout.mood ?? '',
+    effort: workout.effort ?? '',
+    entries: (workout.entries ?? []).map((entry) => ({
+      exerciseId: entry.exerciseId,
+      sets: (entry.sets ?? []).map((set) => ({
+        weight: set.weight,
+        reps: set.reps,
+      })),
+    })),
+  });
+}
+
+function stripSeededDemoEntries(data) {
+  const demoSeedWorkoutFingerprints = new Set(
+    buildDemoData().workouts.map(getWorkoutSeedFingerprint),
+  );
+
+  return {
+    ...data,
+    workouts: data.workouts.filter(
+      (workout) => !demoSeedWorkoutFingerprints.has(getWorkoutSeedFingerprint(workout)),
+    ),
+  };
+}
+
+function buildStarterData() {
+  const demoData = buildDemoData();
+
+  return {
+    ...demoData,
+    workouts: [],
+    bodyweightEntries: [],
+  };
+}
+
 function escapeCsvValue(value) {
   const stringValue = String(value ?? '');
 
@@ -657,7 +697,7 @@ export function buildWorkoutHistoryCsv(workouts, exercises, splits) {
 export function readStoredData() {
   if (typeof window === 'undefined') {
     return {
-      ...buildDemoData(),
+      ...buildStarterData(),
       weeklyWorkoutGoal: DEFAULT_WEEKLY_WORKOUT_GOAL,
     };
   }
@@ -667,7 +707,7 @@ export function readStoredData() {
 
     if (!raw) {
       return {
-        ...buildDemoData(),
+        ...buildStarterData(),
         weeklyWorkoutGoal: DEFAULT_WEEKLY_WORKOUT_GOAL,
       };
     }
@@ -699,15 +739,17 @@ export function readStoredData() {
         : [],
     };
 
-    return hasMeaningfulStoredData(normalizedData)
-      ? normalizedData
+    const normalizedWithoutSeededEntries = stripSeededDemoEntries(normalizedData);
+
+    return hasMeaningfulStoredData(normalizedWithoutSeededEntries)
+      ? normalizedWithoutSeededEntries
       : {
-          ...buildDemoData(),
+          ...buildStarterData(),
           weeklyWorkoutGoal: DEFAULT_WEEKLY_WORKOUT_GOAL,
         };
   } catch {
     return {
-      ...buildDemoData(),
+      ...buildStarterData(),
       weeklyWorkoutGoal: DEFAULT_WEEKLY_WORKOUT_GOAL,
     };
   }

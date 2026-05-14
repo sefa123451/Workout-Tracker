@@ -144,50 +144,275 @@ function assert(condition, message) {
 }
 
 async function runSmokeScenario(page) {
+  async function navigateToView(view) {
+    await page.evaluate((nextView) => {
+      window.location.hash = `#/${nextView}`;
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    }, view);
+    await page.waitForSelector(`iframe[title="Stitch ${view}"]`);
+    await page.waitForTimeout(250);
+  }
+
+  async function assertNoUnwiredInteractiveControls(view) {
+    await navigateToView(view);
+    const suspiciousControls = await page.evaluate((currentView) => {
+      const frame = document.querySelector(`iframe[title="Stitch ${currentView}"]`);
+      const doc = frame?.contentDocument;
+      if (!doc) {
+        return [`${currentView}: frame document missing`];
+      }
+
+      const navigationLabels = new Set([
+        'dashboard',
+        'workouts',
+        'log',
+        'exercises',
+        'history',
+        'analytics',
+        'progress',
+        'settings',
+      ]);
+      const intentionallyHandledIcons = new Set([
+        'arrow_back',
+        'notifications',
+        'settings',
+        'star',
+        'more_horiz',
+        'more_vert',
+        'info',
+      ]);
+      const isVisible = (element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          style.display !== 'none' &&
+          style.visibility !== 'hidden'
+        );
+      };
+      const normalize = (text) => (text ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+      return [
+        ...doc.querySelectorAll('button,a,[role="button"],.cursor-pointer,[data-codex-action]'),
+      ]
+        .filter(isVisible)
+        .filter((element) => {
+          const text = normalize(
+            element.innerText || element.textContent || element.getAttribute('aria-label'),
+          );
+          const isNavigation =
+            Boolean(element.closest('nav,header,aside')) || navigationLabels.has(text);
+          const isFormControl = ['INPUT', 'SELECT', 'TEXTAREA'].includes(element.tagName);
+          const hasAction = Boolean(element.getAttribute('data-codex-action'));
+          const isKnownIcon = intentionallyHandledIcons.has(text);
+          const isDisabled = Boolean(
+            element.disabled || element.getAttribute('aria-disabled') === 'true',
+          );
+
+          return !isDisabled && !isFormControl && !isNavigation && !hasAction && !isKnownIcon;
+        })
+        .map((element) => {
+          const text = normalize(
+            element.innerText || element.textContent || element.getAttribute('aria-label'),
+          );
+          return `${currentView}: <${element.tagName.toLowerCase()}> "${text}"`;
+        });
+    }, view);
+
+    assert(
+      suspiciousControls.length === 0,
+      `Unwired interactive controls found:\n${suspiciousControls.join('\n')}`,
+    );
+  }
+
   await page.goto('http://app.local/', { waitUntil: 'networkidle' });
-  await page.waitForSelector('main, .app-main');
+  await page.waitForSelector('iframe.stitch-frame');
 
-  const dashboardTitle = await page.getByRole('button', { name: 'dashboard' }).count();
-  assert(dashboardTitle === 1, 'Dashboard navigation button was not found.');
+  const dashboardButtonCount = await page.getByRole('button', { name: 'dashboard' }).count();
+  assert(dashboardButtonCount === 1, 'Dashboard navigation button was not found.');
 
-  await page.getByRole('button', { name: 'Log workout' }).click();
-  const workoutForm = page
-    .locator('form')
-    .filter({ has: page.getByRole('button', { name: /Save workout|Save changes/i }) })
-    .first();
+  await navigateToView('log');
+  const logFrame = page.frameLocator('iframe[title="Stitch log"]');
+  const initialWorkoutCount = await page.evaluate((storageKey) => {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) {
+      return 0;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed?.workouts) ? parsed.workouts.length : 0;
+    } catch {
+      return 0;
+    }
+  }, STORAGE_KEY);
 
-  const exerciseSelect = workoutForm
-    .locator('label.field')
-    .filter({ has: page.locator('span', { hasText: /^Exercise$/ }) })
-    .locator('select')
-    .first();
-  const selectableExerciseIds = await exerciseSelect
-    .locator('option')
-    .evaluateAll((options) => options.map((option) => option.value).filter(Boolean));
-  assert(selectableExerciseIds.length > 0, 'No exercise options were available in workout form.');
-  await exerciseSelect.selectOption(selectableExerciseIds[0]);
-  await workoutForm.getByLabel('Weight').first().fill('85');
-  await workoutForm.getByLabel('Reps').first().fill('6');
-  await page.getByRole('button', { name: 'Save workout' }).click();
-  await page.getByText('Past sessions').waitFor({ state: 'visible' });
+  const logInputs = logFrame.locator('input[type="number"]');
+  const logInputCount = await logInputs.count();
+  assert(logInputCount >= 2, 'Log workout screen did not render weight/reps number inputs.');
+  const loadSplitButton = logFrame.locator('[data-codex-action="log-load-split"]').first();
+  await loadSplitButton.waitFor({ state: 'visible' });
+  await loadSplitButton.click();
+  await logInputs.nth(0).fill('85');
+  await logInputs.nth(1).fill('6');
+  const finishButton = logFrame.locator('[data-codex-action="log-finish-workout"]').first();
+  await finishButton.waitFor({ state: 'visible' });
+  await finishButton.click();
+  let workoutSaved = true;
+  try {
+    await page.waitForFunction(
+      ({ storageKey, previousCount }) => {
+        const raw = window.localStorage.getItem(storageKey);
+        if (!raw) {
+          return false;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          const nextCount = Array.isArray(parsed?.workouts) ? parsed.workouts.length : 0;
+          return nextCount > previousCount;
+        } catch {
+          return false;
+        }
+      },
+      { storageKey: STORAGE_KEY, previousCount: initialWorkoutCount },
+      { timeout: 15000 },
+    );
+  } catch {
+    workoutSaved = false;
+  }
 
-  await page.getByRole('button', { name: 'exercises' }).click();
-  await page.getByRole('button', { name: 'Rename template Push Template' }).click();
-  const renameDialog = page.getByRole('dialog', { name: 'Rename template' });
-  await renameDialog.waitFor();
-  await renameDialog.getByLabel('Template name').fill('Push Template A');
-  await renameDialog.getByRole('button', { name: 'Rename template' }).click();
-  await page.getByText('Renamed template to Push Template A.').waitFor({ state: 'visible' });
+  if (!workoutSaved) {
+    const noticeText = (
+      await page
+        .locator('.stitch-action-notice')
+        .first()
+        .textContent()
+        .catch(() => '')
+    )
+      ?.trim()
+      .replace(/\s+/g, ' ');
+    const debugState = await page.evaluate((storageKey) => {
+      const raw = window.localStorage.getItem(storageKey);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return {
+        hash: window.location.hash,
+        workoutCount: Array.isArray(parsed?.workouts) ? parsed.workouts.length : 0,
+      };
+    }, STORAGE_KEY);
 
-  await page.getByRole('button', { name: 'settings' }).click();
-  const dateInputValue = await page.getByLabel('Check-in date').inputValue();
+    throw new Error(
+      `Workout save did not persist. Notice="${noticeText || 'none'}", hash="${debugState.hash}", workouts=${debugState.workoutCount}`,
+    );
+  }
+
+  await navigateToView('history');
+  const historyFrame = page.frameLocator('iframe[title="Stitch history"]');
+  await historyFrame.locator('[data-codex-history-live="desktop"]').waitFor({ state: 'visible' });
+  await historyFrame
+    .locator('[data-codex-history-live="desktop"] [data-codex-action="history-open-workout"]')
+    .first()
+    .click();
+  await historyFrame
+    .locator('[data-codex-history-modal]:not(.hidden)')
+    .waitFor({ state: 'visible' });
+  const detailSetRows = await historyFrame
+    .locator('[data-codex-history-modal] li')
+    .filter({ hasText: /Set/i })
+    .count();
+  assert(detailSetRows > 0, 'Workout details modal did not render any set details.');
+  await page.evaluate(() => {
+    const frame = document.querySelector('iframe[title="Stitch history"]');
+    const closeButton = frame?.contentDocument?.querySelector(
+      '[data-codex-history-modal] [aria-label="Schließen"]',
+    );
+    if (closeButton instanceof HTMLButtonElement) {
+      closeButton.click();
+    }
+  });
+
+  await navigateToView('exercises');
+  const exercisesFrame = page.frameLocator('iframe[title="Stitch exercises"]');
+  await exercisesFrame.locator('[data-codex-action="exercise-filter-back"]').waitFor({
+    state: 'visible',
+  });
+  await exercisesFrame.locator('[data-codex-action="exercise-filter-back"]').click();
+  const visibleBackExerciseNames = await page.evaluate(() => {
+    const frame = document.querySelector('iframe[title="Stitch exercises"]');
+    const doc = frame?.contentDocument;
+    if (!doc) return [];
+
+    return [...doc.querySelectorAll('[data-codex-exercise-card]')]
+      .filter((card) => getComputedStyle(card).display !== 'none')
+      .map((card) => card.querySelector('h3,h4')?.textContent?.trim())
+      .filter(Boolean);
+  });
   assert(
-    /^\d{4}-\d{2}-\d{2}$/.test(dateInputValue),
-    'Bodyweight date input did not render a valid date.',
+    visibleBackExerciseNames.some((name) => /pullups/i.test(name)),
+    'Back exercise filter did not keep the back exercise card visible.',
+  );
+  assert(
+    visibleBackExerciseNames.every((name) => !/squats/i.test(name)),
+    'Back exercise filter left unrelated leg exercise cards visible.',
   );
 
-  await page.getByRole('button', { name: 'progress' }).click();
-  await page.getByRole('heading', { name: 'Exercise progress' }).waitFor({ state: 'visible' });
+  await exercisesFrame.locator('[data-codex-action="exercise-filter-all exercises"]').click();
+  await exercisesFrame
+    .locator('[data-codex-action="exercise-open-details"]')
+    .filter({ visible: true })
+    .first()
+    .click();
+  await exercisesFrame
+    .locator('[data-codex-exercise-modal]:not(.hidden)')
+    .waitFor({ state: 'visible' });
+  const exerciseDetailTitle = await exercisesFrame
+    .locator('[data-codex-exercise-modal] h3')
+    .first()
+    .textContent();
+  assert(Boolean(exerciseDetailTitle?.trim()), 'Exercise details modal did not render a title.');
+  await page.evaluate(() => {
+    const frame = document.querySelector('iframe[title="Stitch exercises"]');
+    const closeButton = frame?.contentDocument?.querySelector(
+      '[data-codex-exercise-modal] [data-codex-action="exercise-close-modal"]',
+    );
+    closeButton?.click();
+  });
+
+  await exercisesFrame.locator('[data-codex-action="exercise-add-custom"]').click();
+  await exercisesFrame.locator('[data-codex-custom-exercise-name]').fill('Cable Fly Smoke');
+  await exercisesFrame.locator('[data-codex-custom-exercise-weight]').fill('20');
+  await exercisesFrame.locator('[data-codex-custom-exercise-rep-min]').fill('10');
+  await exercisesFrame.locator('[data-codex-custom-exercise-rep-max]').fill('15');
+  await exercisesFrame.locator('[data-codex-action="exercise-save-custom"]').click();
+  await page.waitForFunction(
+    (storageKey) => {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return parsed.exercises?.some((exercise) => exercise.name === 'Cable Fly Smoke');
+    },
+    STORAGE_KEY,
+    { timeout: 10000 },
+  );
+
+  await navigateToView('settings');
+  const settingsFrame = page.frameLocator('iframe[title="Stitch settings"]');
+  await settingsFrame
+    .getByRole('button', { name: /weekly|monthly/i })
+    .first()
+    .waitFor({
+      state: 'visible',
+    });
+
+  await navigateToView('progress');
+  const progressFrame = page.frameLocator('iframe[title="Stitch progress"]');
+  await progressFrame
+    .getByText(/progress|analytics|volume/i)
+    .first()
+    .waitFor({ state: 'visible' });
+
+  for (const view of ['dashboard', 'log', 'history', 'exercises', 'progress', 'settings']) {
+    await assertNoUnwiredInteractiveControls(view);
+  }
 }
 
 async function run() {
@@ -200,7 +425,9 @@ async function run() {
 
   await page.addInitScript(
     ({ storageKey, storageValue }) => {
-      window.localStorage.setItem(storageKey, storageValue);
+      if (!window.localStorage.getItem(storageKey)) {
+        window.localStorage.setItem(storageKey, storageValue);
+      }
     },
     { storageKey: STORAGE_KEY, storageValue: JSON.stringify(seedData()) },
   );

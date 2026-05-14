@@ -1,0 +1,2063 @@
+<!doctype html>
+<!-- saved from url=(0012)about:srcdoc -->
+<html class="dark" lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com/?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-container': '#121215',
+              'on-tertiary-fixed-variant': '#047857',
+              'on-secondary-fixed-variant': '#3f3f46',
+              'surface-container-high': '#18181b',
+              'secondary-fixed': '#a1a1aa',
+              'on-primary': '#0a0012',
+              'surface-container-lowest': '#09090b',
+              'on-tertiary': '#001a12',
+              'on-secondary-fixed': '#18181b',
+              'on-tertiary-container': '#bbf7d0',
+              'inverse-primary': '#5b21b6',
+              'error-container': '#3b1111',
+              'surface-variant': '#18181b',
+              'surface-container-highest': '#1e1e22',
+              'on-secondary-container': '#a1a1aa',
+              'primary-fixed-dim': '#c4b5fd',
+              'secondary-fixed-dim': '#71717a',
+              tertiary: '#34d399',
+              'secondary-container': '#27272a',
+              'on-primary-fixed-variant': '#5b21b6',
+              'surface-tint': '#a78bfa',
+              'inverse-surface': '#fafafa',
+              'tertiary-fixed-dim': '#6ee7b7',
+              surface: '#0c0c0f',
+              'on-primary-container': '#ede9fe',
+              'inverse-on-surface': '#09090b',
+              'on-error-container': '#fca5a5',
+              'primary-container': '#7c3aed',
+              error: '#ef4444',
+              primary: '#a78bfa',
+              'on-surface-variant': '#a1a1aa',
+              'on-secondary': '#09090b',
+              outline: '#52525b',
+              'tertiary-fixed': '#bbf7d0',
+              background: '#09090b',
+              'tertiary-container': '#065f46',
+              'outline-variant': '#27272a',
+              'surface-bright': '#18181b',
+              'on-primary-fixed': '#2e1065',
+              'primary-fixed': '#ede9fe',
+              'on-background': '#fafafa',
+              secondary: '#71717a',
+              'on-tertiary-fixed': '#003318',
+              'on-surface': '#fafafa',
+              'on-error': '#1a0000',
+              'surface-container-low': '#0f0f12',
+              'surface-dim': '#0c0c0f',
+            },
+            borderRadius: {
+              DEFAULT: '0.25rem',
+              lg: '0.5rem',
+              xl: '0.75rem',
+              full: '9999px',
+            },
+            fontFamily: {
+              headline: ['Geist'],
+              body: ['Geist'],
+              label: ['Geist'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background-color: #09090b;
+        color: #fafafa;
+        font-family: 'Geist', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0c0c0f;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #27272a;
+        border-radius: 10px;
+      }
+    </style>
+    <style data-stitch-injected="">
+      /* For Webkit Browsers (Chrome, Safari, Edge) */
+      body::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* For Firefox */
+      html {
+        scrollbar-width: none;
+      }
+
+      /* For IE/Edge */
+      body {
+        -ms-overflow-style: none;
+        min-height: auto !important;
+      }
+    </style>
+    <script data-stitch-injected="">
+      (function z() {
+        window.addEventListener(`message`, async function (e) {
+          let t = e.data;
+          if (!t || t.type !== `capture_screenshot` || e.source !== window.parent) return;
+          let n = t.requestId,
+            r = t.captureEngineSource,
+            i = t.options || {},
+            a = window.innerWidth,
+            o = window.innerHeight,
+            s = window.scrollX,
+            c = window.scrollY,
+            l = document.documentElement,
+            u = l.style.width,
+            d = l.style.height,
+            f = l.style.overflow,
+            p = l.style.position;
+          try {
+            if (!window.snapdom && r) {
+              let e = document.createElement(`script`);
+              (e.setAttribute(`data-stitch-injected`, ``),
+                (e.textContent = r),
+                document.head.appendChild(e));
+            }
+            let e = window.snapdom;
+            if (!e) {
+              window.parent.postMessage(
+                {
+                  type: `screenshot_error`,
+                  requestId: n,
+                  errorCode: `CAPTURE_ENGINE_UNAVAILABLE`,
+                  error: `Capture engine not available. Ensure source is sent with the capture request.`,
+                },
+                `*`,
+              );
+              return;
+            }
+            let t = i.exclude || [`[data-stitch-injected]`];
+            (window.scrollTo(0, 0),
+              (l.style.width = a + `px`),
+              (l.style.height = o + `px`),
+              (l.style.overflow = `hidden`),
+              (l.style.position = `relative`));
+            let u = (
+              await (
+                await e(document.documentElement, {
+                  exclude: t,
+                  embedFonts: !0,
+                  scale: i.scale || 1,
+                  quality: i.quality || 1,
+                  plugins: [
+                    {
+                      name: `stitch-viewport-clip`,
+                      afterClone: function (e) {
+                        let t = e.clone;
+                        if (!(t instanceof HTMLElement)) return;
+                        ((t.style.position = `relative`),
+                          (t.style.width = a + `px`),
+                          (t.style.height = o + `px`),
+                          (t.style.overflow = `hidden`));
+                        let n = [],
+                          r = t.querySelectorAll(`*`);
+                        for (let e = 0; e < r.length; e++) {
+                          let t = r[e];
+                          t instanceof HTMLElement &&
+                            (t.style.position ||
+                              (t.__snapdomComputedStyle || window.getComputedStyle(t)).position) ===
+                              `fixed` &&
+                            n.push(t);
+                        }
+                        if (s !== 0 || c !== 0) {
+                          let e = t.querySelector(`body`);
+                          e && ((e.style.marginTop = -c + `px`), (e.style.marginLeft = -s + `px`));
+                        }
+                        for (let e = 0; e < n.length; e++)
+                          ((n[e].style.position = `absolute`), t.appendChild(n[e]));
+                      },
+                    },
+                  ],
+                })
+              ).toCanvas({ width: a, height: o })
+            ).toDataURL(`image/png`);
+            window.parent.postMessage(
+              { type: `screenshot_captured`, requestId: n, dataUrl: u, width: a, height: o },
+              `*`,
+            );
+          } catch (e) {
+            window.parent.postMessage(
+              {
+                type: `screenshot_error`,
+                requestId: n,
+                error: e instanceof Error ? e.message : String(e),
+              },
+              `*`,
+            );
+          } finally {
+            ((l.style.width = u),
+              (l.style.height = d),
+              (l.style.overflow = f),
+              (l.style.position = p),
+              window.scrollTo(s, c));
+          }
+        });
+      })();
+    </script>
+    <script data-stitch-injected="">
+      (function V() {
+        let e = `__stitch-highlight-css`,
+          t = `stitch-highlight-element`,
+          n = null;
+        function r() {
+          if (document.getElementById(e)) return;
+          let n = document.createElement(`style`);
+          ((n.id = e),
+            (n.textContent = [
+              `@keyframes stitch-highlight-pulse {`,
+              `  0%, 100% { box-shadow: 0 0 0 3px rgba(113,105,237,0.8), 0 0 12px 4px rgba(113,105,237,0.3); }`,
+              `  50%      { box-shadow: 0 0 0 3px rgba(113,105,237,0.4), 0 0 6px 2px rgba(113,105,237,0.15); }`,
+              `}`,
+              `.` + t + ` {`,
+              `  outline: 3px solid rgba(113,105,237,0.8) !important;`,
+              `  outline-offset: 2px !important;`,
+              `  animation: stitch-highlight-pulse 1.5s ease-in-out infinite !important;`,
+              `  border-radius: inherit;`,
+              `}`,
+            ].join(`
+`)),
+            document.head.appendChild(n));
+        }
+        function i(e) {
+          let t = e.toLowerCase().trim(),
+            n = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, null),
+            r = null,
+            i = -1,
+            a = n.nextNode();
+          for (; a; ) {
+            if ((a.textContent || ``).trim().toLowerCase().includes(t)) {
+              let e = 0,
+                t = a.parentElement;
+              for (; t; ) (e++, (t = t.parentElement));
+              e > i && ((i = e), (r = a));
+            }
+            a = n.nextNode();
+          }
+          return r;
+        }
+        function a(e) {
+          setTimeout(function () {
+            let t = e.getBoundingClientRect(),
+              n = window.innerWidth || 1,
+              r = window.innerHeight || 1;
+            window.parent.postMessage(
+              {
+                type: `stitch:highlight-element-rect`,
+                normalizedX: (t.left + t.width / 2) / n,
+                normalizedY: (t.top + t.height / 2) / r,
+                normalizedWidth: t.width / n,
+                normalizedHeight: t.height / r,
+              },
+              `*`,
+            );
+          }, 400);
+        }
+        window.addEventListener(`message`, function (e) {
+          if (!e.data || e.data.type !== `stitch:highlight-element`) return;
+          n &&= (n.classList.remove(t), null);
+          let { text: o, selector: s } = e.data;
+          if (!o && !s) return;
+          r();
+          let c = null;
+          if ((o && (c = i(o)), !c && s))
+            try {
+              c = document.querySelector(s);
+            } catch {}
+          c &&
+            (c.classList.add(t),
+            c.scrollIntoView({ behavior: `smooth`, block: `center` }),
+            (n = c),
+            a(c));
+        });
+      })();
+    </script>
+    <script data-stitch-injected="">
+      (function ce() {
+        function e() {
+          window.parent.postMessage(
+            { type: `stitch:content-dimensions`, height: document.documentElement.scrollHeight },
+            `*`,
+          );
+        }
+        (document.readyState === `loading`
+          ? document.addEventListener(`DOMContentLoaded`, () => setTimeout(e, 50))
+          : setTimeout(e, 50),
+          window.addEventListener(`load`, () => setTimeout(e, 100)));
+      })();
+    </script>
+    <style>
+      *,
+      ::before,
+      ::after {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      }
+      ::backdrop {
+        --tw-border-spacing-x: 0;
+        --tw-border-spacing-y: 0;
+        --tw-translate-x: 0;
+        --tw-translate-y: 0;
+        --tw-rotate: 0;
+        --tw-skew-x: 0;
+        --tw-skew-y: 0;
+        --tw-scale-x: 1;
+        --tw-scale-y: 1;
+        --tw-pan-x: ;
+        --tw-pan-y: ;
+        --tw-pinch-zoom: ;
+        --tw-scroll-snap-strictness: proximity;
+        --tw-gradient-from-position: ;
+        --tw-gradient-via-position: ;
+        --tw-gradient-to-position: ;
+        --tw-ordinal: ;
+        --tw-slashed-zero: ;
+        --tw-numeric-figure: ;
+        --tw-numeric-spacing: ;
+        --tw-numeric-fraction: ;
+        --tw-ring-inset: ;
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: rgb(59 130 246 / 0.5);
+        --tw-ring-offset-shadow: 0 0 #0000;
+        --tw-ring-shadow: 0 0 #0000;
+        --tw-shadow: 0 0 #0000;
+        --tw-shadow-colored: 0 0 #0000;
+        --tw-blur: ;
+        --tw-brightness: ;
+        --tw-contrast: ;
+        --tw-grayscale: ;
+        --tw-hue-rotate: ;
+        --tw-invert: ;
+        --tw-saturate: ;
+        --tw-sepia: ;
+        --tw-drop-shadow: ;
+        --tw-backdrop-blur: ;
+        --tw-backdrop-brightness: ;
+        --tw-backdrop-contrast: ;
+        --tw-backdrop-grayscale: ;
+        --tw-backdrop-hue-rotate: ;
+        --tw-backdrop-invert: ;
+        --tw-backdrop-opacity: ;
+        --tw-backdrop-saturate: ;
+        --tw-backdrop-sepia: ;
+        --tw-contain-size: ;
+        --tw-contain-layout: ;
+        --tw-contain-paint: ;
+        --tw-contain-style: ;
+      } /* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */
+      *,
+      ::after,
+      ::before {
+        box-sizing: border-box;
+        border-width: 0;
+        border-style: solid;
+        border-color: #e5e7eb;
+      }
+      ::after,
+      ::before {
+        --tw-content: '';
+      }
+      :host,
+      html {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        tab-size: 4;
+        font-family:
+          ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+          'Segoe UI Symbol', 'Noto Color Emoji';
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        margin: 0;
+        line-height: inherit;
+      }
+      hr {
+        height: 0;
+        color: inherit;
+        border-top-width: 1px;
+      }
+      abbr:where([title]) {
+        -webkit-text-decoration: underline dotted;
+        text-decoration: underline dotted;
+      }
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+      a {
+        color: inherit;
+        text-decoration: inherit;
+      }
+      b,
+      strong {
+        font-weight: bolder;
+      }
+      code,
+      kbd,
+      pre,
+      samp {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+          monospace;
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+        font-size: 1em;
+      }
+      small {
+        font-size: 80%;
+      }
+      sub,
+      sup {
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+      }
+      sub {
+        bottom: -0.25em;
+      }
+      sup {
+        top: -0.5em;
+      }
+      table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+      }
+      button,
+      input,
+      optgroup,
+      select,
+      textarea {
+        font-family: inherit;
+        font-feature-settings: inherit;
+        font-variation-settings: inherit;
+        font-size: 100%;
+        font-weight: inherit;
+        line-height: inherit;
+        letter-spacing: inherit;
+        color: inherit;
+        margin: 0;
+        padding: 0;
+      }
+      button,
+      select {
+        text-transform: none;
+      }
+      button,
+      input:where([type='button']),
+      input:where([type='reset']),
+      input:where([type='submit']) {
+        -webkit-appearance: button;
+        background-color: transparent;
+        background-image: none;
+      }
+      :-moz-focusring {
+        outline: auto;
+      }
+      :-moz-ui-invalid {
+        box-shadow: none;
+      }
+      progress {
+        vertical-align: baseline;
+      }
+      ::-webkit-inner-spin-button,
+      ::-webkit-outer-spin-button {
+        height: auto;
+      }
+      [type='search'] {
+        -webkit-appearance: textfield;
+        outline-offset: -2px;
+      }
+      ::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+      ::-webkit-file-upload-button {
+        -webkit-appearance: button;
+        font: inherit;
+      }
+      summary {
+        display: list-item;
+      }
+      blockquote,
+      dd,
+      dl,
+      figure,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      hr,
+      p,
+      pre {
+        margin: 0;
+      }
+      fieldset {
+        margin: 0;
+        padding: 0;
+      }
+      legend {
+        padding: 0;
+      }
+      menu,
+      ol,
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      dialog {
+        padding: 0;
+      }
+      textarea {
+        resize: vertical;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        opacity: 1;
+        color: #9ca3af;
+      }
+      [role='button'],
+      button {
+        cursor: pointer;
+      }
+      :disabled {
+        cursor: default;
+      }
+      audio,
+      canvas,
+      embed,
+      iframe,
+      img,
+      object,
+      svg,
+      video {
+        display: block;
+        vertical-align: middle;
+      }
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+      [hidden]:where(:not([hidden='until-found'])) {
+        display: none;
+      }
+      [type='text'],
+      input:where(:not([type])),
+      [type='email'],
+      [type='url'],
+      [type='password'],
+      [type='number'],
+      [type='date'],
+      [type='datetime-local'],
+      [type='month'],
+      [type='search'],
+      [type='tel'],
+      [type='time'],
+      [type='week'],
+      [multiple],
+      textarea,
+      select {
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #fff;
+        border-color: #6b7280;
+        border-width: 1px;
+        border-radius: 0px;
+        padding-top: 0.5rem;
+        padding-right: 0.75rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5rem;
+        --tw-shadow: 0 0 #0000;
+      }
+      [type='text']:focus,
+      input:where(:not([type])):focus,
+      [type='email']:focus,
+      [type='url']:focus,
+      [type='password']:focus,
+      [type='number']:focus,
+      [type='date']:focus,
+      [type='datetime-local']:focus,
+      [type='month']:focus,
+      [type='search']:focus,
+      [type='tel']:focus,
+      [type='time']:focus,
+      [type='week']:focus,
+      [multiple]:focus,
+      textarea:focus,
+      select:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-inset: var(--tw-empty, /*!*/ /*!*/);
+        --tw-ring-offset-width: 0px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: #2563eb;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+        border-color: #2563eb;
+      }
+      input::placeholder,
+      textarea::placeholder {
+        color: #6b7280;
+        opacity: 1;
+      }
+      ::-webkit-datetime-edit-fields-wrapper {
+        padding: 0;
+      }
+      ::-webkit-date-and-time-value {
+        min-height: 1.5em;
+        text-align: inherit;
+      }
+      ::-webkit-datetime-edit {
+        display: inline-flex;
+      }
+      ::-webkit-datetime-edit,
+      ::-webkit-datetime-edit-year-field,
+      ::-webkit-datetime-edit-month-field,
+      ::-webkit-datetime-edit-day-field,
+      ::-webkit-datetime-edit-hour-field,
+      ::-webkit-datetime-edit-minute-field,
+      ::-webkit-datetime-edit-second-field,
+      ::-webkit-datetime-edit-millisecond-field,
+      ::-webkit-datetime-edit-meridiem-field {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      select {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        print-color-adjust: exact;
+      }
+      [multiple],
+      [size]:where(select:not([size='1'])) {
+        background-image: initial;
+        background-position: initial;
+        background-repeat: unset;
+        background-size: initial;
+        padding-right: 0.75rem;
+        print-color-adjust: unset;
+      }
+      [type='checkbox'],
+      [type='radio'] {
+        -webkit-appearance: none;
+        appearance: none;
+        padding: 0;
+        print-color-adjust: exact;
+        display: inline-block;
+        vertical-align: middle;
+        background-origin: border-box;
+        -webkit-user-select: none;
+        user-select: none;
+        flex-shrink: 0;
+        height: 1rem;
+        width: 1rem;
+        color: #2563eb;
+        background-color: #fff;
+        border-color: #6b7280;
+        border-width: 1px;
+        --tw-shadow: 0 0 #0000;
+      }
+      [type='checkbox'] {
+        border-radius: 0px;
+      }
+      [type='radio'] {
+        border-radius: 100%;
+      }
+      [type='checkbox']:focus,
+      [type='radio']:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        --tw-ring-inset: var(--tw-empty, /*!*/ /*!*/);
+        --tw-ring-offset-width: 2px;
+        --tw-ring-offset-color: #fff;
+        --tw-ring-color: #2563eb;
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+      }
+      [type='checkbox']:checked,
+      [type='radio']:checked {
+        border-color: transparent;
+        background-color: currentColor;
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      [type='checkbox']:checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+      }
+      @media (forced-colors: active) {
+        [type='checkbox']:checked {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='radio']:checked {
+        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3ccircle cx='8' cy='8' r='3'/%3e%3c/svg%3e");
+      }
+      @media (forced-colors: active) {
+        [type='radio']:checked {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='checkbox']:checked:hover,
+      [type='checkbox']:checked:focus,
+      [type='radio']:checked:hover,
+      [type='radio']:checked:focus {
+        border-color: transparent;
+        background-color: currentColor;
+      }
+      [type='checkbox']:indeterminate {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 16 16'%3e%3cpath stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M4 8h8'/%3e%3c/svg%3e");
+        border-color: transparent;
+        background-color: currentColor;
+        background-size: 100% 100%;
+        background-position: center;
+        background-repeat: no-repeat;
+      }
+      @media (forced-colors: active) {
+        [type='checkbox']:indeterminate {
+          -webkit-appearance: auto;
+          appearance: auto;
+        }
+      }
+      [type='checkbox']:indeterminate:hover,
+      [type='checkbox']:indeterminate:focus {
+        border-color: transparent;
+        background-color: currentColor;
+      }
+      [type='file'] {
+        background: unset;
+        border-color: inherit;
+        border-width: 0;
+        border-radius: 0;
+        padding: 0;
+        font-size: unset;
+        line-height: inherit;
+      }
+      [type='file']:focus {
+        outline: 1px solid ButtonText;
+        outline: 1px auto -webkit-focus-ring-color;
+      }
+      .fixed {
+        position: fixed;
+      }
+      .absolute {
+        position: absolute;
+      }
+      .relative {
+        position: relative;
+      }
+      .inset-x-0 {
+        left: 0px;
+        right: 0px;
+      }
+      .-top-8 {
+        top: -2rem;
+      }
+      .bottom-0 {
+        bottom: 0px;
+      }
+      .left-0 {
+        left: 0px;
+      }
+      .left-1\/2 {
+        left: 50%;
+      }
+      .top-0 {
+        top: 0px;
+      }
+      .z-40 {
+        z-index: 40;
+      }
+      .z-50 {
+        z-index: 50;
+      }
+      .col-span-1 {
+        grid-column: span 1 / span 1;
+      }
+      .mb-1 {
+        margin-bottom: 0.25rem;
+      }
+      .mb-2 {
+        margin-bottom: 0.5rem;
+      }
+      .mb-4 {
+        margin-bottom: 1rem;
+      }
+      .mb-6 {
+        margin-bottom: 1.5rem;
+      }
+      .mb-8 {
+        margin-bottom: 2rem;
+      }
+      .mt-1 {
+        margin-top: 0.25rem;
+      }
+      .mt-16 {
+        margin-top: 4rem;
+      }
+      .mt-3 {
+        margin-top: 0.75rem;
+      }
+      .mt-4 {
+        margin-top: 1rem;
+      }
+      .mt-6 {
+        margin-top: 1.5rem;
+      }
+      .flex {
+        display: flex;
+      }
+      .grid {
+        display: grid;
+      }
+      .hidden {
+        display: none;
+      }
+      .h-10 {
+        height: 2.5rem;
+      }
+      .h-12 {
+        height: 3rem;
+      }
+      .h-16 {
+        height: 4rem;
+      }
+      .h-32 {
+        height: 8rem;
+      }
+      .h-48 {
+        height: 12rem;
+      }
+      .h-6 {
+        height: 1.5rem;
+      }
+      .h-8 {
+        height: 2rem;
+      }
+      .h-\[20\%\] {
+        height: 20%;
+      }
+      .h-\[30\%\] {
+        height: 30%;
+      }
+      .h-\[40\%\] {
+        height: 40%;
+      }
+      .h-\[65\%\] {
+        height: 65%;
+      }
+      .h-\[884px\] {
+        height: 884px;
+      }
+      .h-\[90\%\] {
+        height: 90%;
+      }
+      .h-full {
+        height: 100%;
+      }
+      .w-10 {
+        width: 2.5rem;
+      }
+      .w-12 {
+        width: 3rem;
+      }
+      .w-48 {
+        width: 12rem;
+      }
+      .w-6 {
+        width: 1.5rem;
+      }
+      .w-64 {
+        width: 16rem;
+      }
+      .w-8 {
+        width: 2rem;
+      }
+      .w-full {
+        width: 100%;
+      }
+      .max-w-\[1440px\] {
+        max-width: 1440px;
+      }
+      .flex-1 {
+        flex: 1 1 0%;
+      }
+      .-translate-x-1\/2 {
+        --tw-translate-x: -50%;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .scale-95 {
+        --tw-scale-x: 0.95;
+        --tw-scale-y: 0.95;
+        transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate))
+          skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x))
+          scaleY(var(--tw-scale-y));
+      }
+      .resize-none {
+        resize: none;
+      }
+      .grid-cols-1 {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+      .grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid-cols-6 {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+      .flex-col {
+        flex-direction: column;
+      }
+      .flex-wrap {
+        flex-wrap: wrap;
+      }
+      .items-start {
+        align-items: flex-start;
+      }
+      .items-end {
+        align-items: flex-end;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .justify-end {
+        justify-content: flex-end;
+      }
+      .justify-center {
+        justify-content: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .justify-around {
+        justify-content: space-around;
+      }
+      .gap-1 {
+        gap: 0.25rem;
+      }
+      .gap-2 {
+        gap: 0.5rem;
+      }
+      .gap-3 {
+        gap: 0.75rem;
+      }
+      .gap-4 {
+        gap: 1rem;
+      }
+      .gap-6 {
+        gap: 1.5rem;
+      }
+      .gap-8 {
+        gap: 2rem;
+      }
+      .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+      }
+      .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(0.75rem * var(--tw-space-y-reverse));
+      }
+      .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+        --tw-space-y-reverse: 0;
+        margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+        margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+      }
+      .overflow-hidden {
+        overflow: hidden;
+      }
+      .rounded {
+        border-radius: 0.25rem;
+      }
+      .rounded-full {
+        border-radius: 9999px;
+      }
+      .rounded-lg {
+        border-radius: 0.5rem;
+      }
+      .rounded-md {
+        border-radius: 0.375rem;
+      }
+      .rounded-xl {
+        border-radius: 0.75rem;
+      }
+      .rounded-t-sm {
+        border-top-left-radius: 0.125rem;
+        border-top-right-radius: 0.125rem;
+      }
+      .border {
+        border-width: 1px;
+      }
+      .border-b {
+        border-bottom-width: 1px;
+      }
+      .border-r {
+        border-right-width: 1px;
+      }
+      .border-r-2 {
+        border-right-width: 2px;
+      }
+      .border-t {
+        border-top-width: 1px;
+      }
+      .border-dashed {
+        border-style: dashed;
+      }
+      .border-none {
+        border-style: none;
+      }
+      .border-\[\#27272a\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(39 39 42 / var(--tw-border-opacity, 1));
+      }
+      .border-\[\#a78bfa\] {
+        --tw-border-opacity: 1;
+        border-color: rgb(167 139 250 / var(--tw-border-opacity, 1));
+      }
+      .border-error\/20 {
+        border-color: rgb(239 68 68 / 0.2);
+      }
+      .border-outline {
+        --tw-border-opacity: 1;
+        border-color: rgb(82 82 91 / var(--tw-border-opacity, 1));
+      }
+      .border-outline-variant {
+        --tw-border-opacity: 1;
+        border-color: rgb(39 39 42 / var(--tw-border-opacity, 1));
+      }
+      .border-outline-variant\/50 {
+        border-color: rgb(39 39 42 / 0.5);
+      }
+      .border-transparent {
+        border-color: transparent;
+      }
+      .bg-\[\#09090b\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(9 9 11 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#0c0c0f\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(12 12 15 / var(--tw-bg-opacity, 1));
+      }
+      .bg-\[\#0c0c0f\]\/95 {
+        background-color: rgb(12 12 15 / 0.95);
+      }
+      .bg-\[\#18181b\] {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .bg-background {
+        --tw-bg-opacity: 1;
+        background-color: rgb(9 9 11 / var(--tw-bg-opacity, 1));
+      }
+      .bg-error-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(59 17 17 / var(--tw-bg-opacity, 1));
+      }
+      .bg-primary {
+        --tw-bg-opacity: 1;
+        background-color: rgb(167 139 250 / var(--tw-bg-opacity, 1));
+      }
+      .bg-primary-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(124 58 237 / var(--tw-bg-opacity, 1));
+      }
+      .bg-primary\/10 {
+        background-color: rgb(167 139 250 / 0.1);
+      }
+      .bg-surface-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(18 18 21 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-high {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-highest {
+        --tw-bg-opacity: 1;
+        background-color: rgb(30 30 34 / var(--tw-bg-opacity, 1));
+      }
+      .bg-surface-container-low {
+        --tw-bg-opacity: 1;
+        background-color: rgb(15 15 18 / var(--tw-bg-opacity, 1));
+      }
+      .bg-tertiary-container {
+        --tw-bg-opacity: 1;
+        background-color: rgb(6 95 70 / var(--tw-bg-opacity, 1));
+      }
+      .bg-transparent {
+        background-color: transparent;
+      }
+      .object-cover {
+        object-fit: cover;
+      }
+      .p-1 {
+        padding: 0.25rem;
+      }
+      .p-12 {
+        padding: 3rem;
+      }
+      .p-2 {
+        padding: 0.5rem;
+      }
+      .p-3 {
+        padding: 0.75rem;
+      }
+      .p-4 {
+        padding: 1rem;
+      }
+      .p-5 {
+        padding: 1.25rem;
+      }
+      .px-2 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+      .px-3 {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+      .px-4 {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .px-5 {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+      .px-6 {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+      .py-1 {
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
+      }
+      .py-1\.5 {
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+      }
+      .py-2 {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+      }
+      .py-2\.5 {
+        padding-top: 0.625rem;
+        padding-bottom: 0.625rem;
+      }
+      .py-3 {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+      }
+      .py-4 {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+      }
+      .py-8 {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      .pb-20 {
+        padding-bottom: 5rem;
+      }
+      .pr-2 {
+        padding-right: 0.5rem;
+      }
+      .pt-24 {
+        padding-top: 6rem;
+      }
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .font-mono {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+          monospace;
+      }
+      .text-3xl {
+        font-size: 1.875rem;
+        line-height: 2.25rem;
+      }
+      .text-4xl {
+        font-size: 2.25rem;
+        line-height: 2.5rem;
+      }
+      .text-\[10px\] {
+        font-size: 10px;
+      }
+      .text-\[9px\] {
+        font-size: 9px;
+      }
+      .text-lg {
+        font-size: 1.125rem;
+        line-height: 1.75rem;
+      }
+      .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+      }
+      .text-xl {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+      }
+      .text-xs {
+        font-size: 0.75rem;
+        line-height: 1rem;
+      }
+      .font-black {
+        font-weight: 900;
+      }
+      .font-bold {
+        font-weight: 700;
+      }
+      .font-medium {
+        font-weight: 500;
+      }
+      .uppercase {
+        text-transform: uppercase;
+      }
+      .leading-none {
+        line-height: 1;
+      }
+      .tracking-tight {
+        letter-spacing: -0.025em;
+      }
+      .tracking-tighter {
+        letter-spacing: -0.05em;
+      }
+      .tracking-wider {
+        letter-spacing: 0.05em;
+      }
+      .tracking-widest {
+        letter-spacing: 0.1em;
+      }
+      .text-\[\#a1a1aa\] {
+        --tw-text-opacity: 1;
+        color: rgb(161 161 170 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#a78bfa\] {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .text-\[\#fafafa\] {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-error {
+        --tw-text-opacity: 1;
+        color: rgb(239 68 68 / var(--tw-text-opacity, 1));
+      }
+      .text-on-background {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-on-primary {
+        --tw-text-opacity: 1;
+        color: rgb(10 0 18 / var(--tw-text-opacity, 1));
+      }
+      .text-on-primary-container {
+        --tw-text-opacity: 1;
+        color: rgb(237 233 254 / var(--tw-text-opacity, 1));
+      }
+      .text-on-surface {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .text-outline {
+        --tw-text-opacity: 1;
+        color: rgb(82 82 91 / var(--tw-text-opacity, 1));
+      }
+      .text-primary {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .text-secondary {
+        --tw-text-opacity: 1;
+        color: rgb(113 113 122 / var(--tw-text-opacity, 1));
+      }
+      .text-tertiary {
+        --tw-text-opacity: 1;
+        color: rgb(52 211 153 / var(--tw-text-opacity, 1));
+      }
+      .text-violet-400 {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .antialiased {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .opacity-20 {
+        opacity: 0.2;
+      }
+      .opacity-30 {
+        opacity: 0.3;
+      }
+      .opacity-40 {
+        opacity: 0.4;
+      }
+      .opacity-50 {
+        opacity: 0.5;
+      }
+      .opacity-80 {
+        opacity: 0.8;
+      }
+      .backdrop-blur-md {
+        --tw-backdrop-blur: blur(12px);
+        -webkit-backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+        backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness)
+          var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate)
+          var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate)
+          var(--tw-backdrop-sepia);
+      }
+      .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .transition-colors {
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-property:
+          color, background-color, border-color, text-decoration-color, fill, stroke;
+        transition-property:
+          color,
+          background-color,
+          border-color,
+          text-decoration-color,
+          fill,
+          stroke,
+          -webkit-text-decoration-color;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+      }
+      .duration-100 {
+        transition-duration: 100ms;
+      }
+      .duration-200 {
+        transition-duration: 200ms;
+      }
+      .placeholder\:text-outline::placeholder {
+        --tw-text-opacity: 1;
+        color: rgb(82 82 91 / var(--tw-text-opacity, 1));
+      }
+      .hover\:border-primary:hover {
+        --tw-border-opacity: 1;
+        border-color: rgb(167 139 250 / var(--tw-border-opacity, 1));
+      }
+      .hover\:bg-\[\#18181b\]:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:bg-error\/10:hover {
+        background-color: rgb(239 68 68 / 0.1);
+      }
+      .hover\:bg-surface-container-high:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:bg-surface-container-highest:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(30 30 34 / var(--tw-bg-opacity, 1));
+      }
+      .hover\:text-\[\#fafafa\]:hover {
+        --tw-text-opacity: 1;
+        color: rgb(250 250 250 / var(--tw-text-opacity, 1));
+      }
+      .hover\:text-primary:hover {
+        --tw-text-opacity: 1;
+        color: rgb(167 139 250 / var(--tw-text-opacity, 1));
+      }
+      .hover\:opacity-90:hover {
+        opacity: 0.9;
+      }
+      .focus\:border-primary:focus {
+        --tw-border-opacity: 1;
+        border-color: rgb(167 139 250 / var(--tw-border-opacity, 1));
+      }
+      .focus\:ring-0:focus {
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+      }
+      .focus\:ring-1:focus {
+        --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width)
+          var(--tw-ring-offset-color);
+        --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width))
+          var(--tw-ring-color);
+        box-shadow:
+          var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+      }
+      .focus\:ring-primary:focus {
+        --tw-ring-opacity: 1;
+        --tw-ring-color: rgb(167 139 250 / var(--tw-ring-opacity, 1));
+      }
+      .active\:bg-\[\#18181b\]:active {
+        --tw-bg-opacity: 1;
+        background-color: rgb(24 24 27 / var(--tw-bg-opacity, 1));
+      }
+      .group:hover .group-hover\:block {
+        display: block;
+      }
+      @media (min-width: 768px) {
+        .md\:ml-64 {
+          margin-left: 16rem;
+        }
+        .md\:flex {
+          display: flex;
+        }
+        .md\:hidden {
+          display: none;
+        }
+        .md\:flex-row {
+          flex-direction: row;
+        }
+        .md\:items-end {
+          align-items: flex-end;
+        }
+        .md\:px-8 {
+          padding-left: 2rem;
+          padding-right: 2rem;
+        }
+        .md\:pb-8 {
+          padding-bottom: 2rem;
+        }
+      }
+      @media (min-width: 1024px) {
+        .lg\:col-span-4 {
+          grid-column: span 4 / span 4;
+        }
+        .lg\:col-span-8 {
+          grid-column: span 8 / span 8;
+        }
+        .lg\:flex {
+          display: flex;
+        }
+        .lg\:grid-cols-12 {
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-background text-on-background antialiased">
+    <!-- Top Navigation Shell -->
+    <header
+      class="bg-[#09090b] text-violet-400 font-geist tracking-tight docked full-width top-0 border-b border-[#27272a] flat no shadows flex justify-between items-center px-6 h-16 w-full fixed z-50"
+    >
+      <div class="flex items-center gap-8">
+        <span class="text-xl font-bold text-[#fafafa]">Workout Tracker</span>
+        <nav class="hidden lg:flex items-center gap-6">
+          <a
+            class="text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] px-3 py-1 rounded transition-colors duration-200"
+            href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+            >Dashboard</a
+          >
+          <a
+            class="text-[#a78bfa] font-bold px-3 py-1 rounded transition-colors duration-200"
+            href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+            >Workouts</a
+          >
+          <a
+            class="text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] px-3 py-1 rounded transition-colors duration-200"
+            href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+            >Exercises</a
+          >
+        </nav>
+      </div>
+      <div class="flex items-center gap-4">
+        <div
+          class="hidden md:flex bg-surface-container border border-outline-variant rounded-lg px-3 py-1.5 items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-secondary text-sm">search</span>
+          <input
+            class="bg-transparent border-none focus:ring-0 text-sm w-48 text-on-surface"
+            placeholder="Search exercises..."
+            type="text"
+          />
+        </div>
+        <button
+          class="material-symbols-outlined text-secondary hover:text-primary transition-colors"
+        >
+          notifications
+        </button>
+        <button
+          class="material-symbols-outlined text-secondary hover:text-primary transition-colors"
+        >
+          settings
+        </button>
+        <div class="w-8 h-8 rounded-full border border-outline-variant overflow-hidden">
+          <img
+            alt="User profile"
+            class="w-full h-full object-cover"
+            data-alt="Close up portrait of a young professional athlete with a focused expression in a dimly lit studio setting"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7DOcS6VE2AGV_8OtODi1LemTx_tP71Jj238wGlpouuovhW8E_mEQIW044Nhc84oe8Z48p7gSy6VGcdpWVgjmgQTbY8b5aeLieJhmcML7pSY9zwtY8MXR-Wm4NfgyCuNFFHmvZfDd2d-KaHcXtZ71RKFGlQ-KFf_SXsxg2qBcNQdhLEtRVyOJnNgnxDGpkgU_XZjvqGxZv8_Akywj5PHr_6wbnS6GkpFqYAPJBSLAJs9OU2ZCOePTeiI-NvsNaRPqzqen6k2nuxX0"
+          />
+        </div>
+      </div>
+    </header>
+    <!-- Side Navigation Shell (Hidden on Mobile) -->
+    <aside
+      class="hidden md:flex flex-col fixed left-0 top-0 h-full py-8 bg-[#0c0c0f] font-geist h-[884px] w-64 border-r border-[#27272a] flat no shadows z-40 mt-16"
+      data-stitch-vh="h-[884px]===h-screen"
+    >
+      <div class="px-6 mb-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center">
+            <span
+              class="material-symbols-outlined text-on-primary-container"
+              style="font-variation-settings: &#39;FILL&#39; 1;"
+              >fitness_center</span
+            >
+          </div>
+          <div>
+            <p class="text-lg font-black text-[#fafafa] leading-none">Log Workout</p>
+            <p class="text-[10px] text-secondary uppercase tracking-widest mt-1">
+              Elite Performance
+            </p>
+          </div>
+        </div>
+        <button
+          class="w-full py-3 bg-primary text-on-primary font-bold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+        >
+          <span class="material-symbols-outlined text-lg">add_circle</span>
+          Finish Workout
+        </button>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a
+          class="flex items-center gap-3 px-6 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          <span>Dashboard</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-6 py-3 text-[#a78bfa] border-r-2 border-[#a78bfa] bg-[#18181b] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined" style="font-variation-settings: &#39;FILL&#39; 1;"
+            >fitness_center</span
+          >
+          <span class="font-bold">Log</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-6 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined">menu_book</span>
+          <span>Exercises</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-6 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span>History</span>
+        </a>
+        <a
+          class="flex items-center gap-3 px-6 py-3 text-[#a1a1aa] hover:bg-[#18181b] hover:text-[#fafafa] transition-all duration-200"
+          href="https://app-companion-430619.appspot.com/preview/4594838723388064016?node-id=04df01c8f364414c9ae5ea1b2fa28def&amp;usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.PJsh2cctCQI.O%2Fd%3D1%2Frs%3DAHpOoo_QlMhY2cycn60Rs8eI1WInRwuahw%2Fm%3D__features__#"
+        >
+          <span class="material-symbols-outlined">monitoring</span>
+          <span>Analytics</span>
+        </a>
+      </nav>
+    </aside>
+    <!-- Main Content Canvas -->
+    <main class="md:ml-64 pt-24 pb-20 md:pb-8 px-4 md:px-8 max-w-[1440px]">
+      <!-- Workout Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+        <div class="space-y-1">
+          <div class="flex items-center gap-3 text-primary">
+            <span class="material-symbols-outlined">timer</span>
+            <span class="text-3xl font-mono font-bold tracking-tighter">00:42:18</span>
+          </div>
+          <h1 class="text-4xl font-black tracking-tighter text-on-surface">
+            Push Day A - Hypertrophy
+          </h1>
+          <p class="text-secondary font-medium">Started at 08:30 AM • Thursday, Oct 24</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            class="px-5 py-2.5 bg-surface-container-high border border-outline-variant rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-surface-container-highest transition-colors"
+          >
+            <span class="material-symbols-outlined text-tertiary">history</span>
+            Rest Timer: 90s
+          </button>
+          <button
+            class="px-5 py-2.5 bg-error-container text-error border border-error/20 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-error/10 transition-colors"
+          >
+            <span class="material-symbols-outlined text-sm">cancel</span>
+            Discard
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Exercises Column -->
+        <div class="lg:col-span-8 space-y-6">
+          <!-- Exercise Card: Bench Press -->
+          <section
+            class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden"
+          >
+            <div
+              class="p-5 border-b border-outline-variant flex items-center justify-between bg-surface-container-high"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center overflow-hidden"
+                >
+                  <img
+                    alt="Exercise visual"
+                    class="w-full h-full object-cover"
+                    data-alt="Close up of a barbell with heavy plates resting on a rack in a moody industrial style gym"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfYaW9MO3yiVgVQl7Pl6WQuVZkwAUAjWqpWl1nKfnYXTQon1-gycHosksy1N0RAbbRdt1VCQ2VzvhScGRrE9qPkaMRsVQd_22DUZn2SjMZd_-UZLDVRt-DaP1VOAl6YfOEwJbDib6nvh6bBGGqHOwg1Z0zIfA9JKdeqLMRhi0r2rjW9CJKAM5EGgdb3v-AvGVwI1NTVy5hiim7jqwz96eGWjcDBnBZ6lkVYf_v03v9lt1DzGETZZ2UoBC2O9qQhcFn7Xr47uuvMZc"
+                  />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-on-surface tracking-tight leading-none">
+                    Bench Press (Barbell)
+                  </h3>
+                  <p class="text-xs text-secondary mt-1 uppercase tracking-widest font-bold">
+                    Chest • Compound
+                  </p>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  class="w-8 h-8 rounded bg-surface-container border border-outline-variant flex items-center justify-center text-secondary hover:text-primary"
+                >
+                  <span class="material-symbols-outlined text-sm">info</span>
+                </button>
+                <button
+                  class="w-8 h-8 rounded bg-surface-container border border-outline-variant flex items-center justify-center text-secondary hover:text-primary"
+                >
+                  <span class="material-symbols-outlined text-sm">more_vert</span>
+                </button>
+              </div>
+            </div>
+            <div class="p-5">
+              <div
+                class="grid grid-cols-6 gap-4 mb-4 text-[10px] uppercase font-bold tracking-widest text-secondary px-2"
+              >
+                <div class="text-center">Set</div>
+                <div class="col-span-1">Previous</div>
+                <div class="col-span-1 text-center">Weight (kg)</div>
+                <div class="col-span-1 text-center">Reps</div>
+                <div class="col-span-1 text-center">RPE</div>
+                <div class="text-right pr-2">Status</div>
+              </div>
+              <div class="space-y-3">
+                <!-- Set 1 -->
+                <div
+                  class="grid grid-cols-6 gap-4 items-center bg-surface-container-low p-2 rounded-lg border border-outline-variant/50"
+                >
+                  <div class="text-center font-bold text-primary bg-primary/10 rounded py-1">1</div>
+                  <div class="text-secondary text-xs">80 kg x 10</div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container-highest border border-outline-variant rounded-md text-center text-sm font-bold text-on-surface focus:ring-1 focus:ring-primary focus:border-primary py-1"
+                      type="number"
+                      value="82.5"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container-highest border border-outline-variant rounded-md text-center text-sm font-bold text-on-surface focus:ring-1 focus:ring-primary focus:border-primary py-1"
+                      type="number"
+                      value="8"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container-highest border border-outline-variant rounded-md text-center text-sm font-bold text-on-surface focus:ring-1 focus:ring-primary focus:border-primary py-1"
+                      placeholder="-"
+                      type="number"
+                    />
+                  </div>
+                  <div class="flex justify-end pr-2">
+                    <button
+                      class="w-6 h-6 rounded-md bg-tertiary-container text-tertiary flex items-center justify-center transition-colors"
+                    >
+                      <span
+                        class="material-symbols-outlined text-sm"
+                        style="font-variation-settings: &#39;FILL&#39; 1;"
+                        >check_circle</span
+                      >
+                    </button>
+                  </div>
+                </div>
+                <!-- Set 2 -->
+                <div
+                  class="grid grid-cols-6 gap-4 items-center p-2 rounded-lg border border-transparent"
+                >
+                  <div
+                    class="text-center font-bold text-secondary bg-surface-container-highest rounded py-1"
+                  >
+                    2
+                  </div>
+                  <div class="text-secondary text-xs">80 kg x 10</div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container border border-outline-variant rounded-md text-center text-sm font-bold text-secondary focus:ring-1 focus:ring-primary py-1"
+                      placeholder="82.5"
+                      type="number"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container border border-outline-variant rounded-md text-center text-sm font-bold text-secondary focus:ring-1 focus:ring-primary py-1"
+                      placeholder="8"
+                      type="number"
+                    />
+                  </div>
+                  <div>
+                    <input
+                      class="w-full bg-surface-container border border-outline-variant rounded-md text-center text-sm font-bold text-secondary focus:ring-1 focus:ring-primary py-1"
+                      placeholder="-"
+                      type="number"
+                    />
+                  </div>
+                  <div class="flex justify-end pr-2">
+                    <button
+                      class="w-6 h-6 rounded-md bg-surface-container border border-outline-variant text-secondary flex items-center justify-center hover:bg-surface-container-high transition-colors"
+                    >
+                      <span class="material-symbols-outlined text-sm">check_circle</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button
+                class="w-full mt-6 py-2 border border-dashed border-outline rounded-lg text-sm font-bold text-secondary hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
+              >
+                <span class="material-symbols-outlined text-sm">add</span>
+                Add Set
+              </button>
+            </div>
+          </section>
+          <!-- Exercise Card: Overhead Press -->
+          <section
+            class="bg-surface-container border border-outline-variant rounded-xl overflow-hidden opacity-80"
+          >
+            <div
+              class="p-5 border-b border-outline-variant flex items-center justify-between bg-surface-container-high"
+            >
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-12 h-12 rounded-lg bg-surface-container-highest border border-outline-variant flex items-center justify-center overflow-hidden"
+                >
+                  <img
+                    alt="Exercise visual"
+                    class="w-full h-full object-cover"
+                    data-alt="Muscular shoulders and back of an athlete performing an overhead press with heavy dumbbells in a dark gym environment"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAttktD6pOsTXr5oIrp25LM9KKeR920InkexDEL_nM8tzWb6VpqrocSlFg-4Xlfeb459D9-ArdZ98ThOJLmlSXP3J0Zm97XscpwjGPvZuySC8qIgCi-eKLTDZJvksppCbWBmiHVbob5tDDeo86NiJy6u2whVC-b1srUtaY2rLFgQ6yrYugb1MtbUp7cm9PaGEKvBPnBRV--CQNxJKevsMCJx8M38mPH3TCbzaZU7tx4MS8zbS7C9uiBDpJAK4ntXYPrkCxxSOn9Cn0"
+                  />
+                </div>
+                <div>
+                  <h3
+                    class="text-xl font-bold text-on-surface tracking-tight leading-none text-secondary"
+                  >
+                    Overhead Press (Dumbbell)
+                  </h3>
+                  <p class="text-xs text-secondary mt-1 uppercase tracking-widest font-bold">
+                    Shoulders • Compound
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="p-12 flex flex-col items-center justify-center text-center">
+              <span class="material-symbols-outlined text-4xl text-outline mb-2">lock</span>
+              <p class="text-secondary font-medium">Log the previous exercise to unlock</p>
+            </div>
+          </section>
+          <button
+            class="w-full py-4 bg-surface-container-highest border border-outline-variant rounded-xl text-primary font-bold flex items-center justify-center gap-3 hover:bg-surface-container-high transition-colors"
+          >
+            <span class="material-symbols-outlined">add_circle</span>
+            Add Exercise
+          </button>
+        </div>
+        <!-- Sidebar Column -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Intensity Chart Card -->
+          <div class="bg-surface-container border border-outline-variant rounded-xl p-5">
+            <h4
+              class="text-xs font-black uppercase tracking-widest text-secondary mb-4 flex items-center gap-2"
+            >
+              <span class="material-symbols-outlined text-sm text-tertiary">monitoring</span>
+              Intensity Distribution
+            </h4>
+            <div class="h-48 flex items-end justify-between gap-1 px-2">
+              <div class="w-full bg-surface-container-highest rounded-t-sm h-[30%] relative group">
+                <div
+                  class="absolute inset-x-0 bottom-0 bg-primary opacity-30 h-full rounded-t-sm"
+                ></div>
+                <div
+                  class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-[10px] p-1 rounded border border-outline"
+                >
+                  30%
+                </div>
+              </div>
+              <div class="w-full bg-surface-container-highest rounded-t-sm h-[65%] relative group">
+                <div
+                  class="absolute inset-x-0 bottom-0 bg-primary opacity-50 h-full rounded-t-sm"
+                ></div>
+                <div
+                  class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-[10px] p-1 rounded border border-outline"
+                >
+                  65%
+                </div>
+              </div>
+              <div class="w-full bg-surface-container-highest rounded-t-sm h-[90%] relative group">
+                <div class="absolute inset-x-0 bottom-0 bg-primary h-full rounded-t-sm"></div>
+                <div
+                  class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-[10px] p-1 rounded border border-outline"
+                >
+                  90%
+                </div>
+              </div>
+              <div class="w-full bg-surface-container-highest rounded-t-sm h-[40%] relative group">
+                <div
+                  class="absolute inset-x-0 bottom-0 bg-primary opacity-40 h-full rounded-t-sm"
+                ></div>
+                <div
+                  class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-[10px] p-1 rounded border border-outline"
+                >
+                  40%
+                </div>
+              </div>
+              <div class="w-full bg-surface-container-highest rounded-t-sm h-[20%] relative group">
+                <div
+                  class="absolute inset-x-0 bottom-0 bg-primary opacity-20 h-full rounded-t-sm"
+                ></div>
+                <div
+                  class="hidden group-hover:block absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-container-highest text-[10px] p-1 rounded border border-outline"
+                >
+                  20%
+                </div>
+              </div>
+            </div>
+            <div
+              class="flex justify-between mt-3 text-[9px] font-bold text-secondary uppercase tracking-tighter"
+            >
+              <span>Set 1</span>
+              <span>Set 2</span>
+              <span>Set 3</span>
+              <span>Set 4</span>
+              <span>Set 5</span>
+            </div>
+          </div>
+          <!-- Workout Notes -->
+          <div class="bg-surface-container border border-outline-variant rounded-xl p-5">
+            <h4
+              class="text-xs font-black uppercase tracking-widest text-secondary mb-4 flex items-center gap-2"
+            >
+              <span class="material-symbols-outlined text-sm text-primary">edit_note</span>
+              Workout Notes
+            </h4>
+            <textarea
+              class="w-full h-32 bg-surface-container-low border border-outline-variant rounded-lg p-3 text-sm text-on-surface placeholder:text-outline focus:ring-1 focus:ring-primary resize-none"
+              placeholder="Feeling strong today? Any pain or modifications?"
+            ></textarea>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button
+                class="px-3 py-1 bg-surface-container-highest border border-outline-variant rounded-full text-[10px] font-bold text-secondary hover:text-primary transition-colors"
+              >
+                #PR-ATTEMPT
+              </button>
+              <button
+                class="px-3 py-1 bg-surface-container-highest border border-outline-variant rounded-full text-[10px] font-bold text-secondary hover:text-primary transition-colors"
+              >
+                #DELOAD
+              </button>
+              <button
+                class="px-3 py-1 bg-surface-container-highest border border-outline-variant rounded-full text-[10px] font-bold text-secondary hover:text-primary transition-colors"
+              >
+                #RECOVERY
+              </button>
+            </div>
+          </div>
+          <!-- Session Stats Summary -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-surface-container border border-outline-variant rounded-xl p-4">
+              <p class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">
+                Volume
+              </p>
+              <p class="text-xl font-black text-on-surface">
+                3,250 <span class="text-xs font-medium text-secondary">kg</span>
+              </p>
+            </div>
+            <div class="bg-surface-container border border-outline-variant rounded-xl p-4">
+              <p class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-1">
+                Sets
+              </p>
+              <p class="text-xl font-black text-on-surface">
+                12 <span class="text-xs font-medium text-secondary">total</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- Bottom Navigation Shell (Mobile Only) -->
+    <footer
+      class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 pb-safe bg-[#0c0c0f]/95 backdrop-blur-md text-violet-400 font-geist text-[10px] uppercase tracking-wider docked full-width bottom-0 border-t border-[#27272a] flat no shadows"
+    >
+      <button
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] scale-95 duration-100"
+      >
+        <span class="material-symbols-outlined">home</span>
+        <span>Home</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-[#a78bfa] active:bg-[#18181b] scale-95 duration-100"
+      >
+        <span class="material-symbols-outlined" style="font-variation-settings: &#39;FILL&#39; 1;"
+          >add_circle</span
+        >
+        <span class="font-bold">Log</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] scale-95 duration-100"
+      >
+        <span class="material-symbols-outlined">format_list_bulleted</span>
+        <span>Library</span>
+      </button>
+      <button
+        class="flex flex-col items-center justify-center text-[#a1a1aa] active:bg-[#18181b] scale-95 duration-100"
+      >
+        <span class="material-symbols-outlined">query_stats</span>
+        <span>Stats</span>
+      </button>
+    </footer>
+  </body>
+</html>
