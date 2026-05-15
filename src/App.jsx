@@ -3051,6 +3051,11 @@ function App() {
 
       card.setAttribute('data-codex-exercise-card', '1');
       card.setAttribute('data-codex-exercise-name', exerciseName);
+      card.setAttribute('data-codex-action', 'exercise-open-details');
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Exercise details: ${exerciseName}`);
+      card.style.cursor = 'pointer';
 
       [...card.querySelectorAll('button, .material-symbols-outlined')].forEach((node) => {
         if (!isElementNode(node) || node.getAttribute('data-codex-action')) {
@@ -4063,6 +4068,48 @@ function App() {
           }
 
           handleGenericInteractionRef.current?.(interactiveTarget, text, event);
+        },
+        true,
+      );
+    }
+
+    if (doc.documentElement.dataset.codexDelegatedKeyboard !== '1') {
+      doc.documentElement.dataset.codexDelegatedKeyboard = '1';
+
+      doc.addEventListener(
+        'keydown',
+        (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+          }
+
+          const eventTarget = event.target;
+          const elementTarget = isElementNode(eventTarget)
+            ? eventTarget
+            : isElementNode(eventTarget?.parentElement)
+              ? eventTarget.parentElement
+              : null;
+          const interactiveTarget = elementTarget?.closest('[data-codex-action][role="button"]');
+
+          if (
+            !interactiveTarget ||
+            ['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(interactiveTarget.tagName)
+          ) {
+            return;
+          }
+
+          const text = buildInteractiveText(interactiveTarget);
+          const handled = handleFrameActionRef.current?.(interactiveTarget, text, event) ?? false;
+          if (handled) {
+            syncFrameVisualState(doc);
+            wireGlobalActions(doc);
+            wireDashboardActions(doc);
+            wireHistoryActions(doc);
+            wireSettingsActions(doc);
+            wireProgressActions(doc);
+            wireLogActions(doc);
+            wireExerciseActions(doc);
+          }
         },
         true,
       );

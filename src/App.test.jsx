@@ -195,6 +195,73 @@ describe('App stitch screen rendering', () => {
     );
   });
 
+  it('opens exercise details when an exercise card body is clicked', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    const frame = screen.getByTitle('Stitch exercises');
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(`
+      <main>
+        <div class="grid">
+          <div class="rounded-xl hover:border-primary">
+            <h3>Bench press</h3>
+            <p>Fundamental chest lift.</p>
+          </div>
+        </div>
+      </main>
+    `);
+    doc.close();
+    fireEvent.load(frame);
+
+    const card = doc.querySelector('[data-codex-exercise-card]');
+    expect(card).toBeTruthy();
+
+    fireEvent.click(card.querySelector('h3'));
+
+    await waitFor(() => {
+      expect(doc.querySelector('[data-codex-exercise-modal]:not(.hidden) h3')?.textContent).toBe(
+        'Bench press',
+      );
+    });
+  });
+
+  it('opens exercise details from a focused exercise card', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'exercises' }));
+    const frame = screen.getByTitle('Stitch exercises');
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(`
+      <main>
+        <div class="grid">
+          <div class="rounded-xl hover:border-primary">
+            <h3>Romanian deadlift</h3>
+            <p>Hamstrings and posterior chain.</p>
+          </div>
+        </div>
+      </main>
+    `);
+    doc.close();
+    fireEvent.load(frame);
+
+    const card = doc.querySelector('[data-codex-exercise-card]');
+    expect(card?.getAttribute('role')).toBe('button');
+    expect(card?.getAttribute('tabindex')).toBe('0');
+
+    fireEvent.keyDown(card, { key: 'Enter' });
+
+    await waitFor(() => {
+      expect(doc.querySelector('[data-codex-exercise-modal]:not(.hidden) h3')?.textContent).toBe(
+        'Romanian deadlift',
+      );
+    });
+  });
+
   it('adds practical mobile workout logging controls on iframe load', async () => {
     window.innerWidth = 390;
     window.localStorage.setItem(
