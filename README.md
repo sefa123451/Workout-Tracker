@@ -1,11 +1,11 @@
 # Workout Tracker
 
-Local-first workout tracking app built with React + Vite.
-This project is designed to demonstrate product thinking, data modeling, testing discipline, and practical frontend engineering in a portfolio context.
+Local-first workout tracking app built with React + Vite and deployed on GitHub Pages.
+The project is designed to demonstrate product thinking, mobile-friendly UX, data modeling, testing discipline, and practical frontend engineering in a portfolio context.
 
 ## Demo
 
-- Live app: not deployed (intentional local-first scope)
+- Live app: https://sefa123451.github.io/Workout-Tracker/
 - Quick walkthrough: [`docs/media/workout-flow.gif`](docs/media/workout-flow.gif)
 - Run locally:
   - `npm install`
@@ -14,24 +14,27 @@ This project is designed to demonstrate product thinking, data modeling, testing
 ## What To Evaluate In 2 Minutes
 
 1. Open `Dashboard` for training summary, heatmap, and recommendations.
-2. Open `Log workout` and load a template/split.
-3. Open `History` for day review and PR timeline.
-4. Open `Progress` and switch between exercise/split trends.
+2. Open `Exercises` and click an exercise card to inspect details or start a workout from it.
+3. Open `Log workout` to use the mobile-first workout logging controls.
+4. Open `History` and `Analytics` for review, trends, and progress context.
 5. Open `Settings` for bodyweight logging and import/export flow.
 
 ## Product Screens
 
 ![Dashboard view](docs/media/dashboard-desktop.png)
+![Exercise library view](docs/media/exercises-desktop.png)
 ![Workout logging view](docs/media/log-workout-desktop.png)
-![Progress analytics view](docs/media/history-progress-desktop.png)
+![History view](docs/media/history-desktop.png)
+![Progress analytics view](docs/media/progress-desktop.png)
 ![Settings and data controls](docs/media/settings-desktop.png)
+![Mobile exercise details modal](docs/media/exercise-details-mobile.png)
 
 ## Feature Highlights
 
-- Exercise library with editing, ordering, target values, and safe deletion
+- Exercise library with filters, detail modal, recent performance context, and direct workout starts
 - Split planner with weekly targets and default sets per exercise
 - Workout templates (create, load, duplicate, edit, rename, delete)
-- Workout logging with notes, mood, effort, and per-set tracking
+- Workout logging with notes, mood, effort, per-set tracking, mobile dock controls, and rest timer access
 - History with calendar heatmap, day review, and PR timeline
 - Progress analytics for exercise and split modes across 7/30/90-day windows
 - Bodyweight check-ins with trend context
@@ -45,7 +48,8 @@ This project is designed to demonstrate product thinking, data modeling, testing
 
 ### Frontend
 
-- `src/App.jsx`: app shell and view composition
+- `src/App.jsx`: app shell, Stitch iframe integration, and cross-screen actions
+- `public/stitch/*`: generated desktop/mobile screen markup used by the deployed UI
 - `src/hooks/useAppController.jsx`: centralized state/actions orchestration
 - `src/components/*`: screen and section components
 - `src/styles.css`: design tokens, layout, and responsive styles
@@ -60,6 +64,7 @@ This project is designed to demonstrate product thinking, data modeling, testing
 ### Design Decisions
 
 - Local-first by default: no account required, instant startup, full data ownership.
+- GitHub Pages deployment keeps the gym/mobile flow reachable without a backend.
 - Backward compatibility: existing `localStorage` shape and import/export compatibility are preserved.
 - Defensive input handling: invalid dates/entries are sanitized or rejected early to prevent runtime crashes.
 
@@ -69,7 +74,7 @@ This project is designed to demonstrate product thinking, data modeling, testing
 
 - `npm run lint`
 - `npm run format:check`
-- `npm test -- --run`
+- `npm test`
 - `npm run test:e2e`
 - `npm run build`
 
@@ -80,13 +85,14 @@ This project is designed to demonstrate product thinking, data modeling, testing
 - Component-focused tests for major UI surfaces
 - Lightweight browser smoke checks via `scripts/e2e-smoke.mjs`
 - CI (`.github/workflows/ci.yml`) runs lint + format check + unit/integration tests + build + e2e smoke checks on push/PR
+- GitHub Pages deploy (`.github/workflows/pages.yml`) publishes the latest `main` build
 
 ## Scripts
 
 - `npm run dev` - start Vite dev server
 - `npm run build` - production build
 - `npm run preview` - preview production build
-- `npm test -- --run` - run tests once
+- `npm test` - run tests once
 - `npm run test:e2e` - run lightweight browser smoke checks
 - `npm run lint` - run ESLint
 - `npm run lint:fix` - run ESLint with autofix

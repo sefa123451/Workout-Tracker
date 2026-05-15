@@ -200,7 +200,21 @@ function getContentType(filePath) {
   return 'text/plain';
 }
 
-async function preparePage(page, distDir) {
+async function waitForStitchFrame(page) {
+  const frameHandle = await page.waitForSelector('iframe.stitch-frame');
+  const frame = await frameHandle.contentFrame();
+
+  if (!frame) {
+    throw new Error('Stitch iframe was not available for media capture.');
+  }
+
+  await frame.waitForSelector('body');
+  await frame.evaluate(() => document.fonts?.ready?.then(() => true) ?? true);
+  await page.waitForTimeout(400);
+  return frame;
+}
+
+async function preparePage(page, distDir, route = 'dashboard') {
   await page.addInitScript(
     ({ key, value }) => {
       window.localStorage.setItem(key, value);
@@ -215,12 +229,12 @@ async function preparePage(page, distDir) {
     const requestUrl = new URL(route.request().url());
 
     if (requestUrl.hostname !== 'app.local') {
-      await route.abort();
+      await route.continue();
       return;
     }
 
-    const normalizedPath =
-      requestUrl.pathname === '/' ? '/index.html' : requestUrl.pathname.replace(/\/{2,}/g, '/');
+    const pathname = requestUrl.pathname.replace(/^\/Workout-Tracker(?=\/|$)/, '') || '/';
+    const normalizedPath = pathname === '/' ? '/index.html' : pathname.replace(/\/{2,}/g, '/');
     const safeRelativePath = normalizedPath.replace(/^\/+/, '');
     const filePath = path.join(distDir, safeRelativePath);
 
@@ -237,9 +251,17 @@ async function preparePage(page, distDir) {
     });
   });
 
-  await page.goto('http://app.local/', { waitUntil: 'networkidle' });
-  await page.waitForSelector('main, .app-main');
-  await page.waitForTimeout(400);
+  await page.goto(`http://app.local/#/${route}`, { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
+}
+
+async function captureRoute(page, route, fileName) {
+  await page.goto(`http://app.local/#/${route}`, { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
+  await page.screenshot({
+    path: path.join(MEDIA_DIR, fileName),
+    fullPage: false,
+  });
 }
 
 async function captureScreenshots(browser, distDir) {
@@ -249,32 +271,28 @@ async function captureScreenshots(browser, distDir) {
   const page = await context.newPage();
   await preparePage(page, distDir);
 
-  await page.screenshot({
-    path: path.join(MEDIA_DIR, 'dashboard-desktop.png'),
+  await captureRoute(page, 'dashboard', 'dashboard-desktop.png');
+  await captureRoute(page, 'exercises', 'exercises-desktop.png');
+  await captureRoute(page, 'log', 'log-workout-desktop.png');
+  await captureRoute(page, 'history', 'history-desktop.png');
+  await captureRoute(page, 'progress', 'progress-desktop.png');
+  await captureRoute(page, 'settings', 'settings-desktop.png');
+
+  const mobileContext = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+  });
+  const mobilePage = await mobileContext.newPage();
+  await preparePage(mobilePage, distDir, 'exercises');
+  const frame = await waitForStitchFrame(mobilePage);
+  await frame.getByText('BARBELL BENCH PRESS', { exact: true }).click();
+  await frame.locator('[data-codex-exercise-modal]:not(.hidden)').waitFor({ state: 'visible' });
+  await mobilePage.screenshot({
+    path: path.join(MEDIA_DIR, 'exercise-details-mobile.png'),
     fullPage: false,
   });
 
-  await page.getByRole('button', { name: 'Log workout' }).click();
-  await page.waitForTimeout(300);
-  await page.screenshot({
-    path: path.join(MEDIA_DIR, 'log-workout-desktop.png'),
-    fullPage: false,
-  });
-
-  await page.getByRole('button', { name: 'progress' }).click();
-  await page.waitForTimeout(300);
-  await page.screenshot({
-    path: path.join(MEDIA_DIR, 'history-progress-desktop.png'),
-    fullPage: false,
-  });
-
-  await page.getByRole('button', { name: 'settings' }).click();
-  await page.waitForTimeout(300);
-  await page.screenshot({
-    path: path.join(MEDIA_DIR, 'settings-desktop.png'),
-    fullPage: false,
-  });
-
+  await mobileContext.close();
   await context.close();
 }
 
@@ -295,20 +313,24 @@ async function captureGif(browser, distDir) {
   const frames = [];
   frames.push(await page.screenshot({ fullPage: false }));
 
-  await page.getByRole('button', { name: 'Log workout' }).click();
-  await page.waitForTimeout(250);
+  await page.goto('http://app.local/#/exercises', { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
   frames.push(await page.screenshot({ fullPage: false }));
 
-  await page.getByRole('button', { name: 'history' }).click();
-  await page.waitForTimeout(250);
+  await page.goto('http://app.local/#/log', { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
   frames.push(await page.screenshot({ fullPage: false }));
 
-  await page.getByRole('button', { name: 'progress' }).click();
-  await page.waitForTimeout(250);
+  await page.goto('http://app.local/#/history', { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
   frames.push(await page.screenshot({ fullPage: false }));
 
-  await page.getByRole('button', { name: 'settings' }).click();
-  await page.waitForTimeout(250);
+  await page.goto('http://app.local/#/progress', { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
+  frames.push(await page.screenshot({ fullPage: false }));
+
+  await page.goto('http://app.local/#/settings', { waitUntil: 'networkidle' });
+  await waitForStitchFrame(page);
   frames.push(await page.screenshot({ fullPage: false }));
 
   const firstFrame = PNG.sync.read(frames[0]);
