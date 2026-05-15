@@ -144,6 +144,48 @@ describe('App stitch screen rendering', () => {
     expect(doc.querySelector('[data-codex-action="settings-import-merge"]')).toBeTruthy();
   });
 
+  it('adds desktop bodyweight logging controls to the settings stitch screen', async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole('button', { name: 'settings' }));
+    const frame = screen.getByTitle('Stitch settings');
+    const doc = frame.contentDocument;
+    doc.open();
+    doc.write(`
+      <main>
+        <section>
+          <h3>Bodyweight Tracking</h3>
+          <div>
+            <label>Current Weight</label>
+            <span>82.4</span>
+          </div>
+        </section>
+      </main>
+    `);
+    doc.close();
+    fireEvent.load(frame);
+
+    await waitFor(() => {
+      expect(doc.querySelector('[data-codex-bodyweight-controls]')).toBeTruthy();
+    });
+
+    fireEvent.change(doc.querySelector('input[type="date"]'), {
+      target: { value: '2026-05-15' },
+    });
+    fireEvent.change(doc.querySelector('input[type="number"]'), {
+      target: { value: '83.7' },
+    });
+    fireEvent.click(doc.querySelector('[data-codex-action="settings-save-bodyweight"]'));
+
+    await waitFor(() => {
+      const parsed = JSON.parse(window.localStorage.getItem(STORAGE_KEY));
+      expect(parsed.bodyweightEntries).toContainEqual(
+        expect.objectContaining({ date: '2026-05-15', weight: 83.7 }),
+      );
+    });
+  });
+
   it('uses current iframe handlers for repeated custom exercise saves', async () => {
     const user = userEvent.setup();
     render(<App />);

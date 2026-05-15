@@ -1020,10 +1020,81 @@ function App() {
     `;
   }
 
+  function renderSettingsBodyweightControls(doc) {
+    if (!doc || activeView !== 'settings') {
+      return;
+    }
+
+    if (doc.querySelector('[data-codex-bodyweight-controls]')) {
+      return;
+    }
+
+    const hasSaveControl = [...doc.querySelectorAll('button')].some((button) => {
+      const text = normalizeText(button.textContent);
+      return text === 'log' || text.includes('save bodyweight');
+    });
+
+    if (hasSaveControl && findBodyweightInputs(doc).weightInput) {
+      return;
+    }
+
+    const bodyweightHeading = [...doc.querySelectorAll('h2, h3')].find((heading) =>
+      normalizeText(heading.textContent).includes('bodyweight tracking'),
+    );
+    const bodyweightSection = bodyweightHeading?.closest('section');
+
+    if (!bodyweightSection) {
+      return;
+    }
+
+    const controls = doc.createElement('div');
+    controls.setAttribute('data-codex-bodyweight-controls', '1');
+    controls.className = 'mt-4 border-t border-outline-variant pt-4';
+    controls.innerHTML = `
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.75rem; align-items: end;">
+        <label for="codex-bodyweight-date" style="display: grid; gap: 0.35rem; min-width: 0;">
+          <span class="text-[10px] uppercase tracking-wider text-secondary font-bold">Check-in date</span>
+          <input
+            id="codex-bodyweight-date"
+            aria-label="Check-in date"
+            class="border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none"
+            style="width: 100%; min-width: 0; height: 48px; background: #0f0f12; color: #fafafa;"
+            type="date"
+            value="${getTodayInputValue()}"
+          />
+        </label>
+        <label for="codex-bodyweight-value" style="display: grid; gap: 0.35rem; min-width: 0;">
+          <span class="text-[10px] uppercase tracking-wider text-secondary font-bold">Bodyweight (kg)</span>
+          <input
+            id="codex-bodyweight-value"
+            aria-label="Bodyweight (kg)"
+            class="border border-outline-variant rounded-lg px-4 py-3 text-on-surface focus:ring-2 focus:ring-primary focus:outline-none"
+            style="width: 100%; min-width: 0; height: 48px; background: #0f0f12; color: #fafafa;"
+            placeholder="Enter weight..."
+            type="number"
+            min="0"
+            step="0.1"
+          />
+        </label>
+        <button
+          type="button"
+          class="bg-primary text-on-primary px-6 py-3 rounded-lg font-bold transition-all active:scale-95"
+          style="height: 48px; min-width: 96px;"
+          data-codex-action="settings-save-bodyweight"
+        >
+          Log
+        </button>
+      </div>
+    `;
+    bodyweightSection.appendChild(controls);
+  }
+
   function wireSettingsActions(doc) {
     if (!doc || activeView !== 'settings') {
       return;
     }
+
+    renderSettingsBodyweightControls(doc);
 
     const buttons = [...doc.querySelectorAll('button')];
 
@@ -3596,6 +3667,12 @@ function App() {
     if (actionId === 'settings-delete-everything') {
       event.preventDefault();
       clearAllDataWithConfirmation();
+      return true;
+    }
+
+    if (actionId === 'settings-save-bodyweight') {
+      event.preventDefault();
+      saveBodyweightFromFrame(target?.ownerDocument);
       return true;
     }
 

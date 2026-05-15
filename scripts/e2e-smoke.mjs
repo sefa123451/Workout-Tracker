@@ -409,6 +409,55 @@ async function runSmokeScenario(page) {
     .getByText(/progress|analytics|volume/i)
     .first()
     .waitFor({ state: 'visible' });
+  const getActiveProgressWindowIds = () =>
+    page.evaluate(() => {
+      const frame = document.querySelector('iframe[title="Stitch progress"]');
+      const doc = frame?.contentDocument;
+      if (!doc) return [];
+
+      return [...doc.querySelectorAll('[data-codex-action^="progress-window-"]')]
+        .filter((button) => {
+          const style = button.getAttribute('style') ?? '';
+          return style.includes('box-shadow') || style.includes('brightness');
+        })
+        .map((button) => button.getAttribute('data-codex-action'));
+    });
+  const waitForActiveProgressWindow = async (actionId) => {
+    await page.waitForFunction(
+      (expectedActionId) => {
+        const frame = document.querySelector('iframe[title="Stitch progress"]');
+        const doc = frame?.contentDocument;
+        if (!doc) return false;
+
+        const activeWindowIds = [...doc.querySelectorAll('[data-codex-action^="progress-window-"]')]
+          .filter((button) => {
+            const style = button.getAttribute('style') ?? '';
+            return style.includes('box-shadow') || style.includes('brightness');
+          })
+          .map((button) => button.getAttribute('data-codex-action'));
+
+        return activeWindowIds.length === 1 && activeWindowIds[0] === expectedActionId;
+      },
+      actionId,
+      { timeout: 10000 },
+    );
+  };
+
+  await progressFrame.locator('[data-codex-action="progress-window-30"]').waitFor({
+    state: 'visible',
+  });
+  await progressFrame.locator('[data-codex-action="progress-window-30"]').click();
+  await waitForActiveProgressWindow('progress-window-30');
+  await progressFrame.locator('[data-codex-action="progress-window-7"]').click();
+  await waitForActiveProgressWindow('progress-window-7');
+  await progressFrame.locator('[data-codex-action="progress-window-90"]').click();
+  await waitForActiveProgressWindow('progress-window-90');
+
+  const finalActiveWindowIds = await getActiveProgressWindowIds();
+  assert(
+    finalActiveWindowIds.length === 1 && finalActiveWindowIds[0] === 'progress-window-90',
+    `Progress window clicks did not leave 90D active. Active windows: ${finalActiveWindowIds.join(', ') || 'none'}`,
+  );
 
   for (const view of ['dashboard', 'log', 'history', 'exercises', 'progress', 'settings']) {
     await assertNoUnwiredInteractiveControls(view);
